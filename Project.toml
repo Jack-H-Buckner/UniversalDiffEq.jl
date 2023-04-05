@@ -1,0 +1,13 @@
+name = "UniversalDiffEq"
+uuid = "6fefd740-e8e9-483c-b5b4-ec812cd4a1ea"
+authors = ["Jorge Arroyo-Esquivel"]
+version = "1.0.0-DEV"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
