@@ -16,6 +16,6 @@ using UniversalDiffEq
 # Tutorial coming soon!
 
 # Acknowledgements
-[<img alt="NSF Logo" width="200px" src="NSF_logo.png" />]()
+<img alt="NSF Logo" width="200px" src="NSF_logo.png" />
 
 The development of this package is supported by the National Science Foundation, award \#2233982 on Model Enabled Machine Learning (MnML) for Predicting Ecosystem Regime Shifts.
