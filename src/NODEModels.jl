@@ -14,35 +14,13 @@ struct NODE{M,P}
     parameters::P
 end
 
-function train(model::NODE,trainingData::Matrix{Float64};
+function train(model::NODE,trainingData::Matrix{Float64},timeSpans = nothing;
     solver = nothing,
     tol = 1e-6,
-    hasTime = false,
     lossFunction = :MAE,
     learningRate = 0.005,
     maxIters = 300)
-    
     rng = Random.default_rng()
-    #Determine we have more observations than inputs
-    if size(trainingData,1) > size(trainingData,2)
-        trainingData = copy(trainingData')
-    end
-    
-    #If time is provided, choose first row as time 
-    if hasTime
-        timeSpans = trainingData[1,:]
-        trainingData = trainingData[2:end,:]
-    else
-        timeSpans = 1.:1:size(trainingData,2)
-    end
-
-    #If solver is not provided, choose an appropiate automatic solver
-    solver = isnothing(solver) ? (tol > 1e-8 ? AutoTsit5(Rodas4P()) : AutoAutoVern9(RadauIIA5())) : solver
-
-    #Check provided loss function is valid
-    if !(lossFunction in (:MSE,:RMSE))
-        throw(ArgumentError("Invalid error loss function. Available options are Maximum Absolute Error (:MAE) or Root Mean Squared Error (:RMSE)."))
-    end
 
     ps, st = Lux.setup(rng, model.neuralNetwork)
     ps64 = Float64.(ComponentArray(ps))
@@ -90,7 +68,7 @@ solver = isnothing(solver) ? (tol > 1e-8 ? AutoTsit5(Rodas4P()) : AutoAutoVern9(
     return prediction
 end
 
-function save(model::NODE,fileName = "fit_neural_network")
+function saveNeuralNetwork(model::NODE,fileName = "fit_neural_network")
     serialize(fileName*".jls",model)
 end
 
@@ -106,39 +84,16 @@ struct UDE{M,P,F}
     givenParameters::Vector{Float32}
 end
 
-function train(model::UDE,trainingData::Matrix{Float64};
+function train(model::UDE,trainingData::Matrix{Float64},timeSpans = nothing;
     solver = nothing,
     tol = 1e-6,
-    hasTime = false,
     lossFunction = :MAE,
     learningRate = 0.005,
     maxIters = 300)
-    
     rng = Random.default_rng()
-    #Determine we have more observations than inputs
-    if size(trainingData,1) > size(trainingData,2)
-        trainingData = copy(trainingData')
-    end
-    
-    #If time is provided, choose first row as time 
-    if hasTime
-        timeSpans = trainingData[1,:]
-        trainingData = trainingData[2:end,:]
-    else
-        timeSpans = 1.:1:size(trainingData,2)
-    end
-
-    #If solver is not provided, choose an appropiate automatic solver
-    solver = isnothing(solver) ? (tol > 1e-8 ? AutoTsit5(Rodas4P()) : AutoAutoVern9(RadauIIA5())) : solver
-
-    #Check provided loss function is valid
-    if !(lossFunction in (:MSE,:RMSE))
-        throw(ArgumentError("Invalid error loss function. Available options are Maximum Absolute Error (:MAE) or Root Mean Squared Error (:RMSE)."))
-    end
-
     ps, st = Lux.setup(rng, model.neuralNetwork)
     ps64 = Float64.(ComponentArray(ps))
-    psDynamics = ComponentArray((predefined_params = rand(Float64, neededParameters), model_params = ps64))
+    psDynamics = ComponentArray((predefined_params = rand(Float64, model.neededParameters), model_params = ps64))
 
     function ude!(du,u,p,t,q)
         knownPred = model.knownDynamics(u,p.predefined_params,q)
@@ -211,7 +166,7 @@ function test(model::UDE,x0::Vector{Float64},T::Float64;
     return prediction
 end
 
-function save(model::UDE,fileName = "fit_neural_network")
+function saveNeuralNetwork(model::UDE,fileName = "fit_neural_network")
     methodToSave = methods(model.knownDynamics)[1]
     modelToSave = UDE(model.neuralNetwork,model.parameters,methodToSave,model.neededParameters,model.givenParameters)
     serialize(fileName*".jls",modelToSave)
