@@ -19,7 +19,7 @@ function createModel(path::String;knownDynamics = nothing,hiddenLayerSize = 0,mo
         throw(ArgumentError("Provided model type is not currently supported. Currently supported model types are Neural Ordinary Differential Equations (:NODE) or Universal Differential Equations (:UDE)"))
     end
     #Check provided loss function is valid
-    if !(lossFunction in (:MSE,:RMSE))
+    if !(lossFunction in (:MAE,:RMSE))
         throw(ArgumentError("Invalid error loss function. Available options are Maximum Absolute Error (:MAE) or Root Mean Squared Error (:RMSE)."))
     end
 
@@ -91,7 +91,7 @@ function createModel(trainingData::Matrix{Float64};knownDynamics = nothing,hidde
         throw(ArgumentError("Provided model type is not currently supported. Currently supported model types are Neural Ordinary Differential Equations (:NODE) or Universal Differential Equations (:UDE)"))
     end
     #Check provided loss function is valid
-    if !(lossFunction in (:MSE,:RMSE))
+    if !(lossFunction in (:MAE,:RMSE))
         throw(ArgumentError("Invalid error loss function. Available options are Maximum Absolute Error (:MAE) or Root Mean Squared Error (:RMSE)."))
     end
     
