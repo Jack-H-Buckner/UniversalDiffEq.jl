@@ -47,13 +47,13 @@ function train(model::NODE,trainingData::Matrix{Float64},timeSpans = nothing;
     #Train
     pinit = ComponentVector(ps64)
     adtype = Optimization.AutoZygote()
-    optf = Optimization.OptimizationFunction((x, p) -> lossFunction(x), adtype)
+    optf = Optimization.OptimizationFunction((x, p) -> loss(x), adtype)
     optprob = Optimization.OptimizationProblem(optf, pinit)
 
     optimizedParameters = Optimization.solve(optprob,
                                            ADAM(learningRate),
                                            maxiters = maxIters)
-    return NODE(model.neuralNetwork,optimizedParameters)
+    return NODE(model.neuralNetwork,optimizedParameters.u), predict(optimizedParameters.u)
 end
 
 function test(model::NODE,x0::Vector{Float64},T::Float64;
@@ -131,13 +131,13 @@ function train(model::UDE,trainingData::Matrix{Float64},timeSpans = nothing;
     #Train
     pinit = ComponentVector(ps_dynamics)
     adtype = Optimization.AutoZygote()
-    optf = Optimization.OptimizationFunction((x, p) -> lossFunction(x), adtype)
+    optf = Optimization.OptimizationFunction((x, p) -> loss(x), adtype)
     optprob = Optimization.OptimizationProblem(optf, pinit)
 
     optimizedParameters = Optimization.solve(optprob,
                                            ADAM(learningRate),
                                            maxiters = maxIters)
-    return UDE(model.neuralNetwork,optimizedParameters,model.knownDynamics,model.neededParameters,model.givenParameters)
+    return UDE(model.neuralNetwork,optimizedParameters.u,model.knownDynamics,model.neededParameters,model.givenParameters), predict(optimizedParameters.u)
 end
 
 function test(model::UDE,x0::Vector{Float64},T::Float64;
