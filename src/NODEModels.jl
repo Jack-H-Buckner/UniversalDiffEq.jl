@@ -30,18 +30,15 @@ function train(model::NODE,trainingData::Matrix{Float64},timeSpans = nothing;
     function predict(p)
         Array(neuralode(trainingData[:,1], p,st)[1])
     end
-    if lossFunction == :MSE
-        function loss(p)
-            pred = predict(p)
-            ℓ = sum(abs, trainingData .- pred)
-            return ℓ
+    function loss(p)
+        pred = predict(p)
+        ℓ = 0
+        if lossFunction == :MSE
+            ℓ += sum(abs, trainingData .- pred)
+        elseif lossFunction == :RMSE
+            ℓ += sum(abs2, trainingData .- pred)
         end
-    elseif lossFunction == :RMSE
-        function loss(p)
-            pred = predict(p)
-            ℓ = sum(abs2, trainingData .- pred)
-            return ℓ
-        end
+        return ℓ
     end
 
     #Train
