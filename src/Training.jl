@@ -16,6 +16,15 @@ function createModel(path::String;knownDynamics = nothing,hiddenLayerSize = 0,mo
     givenParameters = Float64[])
 
     trainingData = readdlm(path)
+    #Determine we have more observations than inputs
+    if size(trainingData,1) > size(trainingData,2)
+        trainingData = permutedims(trainingData)
+    end
+    
+    #If string headers are there, remove them
+    if typeof(trainingData)==Matrix{Any}
+        trainingData = convert(Array{Float64},trainingData[:,2:end])
+    end
     
     return createModel(trainingData,knownDynamics=knownDynamics,hiddenLayerSize = hiddenLayerSize,modelType = modelType,solver = solver,
     tol = tol,
@@ -42,11 +51,6 @@ function createModel(trainingData::Matrix{Float64};knownDynamics = nothing,hidde
     #Check provided loss function is valid
     if !(lossFunction in (:MAE,:RMSE))
         throw(ArgumentError("Invalid error loss function. Available options are Maximum Absolute Error (:MAE) or Root Mean Squared Error (:RMSE)."))
-    end
-    
-    #Determine we have more observations than inputs
-    if size(trainingData,1) > size(trainingData,2)
-        trainingData = copy(trainingData')
     end
 
     #If known dynamics are provided, test them first
@@ -89,7 +93,7 @@ function createModel(trainingData::Matrix{Float64};knownDynamics = nothing,hidde
     end
 
     #Train model
-    trainedModel, trainedFit = train(untrainedModel,trainingData,timeSpans,solver = solver,
+    trainedModel, trainedFit = train(neuralNetwork,trainingData,timeSpans,solver = solver,
     tol = tol,
     lossFunction = lossFunction,
     learningRate = learningRate,
