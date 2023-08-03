@@ -9,9 +9,9 @@ end
 Neural Ordinary Differential Equations (NODEs) are the deterministic core of the tools implemented here
 """
 
-struct NODE{M,P}
-    neuralNetwork::M
-    parameters::P
+struct NODE
+    neuralNetwork
+    parameters
 end
 
 function train(model::NODE,trainingData::Matrix{Float64},timeSpans = nothing;
@@ -34,21 +34,20 @@ function train(model::NODE,trainingData::Matrix{Float64},timeSpans = nothing;
         function loss(p)
             pred = predict(p)
             ℓ = sum(abs, trainingData .- pred)
-            return ℓ, pred
+            return ℓ
         end
     elseif lossFunction == :RMSE
         function loss(p)
             pred = predict(p)
             ℓ = sum(abs2, trainingData .- pred)
-            return ℓ, pred
+            return ℓ
         end
     end
 
     #Train
-    pinit = ComponentVector(ps64)
     adtype = Optimization.AutoZygote()
     optf = Optimization.OptimizationFunction((x, p) -> loss(x), adtype)
-    optprob = Optimization.OptimizationProblem(optf, pinit)
+    optprob = Optimization.OptimizationProblem(optf, ps64)
 
     optimizedParameters = Optimization.solve(optprob,
                                            ADAM(learningRate),
@@ -114,18 +113,15 @@ function train(model::UDE,trainingData::Matrix{Float64},timeSpans = nothing;
         Array(solve(_prob,solver,saveat = timeSpans,
             abstol = tol, reltol = tol))
     end
-    if lossFunction == :MSE
-        function loss(p)
-            pred = predict(p)
-            ℓ = sum(abs, trainingData .- pred)
-            return ℓ, pred
+    function loss(p)
+        pred = predict(p)
+        ℓ = 0
+        if lossFunction == :MSE
+            ℓ += sum(abs, trainingData .- pred)
+        elseif lossFunction == :RMSE
+            ℓ += sum(abs2, trainingData .- pred)
         end
-    elseif lossFunction == :RMSE
-        function loss(p)
-            pred = predict(p)
-            ℓ = sum(abs2, trainingData .- pred)
-            return ℓ, pred
-        end
+        return ℓ
     end
 
     #Train
