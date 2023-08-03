@@ -86,14 +86,12 @@ function createModel(trainingData::Matrix{Float64};knownDynamics = nothing,hidde
     end
 
     #Create model
-    if modelType == :NODE
-        untrainedModel = NODE(neuralNetwork,nothing)
-    elseif modelType == :UDE
-        untrainedModel = UDE(neuralNetwork,nothing,knownDynamics,neededParameters,givenParameters)
-    end
+    untrainedModel = (modelType == :NODE) ? NODE(neuralNetwork,nothing) :
+     modelType == :UDE ? UDE(neuralNetwork,nothing,knownDynamics,neededParameters,givenParameters) :
+     nothing
 
     #Train model
-    trainedModel, trainedFit = train(neuralNetwork,trainingData,timeSpans,solver = solver,
+    trainedModel, trainedFit = train(untrainedModel,trainingData,timeSpans,solver = solver,
     tol = tol,
     lossFunction = lossFunction,
     learningRate = learningRate,
