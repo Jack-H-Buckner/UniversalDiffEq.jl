@@ -391,6 +391,76 @@ function ContinuousModelErrors(data,known_dynamics,init_known_dynamics_parameter
                 observation_loss,process_regularization,observation_regularization,constructor)
 end 
 
+
+
+
+function CustomDerivs(data,derivs,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6)
+    
+    # convert data
+    dataframe = data
+    times = data.t # time in colum 1
+    data = transpose(Matrix(data[:,2:size(data)[2]]))
+    
+    # initialize estiamted states
+    uhat = zeros(size(data))
+    dims = size(data)[2]
+    
+    process_model = ProcessModels.ProcessModel(derivs,ComponentArray(initial_parameters),dims)
+    process_loss = LossFunctions.MSE(N = size(data)[2]-1,weight = proc_weight)
+    observation_model = ObservationModels.Identity()
+    observation_loss = LossFunctions.MSE(N = size(data)[2],weight = obs_weight)
+    process_regularization = Regularization.L2(weight=reg_weight)
+    observation_regularization = NamedTuple()
+    
+    
+    # parameters
+    parameters = (uhat = uhat, 
+                    process_model = initial_parameters,
+                    process_loss = process_loss.parameters,
+                    observation_model = observation_model.parameters,
+                    observation_loss = observation_loss.parameters,
+                    process_regularization = process_regularization.reg_parameters, 
+                    observation_regularization = NamedTuple())
+    
+    parameters = ComponentArray(parameters)
+    
+    # loss function 
+    function loss_function(parameters)
+
+        # observation loss
+        L_obs = 0.0 
+        
+        for t in 1:(size(data)[2])
+            yt = data[:,t]
+            yhat = observation_model.link(parameters.uhat[:,t],parameters.observation_model)
+            L_obs += observation_loss.loss(yt, yhat,parameters.observation_model)
+        end
+    
+        # dynamics loss 
+        L_proc = 0
+        for t in 2:(size(data)[2])
+            u0 = parameters.uhat[:,t-1]
+            u1 = parameters.uhat[:,t]
+            dt = times[t]-times[t-1]
+            u1hat, epsilon = process_model.predict(u0,dt,parameters.process_model) 
+            L_proc += process_loss.loss(u1,u1hat,parameters.process_loss)
+        end
+    
+        # regularization
+        L_reg = process_regularization.loss(parameters.process_model.NN,parameters.process_regularization)
+        
+        return L_obs + L_proc + L_reg
+    end
+    
+    
+    constructor = (data) -> CustomDerivs(data,derivs,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight)
+    
+    return SSUDE(times,data,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
+                observation_loss,process_regularization,observation_regularization,constructor)
+
+end
+
+
 """
 ContinuousModelErrors(data, known_dynamics; hidden_units=10, NN_seed = 1, errors_weight=0.1, MSE_weight=1.0, obs_weight=1.0, reg_weight = 0.001)
 

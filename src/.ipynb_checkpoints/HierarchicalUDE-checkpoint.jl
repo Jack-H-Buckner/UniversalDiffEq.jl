@@ -324,7 +324,7 @@ function HierarchicalUDE(data,level_weights,derivs,initial_parameters;proc_weigh
     loss_function = init_loss_function(nlevels,dataframe,data,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,level_weights)
     
     
-    constructor = (data) -> HierarchicalNODESimplex(data,nlevels;
+    constructor = (data) -> HierarchicalUDE(data,nlevels;
                             hidden_units=hidden_units,NN_seed=NN_seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight)
     
     return HierarchicalUDE(times,data,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
@@ -468,6 +468,9 @@ function forcasts_(UDE::HierarchicalUDE,level_;T=10)
 
 end
 
+
+
+
 function plot_forecasts(UDE::HierarchicalUDE;T=10, level_ = 1)
     plts = plot_time_series(UDE)
     fcasts = forcasts_(UDE,level_,T = T)
@@ -479,4 +482,87 @@ function plot_forecasts(UDE::HierarchicalUDE;T=10, level_ = 1)
         end 
     end 
     return plts
+end 
+
+
+
+function predictions(UDE,level_)
+    
+    level_key = keys(UDE.parameters.process_model)[level_]
+    group_keys = keys(UDE.parameters.process_model[level_key])
+    nlevels = length(keys(UDE.parameters.process_model))
+
+    group_number = 0
+    inits = []; obs = []; preds = []
+    for group_key in group_keys
+        
+        group_number += 1
+        group_parameters = UDE.parameters.process_model[level_key][group_key]
+        group_index = 1:nrow(UDE.data_frame)
+        
+        if level_ > 1
+            group_index = UDE.data_frame[:,level_-1] .== group_number
+        end 
+        
+        group_data = UDE.data_frame[group_index,:]
+        group_states = UDE.parameters.uhat[:,group_index]
+        group_series = unique(group_data.series)
+
+        for s in group_series
+            
+            inds = UDE.data_frame.series .== s
+            times = UDE.times[inds]; dts = times[2:end] .- times[1:(end-1)]
+            dt = sum(dts)/length(dts)
+            
+            uhats = UDE.parameters.uhat[:,inds]
+            inits_s = uhats[:,1:(end-1)]
+            obs_s = uhats[:,2:end]
+            preds_s = zeros(size(uhats[:,2:end]))
+            
+            for t in 1:(size(inits_s)[2])
+                u0 = inits_s[:,t]
+                u1 = obs_s[:,t]
+                dt = UDE.times[t+1] - UDE.times[t]
+                preds_s[:,t] = UDE.process_model.predict(u0,dt,group_parameters)[1]
+            end
+            
+            push!(inits,inits_s);push!(obs,obs_s);push!(preds,preds_s)
+            
+        end 
+        
+    end 
+    return inits, obs, preds
+
+end
+
+
+function plot_predictions(UDE,level_)
+    
+    inits, obs, preds = predictions(UDE,level_)
+    
+    plots = []
+    for dim in 1:size(obs[1])[1]
+        
+        difs = obs[1][dim,:].-inits[1][dim,:]
+
+        xmin = difs[argmin(difs)]
+        xmax = difs[argmax(difs)]
+        plt = plot()
+        scatter!(difs,preds[1][dim,:].-inits[1][dim,:], label = "", xlabel = "Observed change Delta hatu_t", 
+                                ylabel = "Predicted change hatut - hatu_t")
+        
+        for i in 2:length(inits)
+            difs = obs[i][dim,:].-inits[i][dim,:]
+            mins = [xmin,difs[argmin(difs)]];xmin = mins[argmin(mins)]
+            maxs = [xmax,difs[argmax(difs)]];xmax = maxs[argmin(maxs)]
+            scatter!(difs,preds[i][dim,:].-inits[i][dim,:], label = "", xlabel = "Observed change Delta hatu_t", 
+                                ylabel = "Predicted change hatut - hatu_t")
+        end  
+        plot!([xmin,xmax],[xmin,xmax],color = "grey", linestyle=:dash, label = "45 degree")
+        push!(plots, plt)
+        
+    end
+        
+    return plot(plots...)
+    
 end 
