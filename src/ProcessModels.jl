@@ -9,13 +9,42 @@ module ProcessModels
 
 using Lux, Random, DifferentialEquations, DiffEqFlux
 
+
+
+function init_forecast(predict,l,extrap_rho)
+    
+    function forecast(u,dt,parameters,umax,umin,umeans)
+        
+        # eval network
+        du = predict(u,dt,parameters)[1] .- u
+        
+        # max extrapolation 
+        ind_max = u .> umax
+        
+        omega = exp.( -0.5/l^2 * ((u[ind_max] .- umax[ind_max])./ (umax[ind_max].-umin[ind_max])).^2)
+        du[ind_max] .= omega .* du[ind_max] .- extrap_rho .*(1 .- omega) .* (u[ind_max] .- umeans[ind_max] )
+        
+        # min extrapolation 
+        ind_min = u .< umin
+        omega = exp.( -0.5/l^2 * ((u[ind_min] .- umin[ind_min])./ (umax[ind_min].-umin[ind_min])).^2)
+        du[ind_min] .= omega .* du[ind_min] .- (1 .- omega) .*extrap_rho .* (u[ind_min] .- umeans[ind_min] )
+        
+        return u .+ du
+    end
+    
+    return forecast
+    
+end 
+
+
 mutable struct ProcessModel
     parameters
     predict
+    forecast
 end
 
-function ProcessModel(derivs!,parameters, dims)
-
+function ProcessModel_(derivs!,parameters, dims; l = 0.25,extrap_rho = 0.1)
+   
     u0 = zeros(dims); tspan = (0.0,1000.0) # assing value for the inital conditions and time span (these dont matter)
     IVP = ODEProblem(derivs!, u0, tspan, parameters)
     
@@ -27,80 +56,22 @@ function ProcessModel(derivs!,parameters, dims)
         return (X[:,end], 0)
     end 
     
-    return ProcessModel(parameters,predict)
+    forecast = init_forecast(predict,l,extrap_rho)
+    
+    return ProcessModel(parameters,predict, forecast)
 end 
 
 
-mutable struct NeuralNetwork #<: AbstractProcessModel
+mutable struct NeuralNetwork
     dims::Int # number of state variables
     NN # lux neural network object 
     parameters #::ComponentArray # nerual network paramters
     predict::Function # neural network 
-    loss::Function
+    forecast
 end 
 
 
-function NeuralNetwork(dims;hidden = 10, seed = 1)
-    
-    # initial neurla Network
-    NN = Lux.Chain(Lux.Dense(dims,hidden,tanh), Lux.Dense(hidden,dims))
-    
-    # parameters 
-    Random.seed!(1)  # set seed for reproducibility 
-    rng = Random.default_rng() 
-    NN_parameters, NN_states = Lux.setup(rng,NN) 
-    loss_params = NamedTuple()
-    
-    # parameters
-    parameters = (loss = loss_params,predict = NN_parameters)
-    #parameters = ComponentArray(parameters)
-    
-    # Loss
-    loss = (u,uhat,parameters) -> sum((u.-uhat).^2)
-    
-    # prediction 
-    predict = (u,parameters) -> u .+ NN(u,parameters.predict,NN_states)[1]
-    
-    return NeuralNetwork(dims,NN,parameters,predict,loss)
-    
-end 
-
-function NeuralNetworkErrors(dims;hidden = 10, seed = 1)
-    
-    # initial neurla Network
-    NN = Lux.Chain(Lux.Dense(dims,hidden,tanh), Lux.Dense(hidden,dims))
-    
-    # parameters 
-    Random.seed!(1)  # set seed for reproducibility 
-    rng = Random.default_rng() 
-    NN_parameters, NN_states = Lux.setup(rng,NN) 
-    loss_params = (omega=1.0,)
-    
-    # parameters
-    parameters = (loss = loss_params,predict = NN_parameters)
-    #parameters = ComponentArray(parameters)
-    
-    # Loss
-    loss = (u,uhat,parameters) -> sum(parameters.loss.omega.^2*(u.-uhat).^2 .-log(abs(parameters.loss.omega)))
-    
-    # prediction 
-    predict = (u,parameters) -> u .+ NN(u,parameters.predict,NN_states)[1]
-    
-    return NeuralNetwork(dims,NN,parameters,predict,loss)
-    
-end 
-
-
-
-mutable struct NeuralNetwork2
-    dims::Int # number of state variables
-    NN # lux neural network object 
-    parameters #::ComponentArray # nerual network paramters
-    predict::Function # neural network 
-end 
-
-
-function NeuralNetwork2(dims;hidden = 10, seed = 1)
+function NeuralNetwork(dims;hidden = 10, seed = 1, extrap_rho = 0.1, l = 0.5)
     
     # initial neurla Network
     NN = Lux.Chain(Lux.Dense(dims,hidden,tanh), Lux.Dense(hidden,dims))
@@ -113,7 +84,10 @@ function NeuralNetwork2(dims;hidden = 10, seed = 1)
     # prediction 
     predict = (u,dt,parameters) -> (u .+ NN(u,parameters,NN_states)[1], 0)
     
-    return NeuralNetwork2(dims,NN,parameters,predict)
+    
+    forecast = init_forecast(predict,l,extrap_rho)
+    
+    return NeuralNetwork(dims,NN,parameters,predict,forecast)
     
 end 
 
@@ -123,10 +97,11 @@ mutable struct DiscreteModelErrors
     error_function # lux neural network object 
     known_dynamics
     parameters #::ComponentArray # nerual network paramters
-    predict::Function # neural network 
+    predict::Function # neural network
+    forecast
 end 
 
-function DiscreteModelErrors(dims,known_dynamics,init_known_dynamics_parameters;hidden = 10, seed = 1)
+function DiscreteModelErrors(dims,known_dynamics,init_known_dynamics_parameters;hidden = 10, seed = 1, extrap_rho = 0.0, l = 0.25)
     
     # initial neurla Network
     NN = Lux.Chain(Lux.Dense(dims,hidden,tanh), Lux.Dense(hidden,dims))
@@ -146,7 +121,10 @@ function DiscreteModelErrors(dims,known_dynamics,init_known_dynamics_parameters;
         return known_dynamics_function(u,parameters) .+ epsilon, epsilon
     end 
     
-    return DiscreteModelErrors(dims,error_function,known_dynamics_function,parameters,predict)
+    
+    forecast = init_forecast(predict,l,extrap_rho)
+    
+    return DiscreteModelErrors(dims,error_function,known_dynamics_function,parameters,predict,forecast)
     
 end 
 
@@ -158,10 +136,11 @@ mutable struct NODE_process
     derivs!
     parameters #::ComponentArray # nerual network paramters
     predict::Function # neural network 
+    forecast
 end 
 
 
-function NODE_process(dims;hidden = 10, seed = 1)
+function NODE_process(dims;hidden = 10, seed = 1,l = 0.25, extrap_rho = 0.1)
     
     # initial neurla Network
     NN = Lux.Chain(Lux.Dense(dims,hidden,tanh), Lux.Dense(hidden,dims))
@@ -187,8 +166,9 @@ function NODE_process(dims;hidden = 10, seed = 1)
         return (X[:,end], 0)
     end 
     
+   forecast = init_forecast(predict,l,extrap_rho)
     
-    return NODE_process(dims,IVP,derivs!,parameters,predict)
+    return NODE_process(dims,IVP,derivs!,parameters,predict,forecast)
     
 end 
 
@@ -200,9 +180,10 @@ mutable struct ContinuousModelErrors
     derivs!
     parameters #::ComponentArray # nerual network paramters
     predict::Function # neural network 
+    forecast
 end 
 
-function ContinuousModelErrors(dims,known_dynamics,init_known_dynamics_parameters;hidden = 10, seed = 1)
+function ContinuousModelErrors(dims,known_dynamics,init_known_dynamics_parameters;hidden = 10, seed = 1,l = 0.25, extrap_rho = 0.1)
         
     
     # initial neurla Network
@@ -224,9 +205,8 @@ function ContinuousModelErrors(dims,known_dynamics,init_known_dynamics_parameter
     end 
     
     # predictions
-    u0 = zeros(dims); tspan = (0.0,1000.0) # assing value for the inital conditions and time span (these dont matter, will be replaced below)
+    u0 = zeros(dims); tspan = (0.0,1000.0) 
     IVP = ODEProblem(derivs!, u0, tspan, parameters)
-    
     
     function predict(u,dt,parameters) 
         tspan =  (0.0,dt) 
@@ -236,10 +216,15 @@ function ContinuousModelErrors(dims,known_dynamics,init_known_dynamics_parameter
         return (X[:,end],0)
     end 
     
+    forecast = init_forecast(predict,l,extrap_rho)
     
-    return ContinuousModelErrors(dims,error_function,known_dynamics_function,IVP,derivs!,parameters,predict)
+    return ContinuousModelErrors(dims,error_function,known_dynamics_function,IVP,derivs!,parameters,predict,forecast)
     
 end 
+
+
+
+
 
 
 mutable struct NeuralNetworkTimeDelays
