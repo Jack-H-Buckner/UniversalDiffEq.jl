@@ -68,7 +68,7 @@ function NeuralNet(data;hidden_units=10,NN_seed = 1,proc_weight=1.0,obs_weight=1
     # initialize estiamted states
     uhat = zeros(size(data))
     
-    process_model = ProcessModels.NeuralNetwork2(size(data)[1];hidden = hidden_units, seed = NN_seed)
+    process_model = ProcessModels.NeuralNetwork(size(data)[1];hidden = hidden_units, seed = NN_seed)
     process_loss = LossFunctions.MSE(N = size(data)[2]-1,weight = proc_weight)
     observation_model = ObservationModels.Identity()
     observation_loss = LossFunctions.MSE(N = size(data)[2],weight = obs_weight)
@@ -245,7 +245,7 @@ proc_weight - the weight given to the accuracy of the process model in the loss 
 obs_weight - the weight given to the accuracy of the observaiton model in the loss function, defualts value of 1.0
 reg_weight - the weight given to regularizing the neural network in the loss function, defualts value of 10^-7
 """
-function SSNODE(data;hidden_units=10,NN_seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-7)
+function SSNODE(data;hidden_units=10,NN_seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-7, l = 0.25,extrap_rho = 0.1 )
     
     # convert data
     data_frame = data
@@ -255,7 +255,7 @@ function SSNODE(data;hidden_units=10,NN_seed = 1,proc_weight=1.0,obs_weight=1.0,
     # initialize estiamted states
     uhat = zeros(size(data))
     
-    process_model = ProcessModels.NODE_process(size(data)[1];hidden = hidden_units, seed = NN_seed)
+    process_model = ProcessModels.NODE_process(size(data)[1];hidden = hidden_units, seed = NN_seed, l = l, extrap_rho=extrap_rho)
     process_loss = LossFunctions.MSE(N = size(data)[2]-1,weight = proc_weight)
     observation_model = ObservationModels.Identity()
     observation_loss = LossFunctions.MSE(N = size(data)[2],weight = obs_weight)
@@ -310,6 +310,11 @@ function SSNODE(data;hidden_units=10,NN_seed = 1,proc_weight=1.0,obs_weight=1.0,
 end 
 
 
+
+function CustomUDE(data, derivs;hidden_units=10,NN_seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-7)
+    initial_parameters = NamedTuple()
+    return CustomUDE(data,derivs,initial_parameters;hidden_units=hidden_units,NN_seed=NN_seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight)
+end
 """
 ContinuousModelErrors(data, known_dynamics, init_known_dynamics_parameters; hidden_units=10, NN_seed = 1, errors_weight=0.1, MSE_weight=1.0, obs_weight=1.0, reg_weight = 0.001)
 
@@ -394,7 +399,7 @@ end
 
 
 
-function CustomDerivs(data,derivs,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6)
+function CustomDerivs(data,derivs,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,l=0.25,extrap_rho=0.1)
     
     # convert data
     dataframe = data
@@ -403,9 +408,9 @@ function CustomDerivs(data,derivs,initial_parameters;proc_weight=1.0,obs_weight=
     
     # initialize estiamted states
     uhat = zeros(size(data))
-    dims = size(data)[2]
+    dims = size(data)[1]
     
-    process_model = ProcessModels.ProcessModel(derivs,ComponentArray(initial_parameters),dims)
+    process_model = ProcessModels.ProcessModel_(derivs,ComponentArray(initial_parameters),dims,l=l,extrap_rho=0.1)
     process_loss = LossFunctions.MSE(N = size(data)[2]-1,weight = proc_weight)
     observation_model = ObservationModels.Identity()
     observation_loss = LossFunctions.MSE(N = size(data)[2],weight = obs_weight)
@@ -460,6 +465,10 @@ function CustomDerivs(data,derivs,initial_parameters;proc_weight=1.0,obs_weight=
 
 end
 
+function CustomDerivs(data, derivs;hidden_units=10,NN_seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-7)
+    initial_parameters = NamedTuple()
+    return CustomDerivs(data,derivs,initial_parameters;hidden_units=hidden_units,NN_seed=NN_seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight)
+end
 
 """
 ContinuousModelErrors(data, known_dynamics; hidden_units=10, NN_seed = 1, errors_weight=0.1, MSE_weight=1.0, obs_weight=1.0, reg_weight = 0.001)
@@ -523,6 +532,35 @@ function gradient_decent!(UDE; step_size = 0.05, maxiter = 500, verbos = false)
     
     return nothing
 end
+
+
+
+function BFGS!(UDE; verbos = true, initial_step_norm = 0.01)
+    
+    if verbos
+        callback = function (p, l; doplot = false)
+          print(round(l,digits = 3), " ")
+          return false
+        end
+    else
+        callback = function (p, l; doplot = false)
+          return false
+        end 
+    end
+    
+    
+    target = (x,p) -> UDE.loss_function(x)
+    adtype = Optimization.AutoZygote()
+    optf = Optimization.OptimizationFunction(target, adtype)
+    optprob = Optimization.OptimizationProblem(optf, UDE.parameters)
+
+    sol = Optimization.solve(optprob, Optim.BFGS(; initial_stepnorm = initial_step_norm);
+        callback, allow_f_increases = false)
+
+    # assign parameters to model 
+    UDE.parameters = sol.u
+    
+end 
 
 
 """
@@ -614,11 +652,35 @@ function plot_predictions(UDE::SSUDE)
 end
 
 
+function max_(x)
+    x[argmax(x)]
+end
+
+function min_(x)
+    x[argmin(x)]
+end
+
+function mean_(x)
+    sum(x)/length(x)
+end
+
 function forecast(UDE::SSUDE, u0::AbstractVector{}, times::AbstractVector{})
-    estimated_map = (x,dt) -> UDE.process_model.predict(x,dt,UDE.parameters.process_model)[1]
+    
+    uhats = UDE.parameters.uhat
+    
+    umax = mapslices(max_, UDE.parameters.uhat, dims = 2);umax=reshape(umax,length(umax))
+    umin = mapslices(min_, UDE.parameters.uhat, dims = 2);umin=reshape(umin,length(umin))
+    umean = mapslices(mean_, UDE.parameters.uhat, dims = 2);umean=reshape(umean,length(umean))
+    
+    
+    #estimated_map = (x,dt) -> UDE.process_model.forecast(x,dt,UDE.parameters.process_model,umax,umin,umean)
+    estimated_map = (x,dt) -> UDE.process_model.forecast(x,dt,UDE.parameters.process_model,umax,umin,umean)
+    
+    
     x = u0
     df = zeros(length(times),length(x)+1)
     df[1,:] = vcat([times[1]],x)
+    
     for t in 2:length(times)
         dt = times[t]-times[t-1]
         x = estimated_map(x,dt)
@@ -651,7 +713,7 @@ function plot_forecast(UDE::SSUDE, T)
                     xlabel = "Time", ylabel = string("x", dim))
         push!(plots, plt)
     end 
-    return plot(plots...)
+    return plot(plots...), plots
 end 
 
 
@@ -749,7 +811,13 @@ function leave_future_out(model; forecast_length = 10,  forecast_number = 10, sp
         model_i = model.constructor(training_data[i])
                         
         gradient_decent!(model_i, step_size = step_size, maxiter = maxiter) 
-        
+                        
+        try
+            BFGS!(model_i)
+        catch
+            gradient_decent!(model_i, step_size = 0.25*step_size, maxiter = maxiter)                 
+        end                    
+                    
         # forecast
         u0 = get_final_state(model_i)
         times = testing_data[i].t
