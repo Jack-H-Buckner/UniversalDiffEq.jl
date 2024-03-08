@@ -1,4 +1,3 @@
-# module SimulateData
 
 function LokaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,sigma = 0.075)
     # set seed 
@@ -101,5 +100,3 @@ function LogisticMap(;plot = true, seed=123,datasize = 100,sigma = 0.05, r = 3.7
     
 end 
 
-
-# end # module

@@ -1,13 +1,19 @@
-module LossFunctions
 
 mutable struct LossFunction
     parameters
     loss
 end
 
-function MSE(;N = 1, weight = 1.0)
+function ObservationMSE(N, weight)
     parameters = NamedTuple()
     loss = (u,uhat,parameters) -> weight*sum((u.-uhat).^2)/N
+    return LossFunction(parameters,loss)
+end
+
+
+function ProcessMSE(N,T, weight)
+    parameters = NamedTuple()
+    loss = (u,uhat,dt,parameters) -> T/dt*weight*sum((u.-uhat).^2)/N^2
     return LossFunction(parameters,loss)
 end
 
@@ -36,5 +42,3 @@ function MSE_and_errors_sd(dims;N = 1, MSE_weight = 1.0, errors_weight = 1.0)
     return LossFunction(parameters,loss)
 end
 
-
-end # module

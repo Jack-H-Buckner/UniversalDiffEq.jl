@@ -2,7 +2,7 @@ include("ObservationModels.jl")
 include("ProcessModels.jl")
 include("LossFunctions.jl")
 include("Regularization.jl")
-
+include("helpers.jl")
 
 """
 UDE
@@ -36,19 +36,9 @@ mutable struct MultiUDE
 end
 
 
-function init_loss_function(dataframe,data,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization)
+function init_multi_loss_function(dataframe,data,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization)
     
     
-    # initialize state estiamtes
-    dims = size(dataframe)[2]-2
-    sites = length(unique(dataframe.series))
-    uhat = zeros(size(dataframe)[1],dims)
-
-    # collect starting points for each time series
-    inds = collect(1:nrow(dataframe))  
-    starts = [inds[dataframe.series .== i][1] for i in unique(dataframe.series)]
-    lengths = [sum(dataframe.series .== i) for i in unique(dataframe.series)]
-
     
     function loss(parameters)
         
@@ -66,13 +56,15 @@ function init_loss_function(dataframe,data,process_model,process_loss,observatio
         for t0 in starts .-1
             i+=1
             for t in 2:lengths[i]
+                dt = times[i][t] - times[i][t-1]
                 u0 = parameters.uhat[:,t0+t-1]
                 u1 = parameters.uhat[:,t0+t]
-                u1hat, epsilon = process_model.predict(u0,1.0,parameters.process_model) 
-                L_proc += process_loss.loss(u1,u1hat,parameters.process_loss)  
+                u1hat, epsilon = process_model.predict(u0,dt,parameters.process_model) 
+                L_proc += process_loss.loss(u1,u1hat,dt,parameters.process_loss)  
             end
         end 
         L_reg = process_regularization.loss(parameters.process_model,parameters.process_regularization)
+        L_reg += process_regularization.loss(parameters.observation_model,parameters.process_regularization)
         
         return L_reg + L_obs + L_proc
     end   
@@ -82,6 +74,36 @@ function init_loss_function(dataframe,data,process_model,process_loss,observatio
 end
     
     
+function MultiCustomDerivatives(data,derivs!,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
+    
+    # convert data
+    N, T, dims, data, dataframe = process_multi_data(data)
+    
+    # generate submodels 
+    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),dims,l,extrap_rho)
+    process_loss = ProcessMSE(N,T,proc_weight)
+    observation_model = Identity()
+    observation_loss = ObservationMSE(N,obs_weight)
+    process_regularization = L2(weight=reg_weight)
+    observation_regularization = no_reg()
+    
+    # paramters vector
+    parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+
+    # loss function 
+    loss_function = init_multi_loss_function(dataframe,data,process_model,process_loss,observation_model,observation_loss,
+                                                process_regularization,observation_regularization)
+    # model constructor
+    constructor = (data) -> MultiCustomDerivatives(data,derivs!,initial_parameters;
+                    proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l)
+    
+    return MultiUDE(times,data,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
+                observation_loss,process_regularization,observation_regularization,constructor)
+
+end
+
+
+
 
 function MultiNeuralNet(data;hidden_units=10,NN_seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6)
     
