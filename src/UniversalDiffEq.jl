@@ -13,7 +13,7 @@ include("ModelTesting.jl")
 include("Optimizers.jl")
 
 
-export CustomDerivs, CustomDiffernce, NNDE, DiscreteUDE, NODE, UDE, gradient_decent!, BFGS!, plot_state_estiamtes, plot_predictions, plot_forecast, leave_future_out_cv, LokaVolterra,plot_leave_future_out_cv, func
+export CustomDerivatives, CustomDiffernce, NNDE, DiscreteUDE, NODE, UDE, gradient_decent!, BFGS!, plot_state_estiamtes, plot_predictions, plot_forecast, leave_future_out_cv, LokaVolterra,plot_leave_future_out_cv, func
 
 
 end

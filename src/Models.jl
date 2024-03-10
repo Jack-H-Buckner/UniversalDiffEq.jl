@@ -232,7 +232,7 @@ Constructs a nonparametric continuous time model for the data set `data` using a
 
 # Model equations 
 ```math
-\frac{dx}{dt} = NN(x;w,b)
+    \frac{dx}{dt} = NN(x;w,b)
 ```
 
 ...
@@ -289,7 +289,7 @@ Constructs an additive continuous time `UDE` model with user supplied derivitive
 
 # Model equaitons
 ```math
-\frac{dx}{dt} = f(x;\theta) + NN(x;w,b)
+    \frac{dx}{dt} = f(x;\theta) + NN(x;w,b)
 ```
 
 ...
