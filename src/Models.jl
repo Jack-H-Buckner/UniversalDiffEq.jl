@@ -17,7 +17,7 @@ end
 
 
 """
-CustomDerivatives(data,derivs!,initial_parameters;kwargs ... )
+    CustomDerivatives(data,derivs!,initial_parameters;kwargs ... )
 
 Constructs a UDE model for the data set `data`  based on user defined derivitivs `derivs`. An initial guess of model parameters are supplied with the `initia_parameters` argument. 
 
@@ -65,7 +65,7 @@ function CustomDerivatives(data,derivs!,initial_parameters;proc_weight=1.0,obs_w
 end
 
 """
-CustomDerivatives(data,X,derivs!,initial_parameters;kwargs ... )
+    CustomDerivatives(data,X,derivs!,initial_parameters;kwargs ... )
 
 When a dataframe `X` is supplied the model will run with covariates. the argumetn `X` should have a column for time `t` with the vlaue fo time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included int he data frame. 
 
@@ -148,7 +148,7 @@ end
 
 
 """
-CustomDiffernce(data,X,step,initial_parameters;kwargs ... )
+    CustomDiffernce(data,X,step,initial_parameters;kwargs ... )
 
 When a dataframe `X` is supplied the model will run with covariates. the argumetn `X` should have a column for time `t` with the vlaue fo time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included int he data frame. 
 
@@ -186,7 +186,7 @@ end
 
 
 """
-NNDE(data;kwargs ...)
+    NNDE(data;kwargs ...)
 
 Constructs a nonparametric discrete time model for the data set `data` using a single layer neural network to reporesent the systems dynamics. 
 
@@ -278,7 +278,7 @@ function DiscreteUDE(data,step,init_parameters;
     # loss function 
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
   
-    constructor = data -> DiscreteUDE(data,step,init_parameters; hidden_units=hidden_units,seed=seed,errors_weight=errors_weight,MSE_weight=MSE_weight,obs_weight=obs_weight,reg_weight=reg_weight)
+    constructor = data -> DiscreteUDE(data,step,init_parameters; hidden_units=hidden_units,seed=seed,errors_weight=errors_weight,obs_weight=obs_weight,proc_weight=proc_weight,reg_weight=reg_weight)
     
     
     return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
@@ -353,7 +353,13 @@ function NODE(data;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_w
                 observation_loss,process_regularization,observation_regularization,constructor)
 end 
 
+"""
+    NODE(data,X;kwargs ... )
 
+When a dataframe `X` is supplied the model will run with covariates. the argumetn `X` should have a column for time `t` with the vlaue fo time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included int he data frame. 
+
+When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)` where `x` is a vector with the value of the coarates at time `t`.     
+"""
 function NODE(data,X;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0 )
     
     # convert data
@@ -388,7 +394,7 @@ function NODE(data,X;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg
 end 
 
 """
-UDE(data,derivs,init_parameters;kwargs...)
+    UDE(data,derivs,init_parameters;kwargs...)
 
 Constructs an additive continuous time `UDE` model with user supplied derivitives `step` and a single layer neural network. When `init_parameters` are provided for the user supplied function their values will be estiated during model training. 
 
@@ -431,7 +437,7 @@ function UDE(data,known_dynamics,init_known_dynamics_parameters;hidden_units=10,
     constructor = data -> UDE(data,known_dynamics,init_known_dynamics_parameters;
                                     hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight)
     
-    return UDE(times,data,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
+    return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor)
 end 
 
@@ -441,7 +447,7 @@ function UDE(data,known_dynamics;hidden_units=10,seed = 1,proc_weight=1.0,obs_we
     known_dynamics1 = (u,p) -> known_dynamics(u)
     init_known_dynamics_parameters = NamedTuple()
     
-    return ContinuousModelErrors(data,known_dynamics1,init_known_dynamics_parameters;
+    return UDE(data,known_dynamics1,init_known_dynamics_parameters;
                                     hidden_units=hidden_units,seed = seed,proc_weight=proc_weight,
                                     obs_weight=obs_weight,reg_weight = reg_weight)
 end 

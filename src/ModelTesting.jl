@@ -5,13 +5,11 @@ function get_final_state(UDE::UDE)
 end 
 
 
-# """
-# plot_state_estiamtes(UDE::UDE)
+"""
+    plot_state_estiamtes(UDE::UDE)
 
-# Plots the value of the state variables estiamted by the UDE mdel 
-
-# UDE - a UDE model object
-# """
+Plots the value of the state variables estiamted by the UDE model. 
+"""
 function plot_state_estiamtes(UDE::UDE)
     
     plots = []
@@ -30,13 +28,11 @@ end
 
 
 
-# """
-# print_parameter_estimates(UDE::UDE)
+"""
+    print_parameter_estimates(UDE::UDE)
 
-# prints the value of the known dynamcis paramters. 
-
-# UDE - a UDE model object
-# """
+prints the value of the known dynamcis paramters. 
+"""
 function print_parameter_estimates(UDE::UDE)
     println("Estimated parameter values: ")
     i = 0
@@ -102,12 +98,12 @@ function predictions(UDE::UDE,test_data::DataFrame, test_X)
 end 
 
 
-# """
-#     plot_predictions(UDE::UDE)
+"""
+    plot_predictions(UDE::UDE)
 
-# Plots the correspondence between the observed state transitons and the predicitons for the model `UDE`. 
+Plots the correspondence between the observed state transitons and the predicitons for the model `UDE`. 
 
-# """
+"""
 function plot_predictions(UDE::UDE)
  
     inits, obs, preds = predictions(UDE)
@@ -128,12 +124,11 @@ function plot_predictions(UDE::UDE)
 end
 
 
-# """
-#     plot_predictions(UDE::UDE, test_data:DataFRame)
+"""
+    plot_predictions(UDE::UDE, test_data::DataFrame)
 
-# Plots the correspondence between the observed state transitons and observed transitions in the test data. 
-
-# """
+Plots the correspondence between the observed state transitons and observed transitions in the test data. 
+"""
 function plot_predictions(UDE::UDE,test_data::DataFrame)
  
     inits, obs, preds = predictions(UDE,test_data)
@@ -167,11 +162,11 @@ function mean_(x)
 end
 
 
-# """
-#     forecast(UDE::UDE, u0::AbstractVector{}, times::AbstractVector{})
+"""
+    forecast(UDE::UDE, u0::AbstractVector{}, times::AbstractVector{})
 
-# predicitons from the trained model `UDE` starting at `u0` saving values at `times`.
-# """
+predicitons from the trained model `UDE` starting at `u0` saving values at `times`.
+"""
 function forecast(UDE, u0::AbstractVector{}, times::AbstractVector{})
     
     uhats = UDE.parameters.uhat
@@ -199,14 +194,14 @@ function forecast(UDE, u0::AbstractVector{}, times::AbstractVector{})
 end 
 
 
-# """
-# plot_forecast(UDE::UDE, T::Int)
+"""
+    plot_forecast(UDE::UDE, T::Int)
 
-# Plots the models forecast up to T time steps into the future from the last observaiton.  
+Plots the models forecast up to T time steps into the future from the last observaiton.  
 
-# UDE - a UDE model object
-# T - the nuber of time steps to forecast
-# """
+UDE - a UDE model object
+T - the nuber of time steps to forecast
+"""
 function plot_forecast(UDE::UDE, T::Int)
     u0 = UDE.parameters.uhat[:,end]
     dts = UDE.times[2:end] .- UDE.times[1:(end-1)]
@@ -225,14 +220,14 @@ function plot_forecast(UDE::UDE, T::Int)
 end 
 
 
-# """
-# plot_forecast(UDE::UDE, test_data::DataFrame)
+"""
+    plot_forecast(UDE::UDE, test_data::DataFrame)
 
-# Plots the models forecast over the range of the test_data along with the value of the test data.   
+Plots the models forecast over the range of the test_data along with the value of the test data.   
 
-# UDE - a UDE model object
-# T - the nuber of time steps to forecast
-# """
+UDE - a UDE model object
+T - the nuber of time steps to forecast
+"""
 function plot_forecast(UDE::UDE, test_data::DataFrame)
     u0 = UDE.parameters.uhat[:,end]
     N, dims, T, times, data, dataframe = process_data(test_data)
@@ -397,21 +392,21 @@ function plot_leave_future_out_cv(data,testing_data, standard_errors , predicted
     return p1,p2
 end 
 
-# """
-# leave_future_out_cv(model; forecast_length = 10,  K = 10, spacing = 1, step_size = 0.05, maxiter = 500)
+"""
+    leave_future_out_cv(model; forecast_length = 10,  K = 10, spacing = 1, step_size = 0.05, maxiter = 500)
     
-# Runs K fold leave future out cross validation and returns the mean squared forecasting error and a plot to visulaize the model fits.
+Runs K fold leave future out cross validation and returns the mean squared forecasting error and a plot to visulaize the model fits.
 
-# ...
-# # Arguments 
-# model - the UDE model to test
-# forecast_length - the number of steps to calcualte the forecast performance (default 10).
-# K - the number of forecast tests to run (default 10).
-# spacing - the number of data points to skip between testing sets (default 1).
-# step_size - step size parameter for the gradient decent algorithm (default 0.05).
-# maxiter - number of iterations for gradent decent (default 500).. 
-# ...
-# """
+...
+# Arguments 
+model - the UDE model to test
+forecast_length - the number of steps to calcualte the forecast performance (default 10).
+K - the number of forecast tests to run (default 10).
+spacing - the number of data points to skip between testing sets (default 1).
+step_size - step size parameter for the gradient decent algorithm (default 0.05).
+maxiter - number of iterations for gradent decent (default 500).. 
+...
+"""
 function leave_future_out_cv(model; forecast_length = 10,  K = 10, spacing = 1, step_size = 0.05, maxiter = 500)
     training_data, testing_data, standard_errors, predicted_data = leave_future_out(model;forecast_length=forecast_length,forecast_number=K,spacing=spacing,step_size=step_size,maxiter=maxiter)
     MSE = leave_future_out_mse(standard_errors)
