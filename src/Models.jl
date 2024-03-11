@@ -64,6 +64,13 @@ function CustomDerivatives(data,derivs!,initial_parameters;proc_weight=1.0,obs_w
 
 end
 
+"""
+CustomDerivatives(data,X,derivs!,initial_parameters;kwargs ... )
+
+When a dataframe `X` is supplied the model will run with covariates. the argumetn `X` should have a column for time `t` with the vlaue fo time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included int he data frame. 
+
+When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)` where `x` is a vector with the value of the coarates at time `t`. 
+"""
 function CustomDerivatives(data,X,derivs!,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25)
     
     # convert data
@@ -100,7 +107,7 @@ end
 Constructs a UDE model for the data set `data` based on user defined difference equation `step`. An initial guess of model parameters are supplied with the initia_parameters argument.
 
 - data: a DataFrame object with the time of observations in a column labeled `t` and the remaining columns the value of the state variables at each time point. 
-- step: a Function of the form `step(u,p)` where `u` is the value of the state variables, `p` are the model parameters.
+- step: a Function of the form `step(u,t,p)` where `u` is the value of the state variables, `p` are the model parameters.
 - init_parameters: A `NamedTuple` with the model parameters. Neural network parameters must be listed under the key `NN`.
 ...
 # Key word arguments
@@ -139,6 +146,14 @@ function CustomDiffernce(data,step,initial_parameters;proc_weight=1.0,obs_weight
     
 end
 
+
+"""
+CustomDiffernce(data,X,step,initial_parameters;kwargs ... )
+
+When a dataframe `X` is supplied the model will run with covariates. the argumetn `X` should have a column for time `t` with the vlaue fo time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included int he data frame. 
+
+When `X` is provided the step function must have the form `step(u,x,t,p)` where `x` is a vector with the value of the coarates at time `t`. 
+"""
 function CustomDiffernce(data,X,step,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
     
     # convert data
