@@ -1,10 +1,10 @@
 
 function init_forecast(predict,l,extrap_rho)
     
-    function forecast(u,dt,parameters,umax,umin,umeans)
+    function forecast(u,t,dt,parameters,umax,umin,umeans)
         
         # eval network
-        du = predict(u,dt,parameters)[1] .- u
+        du = predict(u,t,dt,parameters)[1] .- u
         
         # max extrapolation 
         ind_max = u .> umax
@@ -29,6 +29,7 @@ mutable struct ProcessModel
     parameters
     predict
     forecast
+    covariates
 end
 
 function ContinuousProcessModel(derivs!,parameters, dims, l ,extrap_rho)
@@ -36,23 +37,59 @@ function ContinuousProcessModel(derivs!,parameters, dims, l ,extrap_rho)
     u0 = zeros(dims); tspan = (0.0,1000.0) # assing value for the inital conditions and time span (these dont matter)
     IVP = ODEProblem(derivs!, u0, tspan, parameters)
     
-    function predict(u,dt,parameters) 
-        tspan =  (0.0,dt) 
+    function predict(u,t,dt,parameters) 
+        tspan =  (t,t+dt) 
         sol = solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
-                    saveat = (0.0,dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
+                    saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
         X = Array(sol)
         return (X[:,end], 0)
     end 
     
     forecast = init_forecast(predict,l,extrap_rho)
     
-    return ProcessModel(parameters,predict, forecast)
+    return ProcessModel(parameters,predict, forecast,0)
 end 
 
 
+function ContinuousProcessModel(derivs!,parameters,covariates,dims,l,extrap_rho)
+   
+    u0 = zeros(dims); tspan = (0.0,1000.0) # assing value for the inital conditions and time span (these dont matter)
+    derivs_t! = (du,u,p,t) -> derivs!(du,u,covariates(t),p,t)
+    IVP = ODEProblem(derivs_t!, u0, tspan, parameters)
+    
+    function predict(u,t,dt,parameters) 
+        tspan =  (t,t+dt) 
+        sol = solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
+                    saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
+        X = Array(sol)
+        return (X[:,end], 0)
+    end 
+    
+    forecast = init_forecast(predict,l,extrap_rho)
+    
+    return ProcessModel(parameters,predict, forecast,0)
+end 
+
+
+
+function DiscreteProcessModel(difference, parameters, covariates, dims, l, extrap_rho)
+    
+    function predict(u,t,dt,parameters) 
+        tspan =  t:(t+dt)
+        for t in tspan
+            u = difference(u,covariates(t),parameters)
+        end 
+        return (u, 0)
+    end 
+    
+    forecast = init_forecast(predict,l,extrap_rho)
+    
+    return ProcessModel(parameters,predict, forecast, covariates)
+end 
+
 function DiscreteProcessModel(difference, parameters, dims, l, extrap_rho)
     
-    function predict(u,dt,parameters) 
+    function predict(u,t,dt,parameters) 
         tspan =  1:dt
         for t in tspan
             u = difference(u,parameters)
@@ -62,7 +99,7 @@ function DiscreteProcessModel(difference, parameters, dims, l, extrap_rho)
     
     forecast = init_forecast(predict,l,extrap_rho)
     
-    return ProcessModel(parameters,predict, forecast)
+    return ProcessModel(parameters,predict, forecast,x -> 0)
 end 
 
 
@@ -86,7 +123,7 @@ function NeuralNetwork(dims,hidden,seed,extrap_rho,l)
     rng = Random.default_rng() 
     parameters, NN_states = Lux.setup(rng,NN) 
     parameters = (NN = parameters, known_dynamics = NamedTuple())
-    function predict(u,dt,parameters) 
+    function predict(u,t,dt,parameters) 
         tspan =  1:dt
         for t in tspan
             u = NN(u,parameters.NN,NN_states)[1]
@@ -123,14 +160,14 @@ function DiscreteModelErrors(dims,known_dynamics,init_known_dynamics_parameters,
                     NN = NN_parameters)
     # prediction 
     error_function = (u,parameters) -> NN(u,parameters.NN,NN_states)[1]
-    known_dynamics_function = (u,parameters) -> known_dynamics(u,parameters.known_dynamics)
+    known_dynamics_function = (u,t,parameters) -> known_dynamics(u,t,parameters.known_dynamics)
     
     
-    function predict(u0,dt,parameters) 
+    function predict(u0,t,dt,parameters) 
         tspan =  1:dt
         u = u0
         for t in tspan
-            u = known_dynamics_function(u,parameters) .+ error_function(u,parameters)
+            u = known_dynamics_function(u,t,parameters) .+ error_function(u,parameters)
         end 
         return (u, 0)
     end 
@@ -150,6 +187,47 @@ mutable struct NODE_process
     parameters #::ComponentArray # nerual network paramters
     predict::Function # neural network 
     forecast
+    covariates
+end 
+
+
+function NODE_process(dims,hidden,covariates,seed,l,extrap_rho)
+    
+    # initial neurla Network
+    NN = Lux.Chain(Lux.Dense(dims+length(covariates(0)),hidden,tanh), Lux.Dense(hidden,dims))
+    
+    # parameters 
+    Random.seed!(seed)  # set seed for reproducibility 
+    rng = Random.default_rng() 
+    parameters, states = Lux.setup(rng,NN) 
+    parameters = (NN = parameters, )
+
+    function derivs!(du,u,parameters,t)
+        du .= NN(vcat(u,covariates(t)),parameters.NN,states)[1]
+        return du
+    end 
+
+    u0 = zeros(dims); tspan = (0.0,1000.0) # assing value for the inital conditions and time span (these dont matter)
+    IVP = ODEProblem(derivs!, u0, tspan, parameters)
+    
+    function predict(u,t,dt,parameters) 
+        tspan =  (t,t+dt) 
+        sol = solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
+                    saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
+        X = Array(sol)
+        return (X[:,end], 0)
+    end 
+
+    function derivs_forecast!(du,u,parameters,t, covariates)
+        du .= NN(vcat(u,covariates(t)),parameters.NN,states)[1]
+        return du
+    end 
+    
+    
+   forecast = init_forecast(predict,l,extrap_rho)
+    
+    return NODE_process(dims,IVP,derivs!,parameters,predict,forecast,covariates)
+    
 end 
 
 
@@ -171,17 +249,17 @@ function NODE_process(dims,hidden,seed,l,extrap_rho)
     u0 = zeros(dims); tspan = (0.0,1000.0) # assing value for the inital conditions and time span (these dont matter)
     IVP = ODEProblem(derivs!, u0, tspan, parameters)
     
-    function predict(u,dt,parameters) 
-        tspan =  (0.0,dt) 
+    function predict(u,t,dt,parameters) 
+        tspan =  (t,t+dt) 
         sol = solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
-                    saveat = (0.0,dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
+                    saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
         X = Array(sol)
         return (X[:,end], 0)
     end 
     
    forecast = init_forecast(predict,l,extrap_rho)
     
-    return NODE_process(dims,IVP,derivs!,parameters,predict,forecast)
+    return NODE_process(dims,IVP,derivs!,parameters,predict,forecast,x->0)
     
 end 
 
@@ -211,7 +289,7 @@ function ContinuousModelErrors(dims,known_dynamics,init_known_dynamics_parameter
     
     # derivs
     error_function = (u,p) -> NN(u,p.NN,states)[1]
-    known_dynamics_function = (u,p) -> known_dynamics(u,p.known_dynamics)
+    known_dynamics_function = (u,t,p) -> known_dynamics(u,t,p.known_dynamics)
     function derivs!(du,u,p,t)
         du .= known_dynamics_function(u,p) .+ error_function(u,p)
         return du
@@ -221,10 +299,10 @@ function ContinuousModelErrors(dims,known_dynamics,init_known_dynamics_parameter
     u0 = zeros(dims); tspan = (0.0,1000.0) 
     IVP = ODEProblem(derivs!, u0, tspan, parameters)
     
-    function predict(u,dt,parameters) 
-        tspan =  (0.0,dt) 
+    function predict(u,t,dt,parameters) 
+        tspan =  (t,t+dt) 
         sol = solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
-                    saveat = (0.0,dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
+                    saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
         X = Array(sol)
         return (X[:,end],0)
     end 
@@ -236,8 +314,6 @@ function ContinuousModelErrors(dims,known_dynamics,init_known_dynamics_parameter
 end 
 
 
-
-
 mutable struct NeuralNetworkTimeDelays
     dims::Int # number of state variables
     lags::Int
@@ -245,7 +321,6 @@ mutable struct NeuralNetworkTimeDelays
     parameters #::ComponentArrasy # nerual network paramters
     predict::Function # neural network 
 end 
-
 
 
 function NeuralNetworkTimeDelays(dims,lags;hidden = 10, seed = 1)
@@ -259,11 +334,11 @@ function NeuralNetworkTimeDelays(dims,lags;hidden = 10, seed = 1)
     NN_parameters, NN_states = Lux.setup(rng,NN) 
     parameters = (NN = NN_parameters, aux0 = zeros(dims*lags))
     
-    function predict(u,parameters) 
+    function predict(u,t,parameters) 
         return u .+ NN(vcat(u,parameters.aux0),parameters.NN,NN_states)[1], vcat(u,parameters.aux0[1:(end-dims)])
     end 
     
-    function predict(u,aux,parameters) 
+    function predict(u,t,aux,parameters) 
         return u .+ NN(vcat(u,aux),parameters.NN,NN_states)[1], vcat(u,aux[1:(end-dims)])
     end 
     

@@ -2,6 +2,7 @@
 mutable struct UDE
     times
     data
+    X
     data_frame
     parameters
     loss_function
@@ -18,7 +19,7 @@ end
 """
 CustomDerivatives(data,derivs!,initial_parameters;kwargs ... )
 
-Constructs a UDE model for the data set `data`  based on user defined derivitivs `derivs`. An initial guess of model parameters are supplied with the `initia_parameters` argument.
+Constructs a UDE model for the data set `data`  based on user defined derivitivs `derivs`. An initial guess of model parameters are supplied with the `initia_parameters` argument. 
 
 ...
 # Arguments
@@ -58,7 +59,35 @@ function CustomDerivatives(data,derivs!,initial_parameters;proc_weight=1.0,obs_w
     # model constructor
     constructor = (data) -> CustomDerivs(data,derivs!,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight)
     
-    return UDE(times,data,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
+    return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
+                observation_loss,process_regularization,observation_regularization,constructor)
+
+end
+
+function CustomDerivatives(data,X,derivs!,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25)
+    
+    # convert data
+    N, dims, T, times, data, dataframe = process_data(data)
+    covariates = interpolate_covariates(X)
+
+    # generate submodels 
+    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),covariates,dims,l,extrap_rho)
+    process_loss = ProcessMSE(N,T, proc_weight)
+    observation_model = Identity()
+    observation_loss = ObservationMSE(N,obs_weight)
+    process_regularization = L2(weight=reg_weight)
+    observation_regularization = no_reg()
+    
+    # paramters vector
+    parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+
+    # loss function 
+    loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+    
+    # model constructor
+    constructor = (data,X) -> CustomDerivs(data,X,derivs!,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight)
+    
+    return UDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor)
 
 end
@@ -105,7 +134,35 @@ function CustomDiffernce(data,step,initial_parameters;proc_weight=1.0,obs_weight
     # model constructor
     constructor = (data) -> CustomDerivs(data,derivs,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight)
     
-    return UDE(times,data,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
+    return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
+                observation_loss,process_regularization,observation_regularization,constructor)
+    
+end
+
+function CustomDiffernce(data,X,step,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
+    
+    # convert data
+    N, dims, T, times, data, dataframe = process_data(data)
+    covariates = interpolate_covariates(X)
+
+    # generate submodels 
+    process_model = DiscreteProcessModel(derivs!,ComponentArray(initial_parameters),covariates,dims,l,extrap_rho)
+    process_loss = ProcessMSE(N,T, proc_weight)
+    observation_model = Identity()
+    observation_loss = ObservationMSE(N,obs_weight)
+    process_regularization = L2(weight=reg_weight)
+    observation_regularization = no_reg()
+    
+    # paramters vector
+    parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+
+    # loss function 
+    loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+    
+    # model constructor
+    constructor = (data,X) -> CustomDerivs(data,X,derivs,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight)
+    
+    return UDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor)
     
 end
@@ -158,7 +215,7 @@ function NNDE(data;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_w
     
     constructor = data -> NNDE(data;hidden_units=hidden_units,NN_seed=NN_seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight)
     
-    return UDE(times,data,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
+    return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
                                 observation_loss,process_regularization,observation_regularization,constructor)
     
 end 
@@ -209,7 +266,7 @@ function DiscreteUDE(data,step,init_parameters;
     constructor = data -> DiscreteUDE(data,step,init_parameters; hidden_units=hidden_units,seed=seed,errors_weight=errors_weight,MSE_weight=MSE_weight,obs_weight=obs_weight,reg_weight=reg_weight)
     
     
-    return UDE(times,data,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
+    return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor)
 end 
 
@@ -277,10 +334,43 @@ function NODE(data;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_w
     
     constructor = (data) -> NODE(data;hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight)
     
-    return UDE(times,data,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
+    return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor)
 end 
 
+
+function NODE(data,X;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0 )
+    
+    # convert data
+    N, dims, T, times, data, dataframe = process_data(data)
+    covariates = interpolate_covariates(X)
+
+    # submodels
+    process_model = NODE_process(dims,hidden_units,covariates,seed,l,extrap_rho)
+    process_loss = ProcessMSE(N,T,proc_weight)
+    observation_model = Identity()
+    observation_loss = ObservationMSE(N,obs_weight)
+    process_regularization = L2(weight=reg_weight)
+    if reg_type == "L1"
+        process_regularization = L1(weight=reg_weight)
+    elseif reg_type != "L2"
+        print("Warning: Invalid choice of regularization: using L2 regularization")
+    end 
+    observation_regularization = no_reg()
+    
+    
+    # paramters vector
+    parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+
+    # loss function 
+    loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+    
+    
+    constructor = (data,X) -> NODE(data;hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight)
+    
+    return UDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
+                observation_loss,process_regularization,observation_regularization,constructor)
+end 
 
 """
 UDE(data,derivs,init_parameters;kwargs...)

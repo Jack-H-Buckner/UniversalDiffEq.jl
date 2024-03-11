@@ -36,6 +36,47 @@ function LokaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,sigma = 0.0
 end 
 
 
+
+function LorenzLokaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,sigma = 0.025)
+    # set seed 
+    Random.seed!(seed)
+
+    # set parameters for data set 
+    tspan = (0.0f0, T)
+    tsteps = range(tspan[1], tspan[2], length = datasize)
+
+    # model parameters
+    u0 = Float32[1.0, 0.5,-10, -5.0, 20.0,]
+    p=(r = 4.0, K = 10, alpha = 5.0, theta = 0.75, m = 5.0, sigma = 10, rho = 28, beta = 8/3)
+    
+    # define derivitives 
+    function lotka_voltera(du, u, p, t)
+        du[1] = p.r*u[1]*(1-u[1]/p.K) - p.alpha *u[1]*u[2]+0.05*u[3]
+        du[2] = p.theta*p.alpha *u[1]*u[2] - p.m*u[2]
+        du[3] = p.sigma*(u[4]-u[3])
+        du[4] = u[3]*(p.rho-u[5]) - u[3]
+        du[5] = u[3]*u[4] - p.beta*u[5]
+    end
+
+    # generate time series with DifferentialEquations.jl
+    prob_trueode = ODEProblem(lotka_voltera, u0, tspan, p)
+    ode_data = Array(solve(prob_trueode, Tsit5(), saveat = tsteps))
+
+    # add observation noise 
+    ode_data .+= ode_data .* rand(Normal(0.0,sigma), size(ode_data))
+        
+    if plot
+        plt = Plots.scatter(tsteps,transpose(ode_data[1:2,:]), xlabel = "Time", ylabel = "Abundance", label = "")
+        data = DataFrame(t = tsteps, x1 = ode_data[1,:], x2 = ode_data[2,:])
+        X = DataFrame(t = tsteps, X = ode_data[3,:])
+        return data, X, plt
+    end
+    
+    data = DataFrame(t = tsteps, x1 = ode_data[1,:], x2 = ode_data[2,:])
+    X = DataFrame(t = tsteps, X = ode_data[3,:])
+    return data, X
+end 
+
 function LogisticLorenz(;plot = true, seed = 123, datasize = 100,T = 30.0,sigma = 0.0125,p = (r=0.5,sigma = 10, rho = 28, beta = 8/3))
     
     # set seed 

@@ -41,7 +41,7 @@ end
 
 # minimizes the loss function of the `UDE` model using the BFGS algorithm is the inital step norm equal to `initial_step_norm`. The funciton will print the value fo the loss function after each iteration when `verbos` is true.  
 # """
-function BFGS!(UDE; verbos = true, initial_step_norm = 0.01)
+function BFGS!(UDE; verbos = false, initial_step_norm = 0.01)
     
     if verbos
         callback = function (p, l; doplot = false)

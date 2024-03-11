@@ -58,7 +58,7 @@ function predictions(UDE::UDE)
         u0 = inits[:,t]
         u1 = obs[:,t]
         dt = UDE.times[t+1] - UDE.times[t]
-        preds[:,t] = UDE.process_model.predict(u0,dt,UDE.parameters.process_model)[1]
+        preds[:,t] = UDE.process_model.predict(u0,UDE.times[t],dt,UDE.parameters.process_model)[1]
     end
 
     return inits, obs, preds
@@ -76,7 +76,26 @@ function predictions(UDE::UDE,test_data::DataFrame)
         u0 = inits[:,t]
         u1 = obs[:,t]
         dt = times[t+1] - times[t]
-        preds[:,t] = UDE.process_model.predict(u0,dt,UDE.parameters.process_model)[1]
+        preds[:,t] = UDE.process_model.predict(u0,UDE.times[t],dt,UDE.parameters.process_model)[1]
+    end
+
+    return inits, obs, preds
+end 
+
+
+
+function predictions(UDE::UDE,test_data::DataFrame, test_X)
+     
+    N, dims, T, times, data, dataframe = process_data(test_data)
+    inits = data[:,1:(end-1)]
+    obs = data[:,2:end]
+    preds = data[:,2:end]
+    
+    for t in 1:(size(inits)[2])
+        u0 = inits[:,t]
+        u1 = obs[:,t]
+        dt = times[t+1] - times[t]
+        preds[:,t] = UDE.process_model.predict(u0,UDE.times[t],dt,UDE.parameters.process_model)[1]
     end
 
     return inits, obs, preds
@@ -163,7 +182,7 @@ function forecast(UDE, u0::AbstractVector{}, times::AbstractVector{})
     
     
     #estimated_map = (x,dt) -> UDE.process_model.forecast(x,dt,UDE.parameters.process_model,umax,umin,umean)
-    estimated_map = (x,dt) -> UDE.process_model.forecast(x,dt,UDE.parameters.process_model,umax,umin,umean)
+    estimated_map = (x,t,dt) -> UDE.process_model.forecast(x,t,dt,UDE.parameters.process_model,umax,umin,umean)
     
     
     x = u0
@@ -172,8 +191,8 @@ function forecast(UDE, u0::AbstractVector{}, times::AbstractVector{})
     
     for t in 2:length(times)
         dt = times[t]-times[t-1]
-        x = estimated_map(x,dt)
-        df[t,:] = vcat([times[t]],x)
+        x = estimated_map(x,times[t-1],dt)
+        df[t,:] = vcat([times[t-1]],x)
     end 
     
     return df
