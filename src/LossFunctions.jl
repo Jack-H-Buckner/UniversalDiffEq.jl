@@ -1,4 +1,14 @@
 
+"""
+    LossFunction
+
+A Julia mutable struct that stores the loss function and parameters.
+...
+# Elements
+- parameters: ComponentArray
+- loss: Function 
+...
+"""
 mutable struct LossFunction
     parameters
     loss

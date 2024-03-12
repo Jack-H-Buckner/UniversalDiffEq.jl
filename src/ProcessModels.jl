@@ -24,7 +24,18 @@ function init_forecast(predict,l,extrap_rho)
     
 end 
 
+"""
+    ProcessModel
 
+A Julia mutable struct that stores the functions and parameters for the process model. 
+...
+# Elements
+- parameters: ComponentArray
+- predict: Function the predict one time step ahead
+- forecast: Function, a modified version of rpedict to imporve performace when extrapolating
+- covariates: Function that returns the value of the covariates at each point in time. 
+...
+"""
 mutable struct ProcessModel
     parameters
     predict

@@ -31,13 +31,15 @@ UniversalDiffEq.NODE(data,X;kwargs ... )
 ```
 
 ## UDEs
-
+The CustomDerivatives and CustomDifference function can be used to build models that combine nerual networks and known functional forms. These function take user defined models and consturct a loss function and provide access to the model fitting and testing functions provided by `UniversalDiffEq.jl`
 ```@docs
 UniversalDiffEq.CustomDerivatives(data,derivs!,initial_parameters;kwargs ... )
-UniversalDiffEq.CustomDiffernce(data,derivs,initial_parameters;kwrags...)
+UniversalDiffEq.CustomDiffernce(data,step,initial_parameters;kwrags...)
 ```
 
 ## Adding Covariates
+
+In this context the 
 ```@docs
 UniversalDiffEq.CustomDerivatives(data,X,derivs!,initial_parameters;kwargs ... )
 UniversalDiffEq.CustomDiffernce(data,X,step,initial_parameters;kwargs ... )

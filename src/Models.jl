@@ -1,4 +1,25 @@
 
+"""
+    UDE
+
+Basic data structure used to the model structure, parameters and data for UDE and NODE models. 
+...
+# Elements
+- times: a vector of times for each observation
+- data: a matrix of observaitons at each time point
+- X: a DataFrame with any covariates used by the model
+- data_frame: a DataFrame with colums for the time of each observation and values of the state variables
+- parameters: a ComponentArray that stores model parameters
+- loss_function: the loss function used to fit the model
+- process_model: a Julia mutable struct used to define model predictions 
+- process_loss: a Julia mutable struct used to measure the peroance of model predictions
+- observation_model: a Julia mutable struct used to predict observaitons given state variable estiamtes
+- observaiton_loss: a Julia mutable struct used to measure the performance of the observaiton model
+- process_regularization: a Julia mutable struct used to store data needed for process model regularization
+- observation_regularization: a Julia mutable struct used to store data needed for observation model regularization
+- constructor: A function that initializes a UDE model with identical structure. 
+...
+"""
 mutable struct UDE
     times
     data
@@ -64,6 +85,13 @@ function CustomDerivatives(data,derivs!,initial_parameters;proc_weight=1.0,obs_w
 
 end
 
+function CustomDerivs(data,derivs!,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25)
+    CustomDerivatives(data,derivs!,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l)
+end
+    
+
+    
+
 """
     CustomDerivatives(data,X,derivs!,initial_parameters;kwargs ... )
 
@@ -102,7 +130,7 @@ end
 
 
 """
-    CustomDiffernce(data,derivs,initial_parameters;kwrags...)
+    CustomDiffernce(data,step,initial_parameters;kwrags...)
 
 Constructs a UDE model for the data set `data` based on user defined difference equation `step`. An initial guess of model parameters are supplied with the initia_parameters argument.
 
@@ -304,7 +332,7 @@ Constructs a nonparametric continuous time model for the data set `data` using a
 
 # Model equations 
 ```math
-    \frac{dx}{dt} = NN(x;w,b)
+    dx/dt = NN(x;w,b)
 ```
 
 ...
@@ -400,7 +428,7 @@ Constructs an additive continuous time `UDE` model with user supplied derivitive
 
 # Model equaitons
 ```math
-    \frac{dx}{dt} = f(x;\theta) + NN(x;w,b)
+dx/dt = = f(x;\theta) + NN(x;w,b)
 ```
 
 ...

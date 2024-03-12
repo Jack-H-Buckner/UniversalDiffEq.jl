@@ -1,4 +1,14 @@
 
+"""
+    Regularization 
+
+A Julia mutable struct that stores the loss function and parameters.
+...
+# Elements
+- reg_parameters: ComponentArray
+- loss: Function 
+...
+"""
 mutable struct Regularization  
     reg_parameters 
     loss::Function
