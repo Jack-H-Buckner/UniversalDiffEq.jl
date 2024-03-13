@@ -12,6 +12,7 @@ include("Regularization.jl")
 include("Models.jl")
 include("MultipleTimeSeries.jl")
 include("ModelTesting.jl")
+include("MultiModelTests.jl")
 include("Optimizers.jl")
 
 

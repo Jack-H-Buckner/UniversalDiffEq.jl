@@ -2,6 +2,7 @@
 mutable struct LinkFunction
     parameters
     link
+    inv_link
 end
 
 function Identity()
@@ -12,8 +13,8 @@ function Identity()
     
     # link 
     link = (u,parameters) -> u
-    
-    return LinkFunction(parameters,link)
+    inv_link = (u,parameters) -> u
+    return LinkFunction(parameters,link,inv_link)
 end 
 
 
@@ -30,7 +31,13 @@ function softmax()
         return exp.(u)./sm
     end 
 
+    function inv_link(u, parameters)
+        k = length(u)+1
+        x = log.(u)
+        C = (1-sum(log.(u))-log(1-sum(u)))/k
+        return x .+ C
+    end
     
-    return LinkFunction(parameters,link)
+    return LinkFunction(parameters,link,inv_link)
 end 
 

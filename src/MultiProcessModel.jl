@@ -46,13 +46,13 @@ end
 function MultiContinuousProcessModel(derivs!,parameters, dims, l ,extrap_rho)
    
     u0 = zeros(dims); tspan = (0.0,1000.0) # assing value for the inital conditions and time span (these dont matter)
-    derivs! = (du,u,t,p) -> derivs!(du,u,p.series,t,p)
-    IVP = ODEProblem(derivs!, u0, tspan, parameters)
+    derivs_t! = (du,u,p,t) -> derivs!(du,u,p.series,p,t)
+    IVP = ODEProblem(derivs_t!, u0, tspan, parameters)
     
     function predict(u,i,t,dt,parameters) 
-        tspan = (t,t+dt) 
-        params = merge(params, (series = i,))
-        sol = solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan,saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
+        tspan =  (t,t+dt) 
+        params = vcat(parameters,ComponentArray((series =i, )))
+        sol = solve(IVP, Tsit5(), u0 = u, p=params,tspan = tspan, saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
         X = Array(sol)
         return (X[:,end], 0)
     end 
@@ -71,7 +71,7 @@ function MultiContinuousProcessModel(derivs!,parameters,covariates,dims,l,extrap
     
     function predict(u,i,t,dt,parameters) 
         tspan =  (t,t+dt) 
-        params = merge(parameters, (series = i,))
+        params = vcat(parameters,ComponentArray((series =i, )))
         sol = solve(IVP, Tsit5(), u0 = u, p=params,tspan = tspan, saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
         X = Array(sol)
         return (X[:,end], 0)
@@ -118,8 +118,7 @@ function MultiNODE_process(dims,hidden,covariates,seed,l,extrap_rho)
     function predict(u,i,t,dt,parameters) 
         tspan =  (t,t+dt) 
         params = vcat(parameters,ComponentArray((series =i, )))
-        sol = solve(IVP, Tsit5(), u0 = u, p=params,tspan = tspan, 
-                    saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
+        sol = solve(IVP, Tsit5(), u0 = u, p=params,tspan = tspan,saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
         X = Array(sol)
         return (X[:,end], 0)
     end 
@@ -152,8 +151,7 @@ function MultiNODE_process(dims,hidden,seed,l,extrap_rho)
     
     function predict(u,i,t,dt,parameters) 
         tspan =  (t,t+dt) 
-        sol = solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
-                    saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
+        sol = solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
         X = Array(sol)
         return (X[:,end], 0)
     end 
