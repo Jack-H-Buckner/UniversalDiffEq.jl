@@ -1,5 +1,5 @@
 push!(LOAD_PATH,"../src/")
-import Pkg; Pkg.add("DataFrames")
+using Pkg; Pkg.add("DataFrames")
 using Documenter, UniversalDiffEq, DataFrames
 
 makedocs(
