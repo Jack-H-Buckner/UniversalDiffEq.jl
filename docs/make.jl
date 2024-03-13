@@ -9,3 +9,6 @@ makedocs(
     pages = ["index.md","Models.md","ModelTesting.md","NutsAndBolts.md","MultipleTimeSeries.md","NODEexample.md"]
 )
 
+deploydocs(
+    repo = "github.com/jarroyoe/UniversalDiffEq.jl.git",
+)
