@@ -1,5 +1,5 @@
 
-function init_forecast(predict,l,extrap_rho)
+function init_Multiforecast(predict,l,extrap_rho)
     
     function forecast(u,i,t,dt,parameters,umax,umin,umeans)
         
@@ -24,18 +24,18 @@ function init_forecast(predict,l,extrap_rho)
     
 end 
 
-"""
-    MultiProcessModel
+# """
+#     MultiProcessModel
 
-A Julia mutable struct that stores the functions and parameters for the process model. 
-...
-# Elements
-- parameters: ComponentArray
-- predict: Function the predict one time step ahead
-- forecast: Function, a modified version of rpedict to imporve performace when extrapolating
-- covariates: Function that returns the value of the covariates at each point in time. 
-...
-"""
+# A Julia mutable struct that stores the functions and parameters for the process model. 
+# ...
+# # Elements
+# - parameters: ComponentArray
+# - predict: Function the predict one time step ahead
+# - forecast: Function, a modified version of rpedict to imporve performace when extrapolating
+# - covariates: Function that returns the value of the covariates at each point in time. 
+# ...
+# """
 mutable struct MultiProcessModel
     parameters
     predict
@@ -57,7 +57,7 @@ function MultiContinuousProcessModel(derivs!,parameters, dims, l ,extrap_rho)
         return (X[:,end], 0)
     end 
     
-    forecast = init_forecast(predict,l,extrap_rho)
+    forecast = init_Multiforecast(predict,l,extrap_rho)
     
     return MultiProcessModel(parameters,predict, forecast,0)
 end 
@@ -77,7 +77,7 @@ function MultiContinuousProcessModel(derivs!,parameters,covariates,dims,l,extrap
         return (X[:,end], 0)
     end 
     
-    forecast = init_forecast(predict,l,extrap_rho)
+    forecast = init_Multiforecast(predict,l,extrap_rho)
     
     return MultiProcessModel(parameters,predict, forecast,0)
 end 
@@ -124,7 +124,7 @@ function MultiNODE_process(dims,hidden,covariates,seed,l,extrap_rho)
     end 
 
     
-   forecast = init_forecast(predict,l,extrap_rho)
+   forecast = init_Multiforecast(predict,l,extrap_rho)
     
     return MultiNODE_process(dims,IVP,derivs!,parameters,predict,forecast,covariates)
     
@@ -156,7 +156,7 @@ function MultiNODE_process(dims,hidden,seed,l,extrap_rho)
         return (X[:,end], 0)
     end 
     
-   forecast = init_forecast(predict,l,extrap_rho)
+   forecast = init_Multiforecast(predict,l,extrap_rho)
     
     return MultiNODE_process(dims,IVP,derivs!,parameters,predict,forecast,x->0)
     

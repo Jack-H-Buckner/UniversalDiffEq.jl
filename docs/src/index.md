@@ -11,7 +11,7 @@ Describe NODES / UDEs
 Describe loss function / fitting proceduce 
 
 ```@contents
-Pages = ["UniversalDiffEq.md","Models.md", "ModelTesting.md","NutsAndBolts.md"]
+Pages = ["UniversalDiffEq.md","Models.md", "ModelTesting.md","MultipleTimeSeries.md","NutsAndBolts.md","NODEexample.md"]
 ```
 
 

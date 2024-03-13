@@ -67,7 +67,11 @@ end
     
 
 
+"""
+    MultiNODE(data;kwargs...)
 
+builds a NODE model to fit to the data. `data` is a DatFrame object with time arguments placed in a colum labed `t` and a second colum with a unique index for each time series. The remaining columns have observation of the state variables at each point in time and for each time series.
+"""
 function MultiNODE(data;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,reg_type="L2",l=0.5,extrap_rho=0.0)
     
     # convert data
