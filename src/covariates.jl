@@ -10,6 +10,18 @@ function interpolate_covariates(X)
 end 
 
 
+
+function interpolate_covariates_multi(X)
+    data_sets, times = process_multi_data2(X)
+    dims = size(data_sets[1])[1]
+    interpolations = [[linear_interpolation(times[j], data_sets[j][i,:],extrapolation_bc = Interpolations.Flat()) for i in 1:dims] for j in eachindex(times)]
+    function covariates(t,j)
+        return [interpolation(t) for interpolation in interpolations[round(Int,j)]]
+    end 
+    return covariates
+end 
+
+
 function plot_covariates(model)
     dims = length(model.process_model.covariates(0))
     plt = plot(model.times,broadcast(t -> model.process_model.covariates(t)[1],model.times), xlabel = "Time", ylabel = "X", label = "")

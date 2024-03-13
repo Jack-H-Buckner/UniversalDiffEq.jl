@@ -47,11 +47,8 @@ function init_loss(data,times,observation_model,observation_loss,process_model,p
 end 
 
 
-time_alias = ["T", "t","time", "Time", "times", "Times"] 
-time_alias_ind = [:T, :t,:time,:Time,:times,:Times] 
-
-
 function find_time_alias(nms)
+    time_alias = ["T", "t","time", "Time", "times", "Times"] 
     ind = broadcast(nm -> nm in nms, time_alias)
     if any(ind)
         return time_alias[ind][1]   
@@ -77,10 +74,9 @@ function process_data(data)
 end 
 
 
-series_alias = ["location", "site", "series"] 
-
 
 function find_series_alias(nms)
+    series_alias = ["location", "site", "series"] 
     ind = broadcast(nm -> nm in nms, series_alias)
     if any(ind)
         return series_alias[ind][1]   
@@ -103,6 +99,19 @@ function find_NNparams_alias(nms)
 end 
 
 
+
+function series_indexes(dataframe)
+    
+    series = length(unique(dataframe.series))
+        
+    inds = collect(1:nrow(dataframe))  
+    starts = [inds[dataframe.series .== i][1] for i in unique(dataframe.series)]
+    lengths = [sum(dataframe.series .== i) for i in unique(dataframe.series)]
+    times = [dataframe.t[dataframe.series .== i] for i in unique(dataframe.series)]  
+
+    return series, inds, starts, lengths, times
+end 
+
 function process_multi_data(data)
     
     time_alias_ = find_time_alias(names(data))
@@ -114,24 +123,37 @@ function process_multi_data(data)
     series =dataframe[:,time_alias_]
     T = times[argmax(times)]
     
-    times = dataframe.t # time in colum 1
     N = length(times); dims = size(dataframe)[2] - 2
     inds_time = names(dataframe).!=time_alias_ 
     inds_series = names(dataframe).!=series_alias_
-    varnames = names(dataframe)[inds_time .| inds_series]
+    varnames = names(dataframe)[inds_time .& inds_series]
     data = transpose(Matrix(dataframe[:,varnames]))
-                
-    return N, T, dims, data, dataframe, starts, length, times
+
+    series, inds, starts, lengths, times_ls= series_indexes(dataframe)
+    dims = size(data)[1]
+    return N, T, dims, data, times,  dataframe, series, inds, starts, lengths
 end 
 
 
-function series_indexes(dataframe)
+function process_multi_data2(data)
     
-    series = length(unique(dataframe.series))
-        
-    inds = collect(1:nrow(dataframe))  
-    starts = [inds[dataframe.series .== i][1] for i in unique(dataframe.series)]
-    lengths = [sum(dataframe.series .== i) for i in unique(dataframe.series)]
-    times = [dataframe.t[dataframe.series .== i] for i in unique(dataframe.series)]  
+    time_alias_ = find_time_alias(names(data))
+    series_alias_ = find_series_alias(names(data))
+    dataframe = sort!(data,[series_alias_,time_alias_])
+    inds_time = names(dataframe).!=time_alias_ 
+    inds_series = names(dataframe).!=series_alias_
+    varnames = names(dataframe)[inds_time .& inds_series]
+
+    
+    
+    times = dataframe[:,time_alias_]
+    series =dataframe[:,series_alias_]
+    T = times[argmax(times)]
+    data_sets = [transpose(Matrix(dataframe[series.==s,varnames])) for s in unique(series)] 
+    times = [Vector(dataframe[series.==s,time_alias_]) for s in unique(series)] 
+    
+    return data_sets, times
 end 
+
+
 

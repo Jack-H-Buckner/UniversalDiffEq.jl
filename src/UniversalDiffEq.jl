@@ -10,6 +10,7 @@ include("ProcessModels.jl")
 include("LossFunctions.jl")
 include("Regularization.jl")
 include("Models.jl")
+include("MultipleTimeSeries.jl")
 include("ModelTesting.jl")
 include("Optimizers.jl")
 

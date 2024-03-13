@@ -80,22 +80,6 @@ end
 
 
 
-function predictions(UDE::UDE,test_data::DataFrame, test_X)
-     
-    N, dims, T, times, data, dataframe = process_data(test_data)
-    inits = data[:,1:(end-1)]
-    obs = data[:,2:end]
-    preds = data[:,2:end]
-    
-    for t in 1:(size(inits)[2])
-        u0 = inits[:,t]
-        u1 = obs[:,t]
-        dt = times[t+1] - times[t]
-        preds[:,t] = UDE.process_model.predict(u0,UDE.times[t],dt,UDE.parameters.process_model)[1]
-    end
-
-    return inits, obs, preds
-end 
 
 
 """

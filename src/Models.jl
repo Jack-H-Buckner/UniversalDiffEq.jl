@@ -167,7 +167,7 @@ function CustomDiffernce(data,step,initial_parameters;proc_weight=1.0,obs_weight
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     
     # model constructor
-    constructor = (data) -> CustomDerivs(data,derivs,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight)
+    constructor = (data) -> CustomDerivs(data,step,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight)
     
     return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor)
@@ -189,7 +189,7 @@ function CustomDiffernce(data,X,step,initial_parameters;proc_weight=1.0,obs_weig
     covariates = interpolate_covariates(X)
 
     # generate submodels 
-    process_model = DiscreteProcessModel(derivs!,ComponentArray(initial_parameters),covariates,dims,l,extrap_rho)
+    process_model = DiscreteProcessModel(step,ComponentArray(initial_parameters),covariates,dims,l,extrap_rho)
     process_loss = ProcessMSE(N,T, proc_weight)
     observation_model = Identity()
     observation_loss = ObservationMSE(N,obs_weight)
@@ -203,7 +203,7 @@ function CustomDiffernce(data,X,step,initial_parameters;proc_weight=1.0,obs_weig
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     
     # model constructor
-    constructor = (data,X) -> CustomDerivs(data,X,derivs,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight)
+    constructor = (data,X) -> CustomDerivs(data,X,step,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight)
     
     return UDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor)

@@ -33,7 +33,7 @@ function inv_softmax(p)
     return log.(p) .+ c
 end 
 
-function softmaxMSE(;N = 1, weight = 1.0)
+function softmaxMSE(N,weight)
     parameters = NamedTuple()
     loss = (u,uhat,parameters) -> weight*sum((inv_softmax(u).-inv_softmax(uhat)).^2)/N
     return LossFunction(parameters,loss)
