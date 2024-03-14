@@ -48,7 +48,6 @@ Constructs a UDE model for the data set `data`  based on user defined derivitivs
 - data: a DataFrame object with the time of observations in a column labeled `t` and the remaining columns the value of the state variables at each time point. 
 - derivs: a Function of the form `derivs!(du,u,p,t)` where `u` is the value of the state variables, `p` are the model parameters, `t` is time, and du is updated with the value of the derivitives
 - init_parameters: A `NamedTuple` with the model parameters. Neural network parameters must be listed under the key `NN`.
-
 ...
 """
 function CustomDerivatives(data,derivs!,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25)
@@ -131,7 +130,6 @@ Constructs a UDE model for the data set `data` based on user defined difference 
 - data: a DataFrame object with the time of observations in a column labeled `t` and the remaining columns the value of the state variables at each time point. 
 - step: a Function of the form `step(u,t,p)` where `u` is the value of the state variables, `p` are the model parameters.
 - init_parameters: A `NamedTuple` with the model parameters. Neural network parameters must be listed under the key `NN`.
-
 ...
 """
 function CustomDiffernce(data,step,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
@@ -379,7 +377,7 @@ Constructs an additive continuous time `UDE` model with user supplied derivitive
 
 # Model equaitons
 ```math
-dx/dt = = f(x;\theta) + NN(x;w,b)
+dx/dt = f(x;\theta) + NN(x;w,b)
 ```
 
 ...

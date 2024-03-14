@@ -131,7 +131,7 @@ UniversalDiffEq.CustomDiffernce(data,step,initial_parameters;kwrags...)
 
 ## Adding Covariates
 
-Covariates can also be added to UDE models by passing a data frame X and adding covariates as an argument to the derivs! function which has the new form ``derivs!(du,u,X,p,t)``, where the third argument `X` are a vector of covariates. 
+Covariates can also be added to UDE models by passing a data frame X and adding covariates as an argument to the derivs! function which has the new form `derivs!(du,u,X,p,t)`, where the third argument `X` are a vector of covariates. 
 ```@docs
 UniversalDiffEq.CustomDerivatives(data,X,derivs!,initial_parameters;kwargs ... )
 ```
