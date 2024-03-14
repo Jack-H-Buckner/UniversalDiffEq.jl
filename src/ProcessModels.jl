@@ -41,6 +41,7 @@ mutable struct ProcessModel
     predict
     forecast
     covariates
+    right_hand_side
 end
 
 function ContinuousProcessModel(derivs!,parameters, dims, l ,extrap_rho)
@@ -58,7 +59,13 @@ function ContinuousProcessModel(derivs!,parameters, dims, l ,extrap_rho)
     
     forecast = init_forecast(predict,l,extrap_rho)
     
-    return ProcessModel(parameters,predict, forecast,0)
+    function right_hand_side(u,parameters,t)
+        du = zeros(length(u))
+        derivs!(du,u,p,t)
+        return du
+    end 
+
+    return ProcessModel(parameters,predict, forecast,0,right_hand_side)
 end 
 
 
@@ -77,8 +84,14 @@ function ContinuousProcessModel(derivs!,parameters,covariates,dims,l,extrap_rho)
     end 
     
     forecast = init_forecast(predict,l,extrap_rho)
+
+    function right_hand_side(u,x,parameters,t)
+        du = zeros(length(u))
+        derivs!(du,u,x,p,t)
+        return du
+    end 
     
-    return ProcessModel(parameters,predict, forecast,0)
+    return ProcessModel(parameters,predict, forecast,0, right_hand_side)
 end 
 
 
@@ -95,7 +108,11 @@ function DiscreteProcessModel(difference, parameters, covariates, dims, l, extra
     
     forecast = init_forecast(predict,l,extrap_rho)
     
-    return ProcessModel(parameters,predict, forecast, covariates)
+    function right_hand_side(u,x,parameters,t)
+        return difference(u,x,t,parameters)
+    end 
+
+    return ProcessModel(parameters,predict, forecast, covariates,right_hand_side)
 end 
 
 function DiscreteProcessModel(difference, parameters, dims, l, extrap_rho)
@@ -110,7 +127,11 @@ function DiscreteProcessModel(difference, parameters, dims, l, extrap_rho)
     
     forecast = init_forecast(predict,l,extrap_rho)
     
-    return ProcessModel(parameters,predict, forecast,x -> 0)
+    function right_hand_side(u,parameters,t)
+        return difference(u,t,parameters)
+    end 
+
+    return ProcessModel(parameters,predict, forecast,x -> 0,right_hand_side)
 end 
 
 
@@ -120,7 +141,7 @@ mutable struct NeuralNetwork
     parameters #::ComponentArray # nerual network paramters
     predict::Function # neural network 
     forecast
-    arg
+    right_hand_side
 end 
 
 
@@ -137,14 +158,18 @@ function NeuralNetwork(dims,hidden,seed,extrap_rho,l)
     function predict(u,t,dt,parameters) 
         tspan =  1:dt
         for t in tspan
-            u = NN(u,parameters.NN,NN_states)[1]
+            u = u .+  NN(u,parameters.NN,NN_states)[1]
         end 
         return (u, 0)
     end 
     
     forecast = init_forecast(predict,l,extrap_rho)
+
+    function right_hand_side(u,parameters,t)
+        return u .+ NN(u,parameters.NN,NN_states)[1]
+    end 
     
-    return NeuralNetwork(dims,NN,parameters,predict,forecast,0)
+    return NeuralNetwork(dims,NN,parameters,predict,forecast,right_hand_side)
     
 end 
 
@@ -198,7 +223,8 @@ mutable struct NODE_process
     parameters #::ComponentArray # nerual network paramters
     predict::Function # neural network 
     forecast
-    covariates
+    covariates    
+    right_hand_side
 end 
 
 
@@ -236,8 +262,14 @@ function NODE_process(dims,hidden,covariates,seed,l,extrap_rho)
     
     
    forecast = init_forecast(predict,l,extrap_rho)
+
+   function right_hand_side(u,x,parameters,t)
+        du = zeros(du)
+        du .= NN(vcat(u,x),parameters.NN,states)[1]
+        return du
+    end 
     
-    return NODE_process(dims,IVP,derivs!,parameters,predict,forecast,covariates)
+    return NODE_process(dims,IVP,derivs!,parameters,predict,forecast,covariates,right_hand_side)
     
 end 
 
@@ -269,8 +301,14 @@ function NODE_process(dims,hidden,seed,l,extrap_rho)
     end 
     
    forecast = init_forecast(predict,l,extrap_rho)
-    
-    return NODE_process(dims,IVP,derivs!,parameters,predict,forecast,x->0)
+
+   function right_hand_side(u,parameters,t)
+        du = zeros(du)
+        du .= NN(u,parameters.NN,states)[1]
+        return du
+    end
+
+    return NODE_process(dims,IVP,derivs!,parameters,predict,forecast,x->0,right_hand_side)
     
 end 
 

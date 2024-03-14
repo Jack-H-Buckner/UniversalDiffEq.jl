@@ -36,12 +36,52 @@ prints the value of the known dynamcis paramters.
 function print_parameter_estimates(UDE::UDE)
     println("Estimated parameter values: ")
     i = 0
-    for name in keys(UDE.parameters.process_model.known_dynamics)
+    for name in keys(UDE.parameters.process_model)
         i += 1
-        println(name, ": ", round(UDE.parameters.process_model.known_dynamics[i], digits = 3))
-            
+        if name == "NN"
+        elseif name == :NN
+        else
+            println(name, ": ", round(UDE.parameters.process_model[name], digits = 3))
+        end
     end 
 end
+
+
+"""
+    get_parameters(UDE::UDE)
+
+Returns model parameters.
+"""
+function get_parameters(UDE::UDE)
+    return UDE.parameters.process_model.parameters
+end
+
+
+"""
+    get_NN_parameters(UDE::UDE)
+
+Returns value weights and biases of the neural network 
+"""
+function get_NN_parameters(UDE::UDE)
+    return UDE.parameters.process_model.parameters.NN
+end
+
+
+"""
+    get_right_hand_side(UDE::UDE)
+
+Returns the right hand side of the differntial equation (or difference equaiton) used to build the process model.
+
+The fuction will take the state vector `u` and time `t` if the model does not include covariates. If covaraites are included the arguments are the state vector `u` , covariates vector `x`, and time `t`
+"""
+function get_right_hand_side(UDE::UDE)
+    pars = get_parameters(UDE::UDE)
+    if UDE.X == 0
+        return (u,t) -> UDE.process_model.right_hand_side(u,pars,t)
+    else
+        return (u,x,t) -> UDE.process_model.right_hand_side(u,x,pars,t)
+    end  
+end 
 
 
 function predictions(UDE::UDE)
@@ -61,6 +101,11 @@ function predictions(UDE::UDE)
 end 
 
 
+"""
+    predictions(UDE::UDE,test_data::DataFrame)
+
+Forecasts the value of the state variables starting from the values provided in `test_data`
+"""
 function predictions(UDE::UDE,test_data::DataFrame)
      
     N, dims, T, times, data, dataframe = process_data(test_data)
@@ -182,9 +227,6 @@ end
     plot_forecast(UDE::UDE, T::Int)
 
 Plots the models forecast up to T time steps into the future from the last observaiton.  
-
-UDE - a UDE model object
-T - the nuber of time steps to forecast
 """
 function plot_forecast(UDE::UDE, T::Int)
     u0 = UDE.parameters.uhat[:,end]
@@ -208,9 +250,6 @@ end
     plot_forecast(UDE::UDE, test_data::DataFrame)
 
 Plots the models forecast over the range of the test_data along with the value of the test data.   
-
-UDE - a UDE model object
-T - the nuber of time steps to forecast
 """
 function plot_forecast(UDE::UDE, test_data::DataFrame)
     u0 = UDE.parameters.uhat[:,end]
