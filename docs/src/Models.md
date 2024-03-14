@@ -139,7 +139,6 @@ UniversalDiffEq.CustomDiffernce(data,X,step,initial_parameters;kwargs ... )
 
 ## Other functions
 ```@docs
-UniversalDiffEq.NNDE(data;kwargs ...)
 UniversalDiffEq.DiscreteUDE(data,step,init_parameters;kwargs ...)
 
 UniversalDiffEq.UDE(data,derivs,init_parameters;kwargs...)
