@@ -131,11 +131,52 @@ UniversalDiffEq.CustomDiffernce(data,step,initial_parameters;kwrags...)
 
 ## Adding Covariates
 
-In this context the 
+Covariates can also be added to UDE models by passing a data frame X and adding covariates as an argument to the derivs! function which has the new form ``derivs!(du,u,X,p,t)``, where the third argument `X` are a vector of covariates. 
 ```@docs
 UniversalDiffEq.CustomDerivatives(data,X,derivs!,initial_parameters;kwargs ... )
+```
+
+Covarates can also be added to discrete time framework in the same way. the step function should have four arguments `step(u,X,t,)`.
+```@docs
 UniversalDiffEq.CustomDiffernce(data,X,step,initial_parameters;kwargs ... )
 ```
+### Example
+
+To show how adding covartes can work the following example extends the loka volterra equations defined above to incorperate a covariate X that influences the abunance of predators and prey. We can model this as a linear effect with coeficents ``\beta_N`` and ``\beta_P``
+```math
+\frac{dN}{dt} = rN - NN(N,P) + \beta_N N \\
+\frac{dP}{dt} = \theta NN(N,P) - mP + \beta_P P.
+```
+
+```julia
+# set up neural network 
+using Lux
+dims_in = 2
+hidden_units = 10
+nonlinearity = tanh
+dims_out = 1
+NN = Lux.Chain(Lux.Dense(dims_in,hidden_units,nonlinearity),Lux.Dense(hidden_units,dims_out))
+
+# initialize parameters 
+using Random
+rng = Random.default_rng() 
+NNparameters, NNstates = Lux.setup(rng,NN) 
+
+function derivs!(du,u,X,p,t)
+    C, states = NN(u,p.NN, NNstates) # NNstates are
+    du[1] = p.r*u[1] - C[1] + p.beta[1] * X[1]
+    du[2] = p.theta*C[1] -p.m*u[2] + p.beta[2] * X[1]
+end
+
+init_parameters = (NN = NNparameters,r = 1.0,m=0.5,theta=0.5, beta = [0,0])
+
+
+model = CustomDerivatives(training_data,X,derivs!;init_parameters;proc_weight=2.0,obs_weight=0.5,reg_weight=10^-4)
+nothing
+```
+
+
+
 
 ## Other functions
 ```@docs
