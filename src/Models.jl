@@ -49,13 +49,6 @@ Constructs a UDE model for the data set `data`  based on user defined derivitivs
 - derivs: a Function of the form `derivs!(du,u,p,t)` where `u` is the value of the state variables, `p` are the model parameters, `t` is time, and du is updated with the value of the derivitives
 - init_parameters: A `NamedTuple` with the model parameters. Neural network parameters must be listed under the key `NN`.
 
-# Key word arguments
-
-- proc_weight=1.0 : Weight given to the model predictiosn in loss funciton
-- obs_weight=1.0 : Weight given to the state estiamtes in loss function 
-- reg_weight=10^-6 : Weight given to regularization in the loss function 
-- extrap_rho=0.0 : Asymthotic value of derivitives when extrapolating (negative when extrapolating higher than past observaitons, postive when extrapolating lower)
-- l=0.25 : rate at which extrapolations converge on asymthotic behavior
 ...
 """
 function CustomDerivatives(data,derivs!,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25)
@@ -133,18 +126,12 @@ end
     CustomDiffernce(data,step,initial_parameters;kwrags...)
 
 Constructs a UDE model for the data set `data` based on user defined difference equation `step`. An initial guess of model parameters are supplied with the initia_parameters argument.
-
+...
+# Arguments
 - data: a DataFrame object with the time of observations in a column labeled `t` and the remaining columns the value of the state variables at each time point. 
 - step: a Function of the form `step(u,t,p)` where `u` is the value of the state variables, `p` are the model parameters.
 - init_parameters: A `NamedTuple` with the model parameters. Neural network parameters must be listed under the key `NN`.
-...
-# Key word arguments
 
-- proc_weight=1.0 : Weight given to the model predictiosn in loss funciton
-- obs_weight=1.0 : Weight given to the state estiamtes in loss function 
-- reg_weight=10^-6 : Weight given to regularization in the loss function 
-- extrap_rho=0.0 : Asymthotic value of derivitives when extrapolating (negative when extrapolating higher than past observaitons, postive when extrapolating lower)
-- l=0.25 : rate at which extrapolations converge on asymthotic behavior
 ...
 """
 function CustomDiffernce(data,step,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
@@ -218,23 +205,6 @@ end
 
 Constructs a nonparametric discrete time model for the data set `data` using a single layer neural network to reporesent the systems dynamics. 
 
-# Model equations 
-```math
-x_{t+1} = NN(x_t;w,b)
-```
-...
-# Arguments
-
-- data: a DataFrame object with the time of observations in a column labeled `t` and the remaining columns the value of the state variables at each time point. 
-
-# Key word arguments
-
-- proc_weight=1.0 : Weight given to the model predictiosn in loss funciton
-- obs_weight=1.0 : Weight given to the state estiamtes in loss function 
-- reg_weight=10^-6 : Weight given to regularization in the loss function 
-- extrap_rho=0.0 : Asymthotic value of derivitives when extrapolating (negative when extrapolating higher than past observaitons, postive when extrapolating lower)
-- l=0.25 : rate at which extrapolations converge on asymthotic behavior
-...
 """
 function NNDE(data;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
     
@@ -330,24 +300,6 @@ end
 
 Constructs a nonparametric continuous time model for the data set `data` using a single layer neural network to represent the systems dynamics. 
 
-# Model equations 
-```math
-    dx/dt = NN(x;w,b)
-```
-
-...
-# Arguments
-
-- data: a DataFrame object with the time of observations in a column labeled `t` and the remaining columns the value of the state variables at each time point.
-
-# Key word arguments
-
-- proc_weight=1.0 : Weight given to the model predictiosn in loss funciton
-- obs_weight=1.0 : Weight given to the state estiamtes in loss function 
-- reg_weight=10^-6 : Weight given to regularization in the loss function 
-- extrap_rho=0.0 : Asymthotic value of derivitives when extrapolating (negative when extrapolating higher than past observaitons, postive when extrapolating lower)
-- l=0.25 : rate at which extrapolations converge on asymthotic behavior
-...
 """
 function NODE(data;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0 )
     
@@ -384,9 +336,8 @@ end
 """
     NODE(data,X;kwargs ... )
 
-When a dataframe `X` is supplied the model will run with covariates. the argumetn `X` should have a column for time `t` with the vlaue fo time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included int he data frame. 
+When a dataframe `X` is supplied the model will run with covariates. the argumetn `X` should have a column for time `t` with the value fo time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included in the data frame. 
 
-When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)` where `x` is a vector with the value of the coarates at time `t`.     
 """
 function NODE(data,X;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0 )
     

@@ -10,5 +10,5 @@ makedocs(
 )
 
 deploydocs(
-    repo = "github.com/jarroyoe/UniversalDiffEq.jl.git",
+    repo = "github.com/Jack-H-Buckner/UniversalDiffEq.jl.git",
 )
