@@ -264,9 +264,7 @@ function NODE_process(dims,hidden,covariates,seed,l,extrap_rho)
    forecast = init_forecast(predict,l,extrap_rho)
 
    function right_hand_side(u,x,parameters,t)
-        du = zeros(du)
-        du .= NN(vcat(u,x),parameters.NN,states)[1]
-        return du
+        return NN(vcat(u,x),parameters.NN,states)[1]
     end 
     
     return NODE_process(dims,IVP,derivs!,parameters,predict,forecast,covariates,right_hand_side)
@@ -303,9 +301,7 @@ function NODE_process(dims,hidden,seed,l,extrap_rho)
    forecast = init_forecast(predict,l,extrap_rho)
 
    function right_hand_side(u,parameters,t)
-        du = zeros(du)
-        du .= NN(u,parameters.NN,states)[1]
-        return du
+        return NN(u,parameters.NN,states)[1]
     end
 
     return NODE_process(dims,IVP,derivs!,parameters,predict,forecast,x->0,right_hand_side)

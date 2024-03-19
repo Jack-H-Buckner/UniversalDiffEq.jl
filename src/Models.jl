@@ -202,7 +202,6 @@ end
     NNDE(data;kwargs ...)
 
 Constructs a nonparametric discrete time model for the data set `data` using a single layer neural network to reporesent the systems dynamics. 
-
 """
 function NNDE(data;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
     
@@ -297,7 +296,6 @@ end
 
 
 Constructs a nonparametric continuous time model for the data set `data` using a single layer neural network to represent the systems dynamics. 
-
 """
 function NODE(data;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0 )
     

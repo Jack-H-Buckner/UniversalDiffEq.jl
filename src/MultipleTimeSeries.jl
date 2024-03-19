@@ -109,6 +109,11 @@ function MultiNODE(data;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,
 end 
 
 
+"""
+    MultiNODE(data,X;kwargs...)
+
+When a dataframe `X` is supplied the model will run with covariates. the argumetn `X` should have a column for time `t` with the value fo time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included in the data frame. 
+"""
 function MultiNODE(data,X;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,reg_type="L2",l=0.5,extrap_rho=0.0)
 
     N, T, dims, data, times,  dataframe, series, inds, starts, lengths = process_multi_data(data)

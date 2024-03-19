@@ -15,4 +15,5 @@ UniversalDiffEq provides a set of functions to fit models to multiple time serie
 Covarate can be added to the models as well. The covarates dataframe must have the same sturcture 
 ```@docs
 UniversalDiffEq.MultiNODE(data;kwargs...)
+UniversalDiffEq.MultiNODE(data,X;kwargs...)
 ```

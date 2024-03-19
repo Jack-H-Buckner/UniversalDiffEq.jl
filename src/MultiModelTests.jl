@@ -182,22 +182,29 @@ end
 
 
 function plot_forecast(UDE::MultiUDE, test_data::DataFrame)
-    
+
+    N, T, dims, test_data, test_times,  test_dataframe, test_series, inds, test_starts, test_lengths = process_multi_data(test_data)
     N, T, dims, data, times,  dataframe, series, inds, starts, lengths = process_multi_data(UDE.data_frame)
-    series_ls = unique(test_data.series)
+    
+    series_ls = unique(test_dataframe.series)
     plots = []
     for d in 1:dims
-        plt = plot()
+        plt = plot();i = 0
          for series in eachindex(series_ls)
+            i += 1
             series = series_ls[series]
             time = times[starts[series]:(starts[series]+lengths[series]-1)]
             dat = data[:,starts[series]:(starts[series]+lengths[series]-1)]
             uhat = UDE.parameters.uhat[:,starts[series]:(starts[series]+lengths[series]-1)]
+            
+            test_time = test_times[test_starts[series]:(test_starts[series]+test_lengths[series]-1)]
+            test_dat = test_data[:,test_starts[series]:(test_starts[series]+test_lengths[series]-1)]
 
-            df = forecast(UDE, uhat[:,end], test_data.t[test_data.series .== series], series)
-            plt = plot!(df[:,1],df[:,d+1],color = "grey", linestyle=:dash, label = "forecast",xlabel = "Time", ylabel = string("x", dim))
-            scatter!(time,dat[d,:],c=1, label = "training data",ylabel = string("x", dim))
-            scatter!(test_data.t,test_data[:,d+2],c=2, label = "test data")
+            df = forecast(UDE, uhat[:,end], test_dataframe.t[test_dataframe.series .== series], series)
+
+            plt = plot!(df[:,1],df[:,d+1],c=i, linestyle=:dash, width = 2, label = "",xlabel = "Time", ylabel = string("x", dim))
+            scatter!(time,dat[d,:],c=1, label = "",ylabel = string("x", dim))
+            scatter!(test_time,test_dat[d,:],c=i, label = "")
      
         end 
        

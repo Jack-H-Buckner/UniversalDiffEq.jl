@@ -53,7 +53,7 @@ end
 Returns model parameters.
 """
 function get_parameters(UDE::UDE)
-    return UDE.parameters.process_model.parameters
+    return UDE.parameters.process_model
 end
 
 
@@ -63,7 +63,7 @@ end
 Returns value weights and biases of the neural network 
 """
 function get_NN_parameters(UDE::UDE)
-    return UDE.parameters.process_model.parameters.NN
+    return UDE.parameters.process_model.NN
 end
 
 
@@ -75,7 +75,7 @@ Returns the right hand side of the differntial equation (or difference equaiton)
 The fuction will take the state vector `u` and time `t` if the model does not include covariates. If covaraites are included the arguments are the state vector `u` , covariates vector `x`, and time `t`
 """
 function get_right_hand_side(UDE::UDE)
-    pars = get_parameters(UDE::UDE)
+    pars = get_parameters(UDE)
     if UDE.X == 0
         return (u,t) -> UDE.process_model.right_hand_side(u,pars,t)
     else

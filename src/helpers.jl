@@ -73,8 +73,6 @@ function process_data(data)
     return  N, dims, T, times, data, dataframe
 end 
 
-
-
 function find_series_alias(nms)
     series_alias = ["location", "site", "series"] 
     ind = broadcast(nm -> nm in nms, series_alias)
@@ -85,20 +83,15 @@ function find_series_alias(nms)
     throw(error()) 
 end 
 
-
-series_alias = ["NNparams", "NN", "NN1", "NN2", "NN3", "NN4", "NN5", "Network", "NeuralNetwork", "NNparameters"] 
-
-
 function find_NNparams_alias(nms)
-    ind = broadcast(nm -> nm in nms, series_alias)
+    NN_alias = ["NNparams", "NN", "NN1", "NN2", "NN3", "NN4", "NN5", "Network", "NeuralNetwork", "NNparameters"] 
+    ind = broadcast(nm -> nm in nms, NN_alias)
     if any(ind)
-        return series_alias[ind]  
+        return NN_alias[ind]  
     end
     print("Cannot find column for time ")
     throw(error()) 
 end 
-
-
 
 function series_indexes(dataframe)
     
