@@ -11,17 +11,34 @@ UniversalDiffEq.plot_state_estiamtes(UDE::UDE)
 UniversalDiffEq.plot_predictions(UDE::UDE)
 ```
 
-In addition to 
+There are also functions to compare the model perdictions to out of sample data. The simplest is `plot_forecast`, which comapres that observaitons in the test data set to a deterministic simulation from the data set that starts at the first observation runs to the end of the test data. 
+
+```@docs
+UniversalDiffEq.plot_forecast(UDE::UDE, test_data::DataFrame)
+```
+
+It is also possible to test the performance of the the models one time step into the future using the `plot_predictions` functions. When a test data set is supplied to the `plot_predictions` function it will run a series of forcasts starting at each point in the data set, predicting one time step into the future. The function returns a plot comparing the predicted and observed changes. 
+
+```@docs
+UniversalDiffEq.plot_predictions(UDE::UDE, test_data::DataFrame)
+```
+
+# Cross validation
+
+Cross validation is important for model comparison and hyper-parameter tuning. The `leave_future_out_cv` function breaks the data set up into training and test data set by leaving off the final  observations in the data set. The model is then training on the begining of the data set and the perfornace is caculated by comparing a forecast to the test data. The user can specify the time horizon for the forecast ``T_{Forecast}`` and the number of tests ``K``. The first test trains the model on the full data set only ommiting the final ``T_{forecast}`` years as the tes set. The remaining test each generate a new test data set by using removing iteritively more of the observations fromt he end of the data set. The number removed between each test can be controled by changing the spacing argument. 
+
+
+```@docs
+UniversalDiffEq.leave_future_out_cv(model; forecast_length = 10,  K = 10, spacing = 1, step_size = 0.05, maxiter = 500)
+```
+
 
 ```@docs
 UniversalDiffEq.print_parameter_estimates(UDE::UDE)
-UniversalDiffEq.plot_predictions(UDE::UDE, test_data::DataFrame)
 UniversalDiffEq.forecast(UDE::UDE, u0::AbstractVector{}, times::AbstractVector{})
 UniversalDiffEq.plot_forecast(UDE::UDE, T::Int)
-UniversalDiffEq.plot_forecast(UDE::UDE, test_data::DataFrame)
 UniversalDiffEq.leave_future_out_cv(model; forecast_length = 10,  K = 10, spacing = 1, step_size = 0.05, maxiter = 500)
 UniversalDiffEq.get_NN_parameters(UDE::UDE)
-UniversalDiffEq.get_right_hand_side(UDE::UDE)
 UniversalDiffEq.predictions(UDE::UDE,test_data::DataFrame)
 UniversalDiffEq.get_parameters(UDE::UDE)
 ```
