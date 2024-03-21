@@ -24,6 +24,52 @@ function L2(;weight=1.0)
     
 end 
 
+function find_NN_weights(tree, parameters)
+    inds = []
+    try 
+       inds =  keys(parameters)
+    catch 
+        return nothing
+    end
+   
+    if typeof(inds[1]) != Symbol
+        return nothing
+    end 
+
+    for ind in inds 
+        if ind == :weight
+            push!(tree,parameters[ind])
+        else
+            find_NN_weights(tree, parameters[ind])
+        end    
+    end 
+    return tree
+
+end
+
+function find_NN_weights(parameters)
+    tree = []
+    find_NN_weights(tree, parameters)
+end 
+
+function L2(parameters;weight=1.0)
+    
+    reg_parameters = NamedTuple()
+
+    function  loss(parameters,reg_parameters)  
+        weights = find_NN_weights(parameters)
+        L=0
+        for w in weights
+            L+=weights * sum(w.^2)
+        end 
+        return L
+    end
+    
+    return Regularization(reg_parameters,loss)
+    
+end 
+
+
 function L2UDE(;weight=1.0)
     
     reg_parameters = NamedTuple()

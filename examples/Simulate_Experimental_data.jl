@@ -30,9 +30,9 @@ function derivs(u,p,treatment)
 end 
 
 # set paramters 
-parameters = (r1 = 0.1, r2 = 0.01, alpha1 =0.15, alpha2 = 0.5,  m1 = 0.05, m2 = 0.025, h = 10.0, 
-                beta11 = 0.5, beta21 = 0.0, beta12 = 0.0, beta22 = 0.5, beta13 = 0.25, beta23 = 0.25,
-                 beta10 = -3.0, beta20 = -3.0, rho = -0.1)
+parameters = (r1 = 0.005, r2 = 0.005, alpha1 =0.175, alpha2 = 0.175,  m1 = 0.05, m2 = 0.05, h = 10.0, 
+                beta11 = 0.25, beta21 = 0.0, beta12 = 0.0, beta22 = 0.25, beta13 = 0.05, beta23 = 0.05,
+                 beta10 = -3., beta20 = -3., rho = -0.1)
 treatment1 = (exclusion = 0, removal1 = 0, removal2 = 0)
 treatment2 = (exclusion = 1, removal1 = 0, removal2 = 0)
 treatment3 = (exclusion = 0, removal1 = 1, removal2 = 0)

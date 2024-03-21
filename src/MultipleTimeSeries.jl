@@ -234,7 +234,7 @@ function MultiCustomDerivatives(data,derivs!,initial_parameters;proc_weight=1.0,
     process_loss = ProcessMSE(N,T, proc_weight)
     observation_model = Identity()
     observation_loss = ObservationMSE(N,obs_weight)
-    process_regularization = L2(weight=reg_weight)
+    process_regularization = L2(initial_parameters,weight=reg_weight)
     observation_regularization = no_reg()
     
     # paramters vector
