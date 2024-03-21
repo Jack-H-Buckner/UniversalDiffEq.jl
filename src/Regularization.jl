@@ -14,55 +14,55 @@ mutable struct Regularization
     loss::Function
 end 
 
-function L2(;weight=1.0)
-    
-    reg_parameters = NamedTuple()
-    
-    loss = (parameters,reg_parameters) -> weight * (sum(parameters.layer_1.weight.^2) + sum(parameters.layer_2.weight.^2))
-    
-    return Regularization(reg_parameters,loss)
-    
-end 
 
-function find_NN_weights(tree, parameters)
-    inds = []
-    try 
-       inds =  keys(parameters)
-    catch 
-        return nothing
-    end
+
+function L2(L,reg_weight,parameters)
+
+    inds =  keys(parameters)
    
     if typeof(inds[1]) != Symbol
-        return nothing
+        return 0
     end 
-
+    val = []
     for ind in inds 
         if ind == :weight
-            push!(tree,parameters[ind])
+            return  reg_weight * sum(parameters[ind].^2)
         else
-            find_NN_weights(tree, parameters[ind])
+            L+=L2(L,reg_weight,parameters[ind])
         end    
     end 
-    return tree
+    return L
 
 end
 
-function find_NN_weights(parameters)
-    tree = []
-    find_NN_weights(tree, parameters)
-end 
+
+
+function L1(L,reg_weight,parameters)
+
+    inds =  keys(parameters)
+   
+    if typeof(inds[1]) != Symbol
+        return 0
+    end 
+    val = []
+    for ind in inds 
+        if ind == :weight
+            return  reg_weight * sum(abs(parameters[ind]))
+        else
+            L+=L1(L,reg_weight,parameters[ind])
+        end    
+    end 
+    return L
+
+end
+
 
 function L2(parameters;weight=1.0)
     
     reg_parameters = NamedTuple()
 
     function  loss(parameters,reg_parameters)  
-        weights = find_NN_weights(parameters)
-        L=0
-        for w in weights
-            L+=weights * sum(w.^2)
-        end 
-        return L
+        return L2(0,weight,parameters)
     end
     
     return Regularization(reg_parameters,loss)
@@ -70,11 +70,13 @@ function L2(parameters;weight=1.0)
 end 
 
 
-function L2UDE(;weight=1.0)
+function L1(parameters;weight=1.0)
     
     reg_parameters = NamedTuple()
-    
-    loss = (parameters,reg_parameters) -> weight * (sum(parameters.NN.layer_1.weight.^2) + sum(parameters.NN.layer_2.weight.^2))
+
+    function  loss(parameters,reg_parameters)  
+        return L1(0,weight,parameters)
+    end
     
     return Regularization(reg_parameters,loss)
     
@@ -85,18 +87,18 @@ function L1(;weight=1.0)
     
     reg_parameters = NamedTuple()
     
-    loss = (parameters,reg_parameters) -> weight * (sum(abs.(parameters.layer_1.weight))+ sum(abs.(parameters.layer_2.weight)))
+    loss = (parameters,reg_parameters) -> weight * (sum(abs.(parameters.NN.layer_1.weight))+ sum(abs.(parameters.NN.layer_2.weight)))
     
     return Regularization(reg_parameters,loss)
     
 end 
 
 
-function L2_all(;weight=1.0)
+function L2(;weight=1.0)
     
     reg_parameters = NamedTuple()
-
-    loss = (parameters,reg_parameters) -> weight * (sum(parameters.^2))
+    
+    loss = (parameters,reg_parameters) -> weight * (sum((parameters.NN.layer_1.weight).^2)+ sum((parameters.NN.layer_2.weight).^2))
     
     return Regularization(reg_parameters,loss)
     

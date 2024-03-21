@@ -42,7 +42,7 @@ function init_single_loss(process_model,process_loss,observation_model,observati
         end
         
         # regularization
-        L_reg = process_regularization.loss(parameters.process_model.NN,parameters.process_regularization)
+        L_reg = process_regularization.loss(parameters.process_model,parameters.process_regularization)
 
         return L_obs + L_proc + L_reg
     end
@@ -264,7 +264,7 @@ function MultiCustomDerivatives(data,X,derivs!,initial_parameters;proc_weight=1.
     process_loss = ProcessMSE(N,T, proc_weight)
     observation_model = Identity()
     observation_loss = ObservationMSE(N,obs_weight)
-    process_regularization = L2(weight=reg_weight)
+    process_regularization = L2(initial_parameters,weight=reg_weight)
     observation_regularization = no_reg()
     
     # paramters vector

@@ -37,8 +37,8 @@ function init_loss(data,times,observation_model,observation_loss,process_model,p
         end
         
         # regularization
-        L_reg = process_regularization.loss(parameters.process_model.NN,parameters.process_regularization)
-        L_reg += observation_regularization.loss(parameters.process_model.NN,parameters.process_regularization)
+        L_reg = process_regularization.loss(parameters.process_model,parameters.process_regularization)
+        L_reg += observation_regularization.loss(parameters.process_model,parameters.process_regularization)
         
         return L_obs + L_proc + L_reg
     end
