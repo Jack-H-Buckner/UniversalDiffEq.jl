@@ -101,11 +101,7 @@ function predictions(UDE::UDE)
 end 
 
 
-"""
-    predictions(UDE::UDE,test_data::DataFrame)
 
-Forecasts the value of the state variables starting from the values provided in `test_data`
-"""
 function predictions(UDE::UDE,test_data::DataFrame)
      
     N, dims, T, times, data, dataframe = process_data(test_data)
@@ -122,8 +118,6 @@ function predictions(UDE::UDE,test_data::DataFrame)
 
     return inits, obs, preds
 end 
-
-
 
 
 
