@@ -67,4 +67,4 @@ UniversalDiffEq.plot_predictions(model)
 
 Unsuprisingly, given that this is simulated data our model was able to fit the training data very closely. 
 
-Given that the model fit that data well we can move on to our analysis. The goal of this model is to capture the effects of a slowly chanign variable on the dynamics of the coral - algae system. 
+Given that the model fit that data well we can move on to our analysis. The goal of this model is to capture the effects of a slowly chanign variable on the dynamics of the coral - algae system. In particular we want to idenfiy any potential regime changes, points in time where a small change in the environment leads to a large change in the state of the ecosystem. Often regiem changes are characterizd by the apreance or dissapearance of equilibrium points in a dynamics system 
