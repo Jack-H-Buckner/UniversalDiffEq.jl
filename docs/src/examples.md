@@ -8,14 +8,14 @@ In the followng example we build a NODE model for a two species system that unde
 
 ![figure 1: simulated regime chagne data ](figures/regiem_changes_state_estiamtes.png)
 
-
- The model is a function of the area covered by coral ``p_C`` and algae ``p_A`` an environemtnal covariate ``X`` that is related to coral mortality and time ``t`` to capture the effect of the slowling increasing coral mortaltiy rate. The coral and macro algae abundances are transformed with the inverse soft_max transformation ``x_i = soft_max(p_i)`` before fitting the model 
+ The model is a function of the area covered by coral ``p_C`` and algae ``p_A`` an environemtnal covariate ``X`` that is related to coral mortality and time ``t`` to capture the effect of the slowling increasing coral mortaltiy rate. The coral and macro algae abundances are transformed to ``x_i = softmax^{-1}(p_i)`` using the inverse soft_max transformation  before fitting the model 
 
 ```math
     \frac{dx_C}{dt} = NN_1(x_C,x_A,X,t) \\ 
     \frac{dx_A}{dt} = NN_2(x_C,x_A,X,t) \\ 
 ```
 
+UniversalDiffEq does not have built in methods to constructing time dependent NODES but they can be build easily enough using the CustomDerivatives function. In this case, we initialize a neural network that take four inputs (one for each species, the environemtnal covariate and time) and two outputs using Lux.jl. The deriviatives function `derivs!` divides time by 50 to match the sale of the other inputs, concatanates the abundnaces of eahc species, the covariate ``X`` and time into a vector and evaluates the neural network. The UDE model is constructed using the CustomDerivatives function passing both the species data in a data framed called `data` and the covairate in a dataframe labeld `X`.
 
 
 ```julia
@@ -35,7 +35,8 @@ parameters = (NN = NNparameters,)
 
 # Define derivatives (time dependent NODE)
 function derivs!(du,u,X,p,t)
-    vals = NN([u[1],u[2],X[1],t/50-1.0],p.NN,NNstates)[1]
+    inputs = [u[1],u[2],X[1],t/50-1.0]
+    vals = NN(inputs,p.NN,NNstates)[1]
     du[1] = vals[1]
     du[2] = vals[2]
     return du 
@@ -46,4 +47,6 @@ model = UniversalDiffEq.CustomDerivatives(data[1:80,:],X,derivs!,parameters;proc
 gradient_decent!(model, verbos = true, maxiter = 250)
 BFGS!(model, verbos = true )
 ```
+
+To verify the model fit 
 ![](figures/regiem_changes_state_estiamtes.png)
