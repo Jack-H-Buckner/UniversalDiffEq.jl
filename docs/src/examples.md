@@ -4,14 +4,19 @@
 
 One intersting use of NODE and UDE models in ecology is detecting and predicting regiem changes, sudden shifts in the strucutre and function of an ecosystem cause by a small change in conditions. Regiem chagnes are caused by the interaction of non-linear feedback mechiamsms, environmental variability and long term environemtnal change. NODE an UDE model built with UniversalDiffEq can capture all three of these proceses opeining upt he possibiltiy of detecting and predicting regiem chagnes from data. 
 
-In the followng example we build a NODE model for a two species system that under goes a regiem change. The data are simulated from the Mumby-hastings model of coral-algae competition with an added term for stochastic coral mortaltiy events and a long term increase in the coral mortaltiy rate from increasing temperature. The model is a function of the area covered by coral ``p_C`` and algae ``p_A`` an environemtnal covariate ``X`` that is related to coral mortality and time ``t`` to capture the effect of the slowling increasing coral mortaltiy rate. The coral and macro algae abundances are transformed with the inverse soft_max transformation ``x_i = soft_max(p_i)`` before fitting the model 
+In the followng example we build a NODE model for a two species system that under goes a regiem change. The data are simulated from the Mumby-hastings model of coral-algae competition with an added term for stochastic coral mortaltiy events and a long term increase in the coral mortaltiy rate from increasing temperature. The increasing temperature eventually causes the system to shift from a coral to and algae dominated state (figure 1). The data up to the time of the regime chagne are used to fit the model.
+
+![figure 1: simulated regime chagne data ](figures/regiem_changes_state_estiamtes.png)
+
+
+ The model is a function of the area covered by coral ``p_C`` and algae ``p_A`` an environemtnal covariate ``X`` that is related to coral mortality and time ``t`` to capture the effect of the slowling increasing coral mortaltiy rate. The coral and macro algae abundances are transformed with the inverse soft_max transformation ``x_i = soft_max(p_i)`` before fitting the model 
 
 ```math
     \frac{dx_C}{dt} = NN_1(x_C,x_A,X,t) \\ 
     \frac{dx_A}{dt} = NN_2(x_C,x_A,X,t) \\ 
 ```
 
-![](figures/regiem_changes_state_estiamtes.png)
+
 
 ```julia
 using Lux, UniversalDiffEq
