@@ -63,7 +63,7 @@ function CustomDerivatives(data,derivs!,initial_parameters;proc_weight=1.0,obs_w
     process_regularization = L2(initial_parameters,weight=reg_weight)
     if reg_type == "L1"
         process_regularization = L1(initial_parameters,weight=reg_weight)
-    else
+    elseif reg_type != "L2"
         println("Invalid regularization type - defaulting to L2")
     end
     observation_regularization = no_reg()
@@ -110,7 +110,7 @@ function CustomDerivatives(data,X,derivs!,initial_parameters;proc_weight=1.0,obs
     process_regularization = L2(initial_parameters,weight=reg_weight)
     if reg_type == "L1"
         process_regularization = L1(initial_parameters,weight=reg_weight)
-    else
+    elseif reg_type != "L2"
         println("Invalid regularization type - defaulting to L2")
     end
     observation_regularization = no_reg()
@@ -155,7 +155,7 @@ function CustomDiffernce(data,step,initial_parameters;proc_weight=1.0,obs_weight
     process_regularization = L2(initial_parameters,weight=reg_weight)
     if reg_type == "L1"
         process_regularization = L1(initial_parameters,weight=reg_weight)
-    else
+    elseif reg_type != "L2"
         println("Invalid regularization type - defaulting to L2")
     end
     observation_regularization = no_reg()
@@ -196,7 +196,7 @@ function CustomDiffernce(data,X,step,initial_parameters;proc_weight=1.0,obs_weig
     process_regularization = L2(initial_parameters,weight=reg_weight)
     if reg_type == "L1"
         process_regularization = L1(initial_parameters,weight=reg_weight)
-    else
+    elseif reg_type != "L2"
         println("Invalid regularization type - defaulting to L2")
     end
     observation_regularization = no_reg()
@@ -287,7 +287,7 @@ function DiscreteUDE(data,step,init_parameters;
     process_regularization = L2(weight=reg_weight)
     if reg_type == "L1"
         process_regularization = L1(weight=reg_weight)
-    else
+    elseif reg_type != "L2"
         println("Invalid regularization type - defaulting to L2")
     end
     observation_regularization = no_reg()
