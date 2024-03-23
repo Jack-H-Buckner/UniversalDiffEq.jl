@@ -118,12 +118,12 @@ Plots.scatter!(data.t,data.limited_entry, label = "Limited entry", width = 2)
 ### Model
 We use a logistic growth model to describe the changes in the population biomass and model changes in harvest as a function of the stock, the current harvest, and regulations. The factors that drive changes in harvest may be complex and non-linear so we use a neural network to model the rate of change of harvest. Combining these assumptions yields a system of different equations that we fit into the data using the UniversalDiffEq.jl package
 
-$$
+```math
 \frac{dH}{dt} = NN(H,B,I_{LE};w,b)\\
 \frac{dB}{dt} = rB(1-B/K) - qH,
-$$
+```
 
-where $r$ is the growth rate of the population, $K$ is the carrying capacity, $q$ is a scaling factor to match the units of stock biomass and harvest, $w$ is the weights of the neural network, and $b$ are the neural network biases. We define the model using a neural network from Lux.jl and the CustomDerivatives function. We fit the model parameters using the gradient descent and BFGS algorithms.
+where ``r`` is the growth rate of the population, ``K`` is the carrying capacity, ``q`` is a scaling factor to match the units of stock biomass and harvest, ``w`` is the weights of the neural network, and ``b`` are the neural network biases. We define the model using a neural network from Lux.jl and the CustomDerivatives function. We fit the model parameters using the gradient descent and BFGS algorithms.
 
 ```julia
 # set up nerual network 
