@@ -95,7 +95,7 @@ p4 = vector_field_plot(120,0.0)
 
 The vector plots show clear changes in the dynamics of the system over time that likely constitute a regieme change form a coral dominated state an algae dominated state. For small values of time, the vector fields all point to the upper left, high coral abundance, and low algae abundance. Over time, however, a second equilibrium appears in the lower right, low coral and high algae abundance. The final vector field, t = 120 predicts 40 years into the future after the end of the time series. this plot predicts that the basin of attraction around the algae-dominated state will continue to grow. which is consistent with the data, which shows a sudden switch from high coral to high algae abundances.
 
-## Using UDEs to learn the dynamics of  coupled human-natraul system
+## Using UDEs to learn the dynamics of coupled human-natraul system
 
 Natural resources like fisheries are examples of coupled human and natural systems; human activities influence the state of the natural system, and the environment influences human activities. One of the primary goals of coupled human-natural systems research is understanding how these cycles of mutual causation determine biological and social outcomes. We may also wish to understand how interventions from regulators modify interactions between people and their environment to identify if these interventions achieve their desired effects.
 
