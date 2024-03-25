@@ -175,7 +175,12 @@ model = CustomDerivatives(training_data,X,derivs!;init_parameters;proc_weight=2.
 nothing
 ```
 
+## adding prior information to custom models 
 
+```@docs
+UniversalDiffEq.CustomDerivatives(data,step,initial_parameters,priors;kwargs ... )
+UniversalDiffEq.CustomDiffernce(data,step,initial_parameters,priors;kwargs ... )
+```
 
 
 ## Other functions

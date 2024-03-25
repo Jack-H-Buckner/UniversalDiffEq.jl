@@ -91,7 +91,7 @@ function ContinuousProcessModel(derivs!,parameters,covariates,dims,l,extrap_rho)
         return du
     end 
     
-    return ProcessModel(parameters,predict, forecast,0, right_hand_side)
+    return ProcessModel(parameters,predict, forecast,covariates, right_hand_side)
 end 
 
 

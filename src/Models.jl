@@ -85,8 +85,51 @@ end
 function CustomDerivs(data,derivs!,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25)
     CustomDerivatives(data,derivs!,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l)
 end
-    
 
+"""
+    CustomDerivatives(data,step,initial_parameters,priors;kwargs ... )
+
+When a function priors is supplied its value will be added to the loss function as a penalty term for user specified paramters. It should take the a single NamedTuple `p` as an argument penelties for each paramter should be calcualted by accessing `p` with the period operator.
+    
+The prior function can be used to nudge the fitted model toward prior expectations for a paramter value. For example, the following function increases the loss when a parameter `p.r` has a value other than 1.5, nad a second parameter `p.beta` is greater than zeros. 
+
+```julia 
+function priors(p)
+    l = 0.01*(p.r - 1.5)^2
+    l += 0.01*(p.beta)^2
+    return l
+end 
+```
+"""
+function CustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,priors::Function;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+    # convert data
+    N, dims, T, times, data, dataframe = process_data(data)
+    
+    # generate submodels 
+    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),dims,l,extrap_rho)
+    process_loss = ProcessMSE(N,T, proc_weight)
+    observation_model = Identity()
+    observation_loss = ObservationMSE(N,obs_weight)
+    process_regularization = L2(initial_parameters,weight=reg_weight)
+    if reg_type == "L1"
+        process_regularization = L1(initial_parameters,weight=reg_weight)
+    elseif reg_type != "L2"
+        println("Invalid regularization type - defaulting to L2")
+    end
+    observation_regularization = no_reg()
+    
+    # paramters vector
+    parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+
+    # loss function 
+    loss_ = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+    loss_function = parameters -> loss_(parameters) + priors(parameters.process_model)
+    # model constructor
+    constructor = data -> CustomDerivatives(data,derivs!,initial_parameters,priors;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
+    
+    return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,constructor)
+
+end 
     
 
 """
@@ -96,7 +139,7 @@ When a dataframe `X` is supplied the model will run with covariates. the argumet
 
 When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)` where `x` is a vector with the value of the coarates at time `t`. 
 """
-function CustomDerivatives(data,X,derivs!,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+function CustomDerivatives(data::DataFrame,X::DataFrame,derivs!::Function,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
     
     # convert data
     N, dims, T, times, data, dataframe = process_data(data)
@@ -130,6 +173,37 @@ function CustomDerivatives(data,X,derivs!,initial_parameters;proc_weight=1.0,obs
 end
 
 
+function CustomDerivatives(data::DataFrame,X::DataFrame,derivs!::Function,initial_parameters,priors::Function;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+    # convert data
+    N, dims, T, times, data, dataframe = process_data(data)
+    covariates = interpolate_covariates(X)
+
+    # generate submodels 
+    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),covariates,dims,l,extrap_rho)
+    process_loss = ProcessMSE(N,T, proc_weight)
+    observation_model = Identity()
+    observation_loss = ObservationMSE(N,obs_weight)
+    process_regularization = L2(initial_parameters,weight=reg_weight)
+    if reg_type == "L1"
+        process_regularization = L1(initial_parameters,weight=reg_weight)
+    elseif reg_type != "L2"
+        println("Invalid regularization type - defaulting to L2")
+    end
+    observation_regularization = no_reg()
+    
+    # paramters vector
+    parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+
+    # loss function 
+    loss_ = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+    loss_function = parameters -> loss_(parameters) + priors(parameters.process_model)
+    # model constructor
+    constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters,priors;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type)
+    
+    return UDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
+                observation_loss,process_regularization,observation_regularization,constructor)
+   
+end 
 
 """
     CustomDiffernce(data,step,initial_parameters;kwrags...)
@@ -174,6 +248,50 @@ function CustomDiffernce(data,step,initial_parameters;proc_weight=1.0,obs_weight
     
 end
 
+"""
+    CustomDiffernce(data,step,initial_parameters,priors;kwargs ... )
+
+When a function priors is supplied its value will be added to the loss function as a penalty term for user specified paramters. It should take the a single NamedTuple `p` as an argument penelties for each paramter should be calcualted by accessing `p` with the period operator. 
+
+```julia 
+function priors(p)
+    l = 0.01*(p.r - 1.5)^2
+    l += 0.01*(p.beta)^2
+    return l
+end 
+```
+"""
+function CustomDiffernce(data::DataFrame,step,initial_parameters,priors::Function;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type="L2")
+    
+    # convert data
+    N, dims, T, times, data, dataframe = process_data(data)
+    
+    # generate submodels 
+    process_model = DiscreteProcessModel(step,ComponentArray(initial_parameters),dims,l,extrap_rho)
+    process_loss = ProcessMSE(N,T, proc_weight)
+    observation_model = Identity()
+    observation_loss = ObservationMSE(N,obs_weight)
+    process_regularization = L2(initial_parameters,weight=reg_weight)
+    if reg_type == "L1"
+        process_regularization = L1(initial_parameters,weight=reg_weight)
+    elseif reg_type != "L2"
+        println("Invalid regularization type - defaulting to L2")
+    end
+    observation_regularization = no_reg()
+    
+    # paramters vector
+    parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+
+    # loss function 
+    loss_ = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+    loss_function = parameters -> loss_(parameters) + priors(parameters.process_model)
+    # model constructor
+    constructor = data -> CustomDiffernce(data,step,initial_parameters,priors;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type=reg_type)
+    
+    return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
+                observation_loss,process_regularization,observation_regularization,constructor)
+    
+end
 
 """
     CustomDiffernce(data,X,step,initial_parameters;kwargs ... )
@@ -182,7 +300,7 @@ When a dataframe `X` is supplied the model will run with covariates. the argumet
 
 When `X` is provided the step function must have the form `step(u,x,t,p)` where `x` is a vector with the value of the coarates at time `t`. 
 """
-function CustomDiffernce(data,X,step,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type = "L2")
+function CustomDiffernce(data::DataFrame,X::DataFrame,step,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type = "L2")
     
     # convert data
     N, dims, T, times, data, dataframe = process_data(data)
@@ -215,6 +333,39 @@ function CustomDiffernce(data,X,step,initial_parameters;proc_weight=1.0,obs_weig
     
 end
 
+
+function CustomDiffernce(data::DataFrame,X::DataFrame,step,initial_parameters,priors::Function;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type = "L2")
+    
+    # convert data
+    N, dims, T, times, data, dataframe = process_data(data)
+    covariates = interpolate_covariates(X)
+
+    # generate submodels 
+    process_model = DiscreteProcessModel(step,ComponentArray(initial_parameters),covariates,dims,l,extrap_rho)
+    process_loss = ProcessMSE(N,T, proc_weight)
+    observation_model = Identity()
+    observation_loss = ObservationMSE(N,obs_weight)
+    process_regularization = L2(initial_parameters,weight=reg_weight)
+    if reg_type == "L1"
+        process_regularization = L1(initial_parameters,weight=reg_weight)
+    elseif reg_type != "L2"
+        println("Invalid regularization type - defaulting to L2")
+    end
+    observation_regularization = no_reg()
+    
+    # paramters vector
+    parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+
+    # loss function 
+    loss_ = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+    loss_function = parameters -> loss_(parameters) + priors(parameters.process_model)
+    # model constructor
+    constructor = (data,X) -> CustomDiffernce(data,X,step,initial_parameters,priors;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type=reg_type)
+    
+    return UDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
+                observation_loss,process_regularization,observation_regularization,constructor)
+    
+end
 
 
 
