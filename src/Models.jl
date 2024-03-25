@@ -87,7 +87,7 @@ function CustomDerivs(data,derivs!,initial_parameters;proc_weight=1.0,obs_weight
 end
 
 """
-    CustomDerivatives(data,step,initial_parameters,priors;kwargs ... )
+    CustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,priors::Function;kwargs ... )
 
 When a function priors is supplied its value will be added to the loss function as a penalty term for user specified paramters. It should take the a single NamedTuple `p` as an argument penelties for each paramter should be calcualted by accessing `p` with the period operator.
     
@@ -133,7 +133,7 @@ end
     
 
 """
-    CustomDerivatives(data,X,derivs!,initial_parameters;kwargs ... )
+    CustomDerivatives(data::DataFrame,X::DataFrame,derivs!::Function,initial_parameters;kwargs ... )
 
 When a dataframe `X` is supplied the model will run with covariates. the argumetn `X` should have a column for time `t` with the vlaue fo time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included int he data frame. 
 
@@ -249,7 +249,7 @@ function CustomDiffernce(data,step,initial_parameters;proc_weight=1.0,obs_weight
 end
 
 """
-    CustomDiffernce(data,step,initial_parameters,priors;kwargs ... )
+    CustomDiffernce(data::DataFrame,step,initial_parameters,priors::Function;kwargs ... )
 
 When a function priors is supplied its value will be added to the loss function as a penalty term for user specified paramters. It should take the a single NamedTuple `p` as an argument penelties for each paramter should be calcualted by accessing `p` with the period operator. 
 
@@ -294,7 +294,7 @@ function CustomDiffernce(data::DataFrame,step,initial_parameters,priors::Functio
 end
 
 """
-    CustomDiffernce(data,X,step,initial_parameters;kwargs ... )
+    CustomDiffernce(data::DataFrame,X::DataFrame,step,initial_parameters;kwargs ... )
 
 When a dataframe `X` is supplied the model will run with covariates. the argumetn `X` should have a column for time `t` with the vlaue fo time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included int he data frame. 
 
