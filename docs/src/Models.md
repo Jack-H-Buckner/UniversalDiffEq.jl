@@ -133,12 +133,12 @@ UniversalDiffEq.CustomDiffernce(data,step,initial_parameters;kwrags...)
 
 Covariates can also be added to UDE models by passing a data frame X and adding covariates as an argument to the derivs! function which has the new form `derivs!(du,u,X,p,t)`, where the third argument `X` are a vector of covariates. 
 ```@docs
-UniversalDiffEq.CustomDerivatives(data,X,derivs!,initial_parameters;kwargs ... )
+UniversalDiffEq.CustomDerivatives(data::DataFrame,X::DataFrame,derivs!::Function,initial_parameters;kwargs ... )
 ```
 
 Covarates can also be added to discrete time framework in the same way. the step function should have four arguments `step(u,X,t,)`.
 ```@docs
-UniversalDiffEq.CustomDiffernce(data,X,step,initial_parameters;kwargs ... )
+UniversalDiffEq.CustomDiffernce(data::DataFrame,X::DataFrame,step,initial_parameters;kwargs ... )
 ```
 ### Example
 
@@ -178,8 +178,8 @@ nothing
 ## adding prior information to custom models 
 
 ```@docs
-UniversalDiffEq.CustomDerivatives(data,step,initial_parameters,priors;kwargs ... )
-UniversalDiffEq.CustomDiffernce(data,step,initial_parameters,priors;kwargs ... )
+UniversalDiffEq.CustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,priors::Function;kwargs ... )
+UniversalDiffEq.CustomDiffernce(data::DataFrame,step,initial_parameters,priors::Function;kwargs ... )
 ```
 
 
