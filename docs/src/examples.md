@@ -192,19 +192,8 @@ Plots.plot!(forecast_LE[:,1],log.(forecast_LE[:,3]), width = 2,c=2, label = "For
 The limited entry regulations produced a qualitative change in the dynamics of the coupled human-natural system. prior to regulations our model predicts the system had oscillating dynamics around a stable equilibrium. These dynamics are characteristic of the bioeconomic cycles predicted by theoretical models of open-access fisheries. When regulated the cycling dynamics disappear and the model predicts declining harvest and increasing biomass over most of the state space.
 
 ```julia
-include("vectorfield.jl")
-
-RHS = UniversalDiffEq.get_right_hand_side(model)
-open_access_dynamics = (B,H) -> [RHS([H,B],[0],0)[2],RHS([H,B],[0],0)[1]]
-limited_entry_dynamics = (B,H) -> [RHS([H,B],[1],0)[2],RHS([H,B],[1],0)[1]]
-
-function vector_field_plot(field, title)
-    grid = meshgrid(20) ./ [5.0; 60] 
-    vectorfield2d(field, grid, arrowlength=0.25)
-    return Plots.plot!(ylabel = "Harvest", xlabel = "Abundance", title = title)
-end 
-p1 = vector_field_plot(open_access_dynamics, "Open Access")
-p2 = vector_field_plot(limited_entry_dynamics, "Regulated")
+p1 = vectorfield_and_nullclines(model,0, upper = [0.3,4.0], arrow_color = "blue",legend = :none,title = "Open Access",xlabel = "Harvest", ylabel = "Abundance")
+p2 = vectorfield_and_nullclines(model,1, upper = [0.3,4.0], arrow_color = "blue",legend = :topright,title = "Limited Entry",xlabel = "Harvest", ylabel = "")
 plt = plot(p1,p2)
 ```
 ![](figures/bioeconomic_phase_portrait.png)
