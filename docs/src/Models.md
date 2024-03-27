@@ -186,6 +186,4 @@ UniversalDiffEq.CustomDifference(data::DataFrame,step,initial_parameters,priors:
 ## Other functions
 ```@docs
 UniversalDiffEq.DiscreteUDE(data,step,init_parameters;kwargs ...)
-
-UniversalDiffEq.UDE(data,derivs,init_parameters;kwargs...)
 ```
