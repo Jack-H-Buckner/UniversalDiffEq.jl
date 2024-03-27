@@ -126,7 +126,7 @@ model = CustomDerivatives(data,loka_volterra_derivs!,initial_parameters)
 Discrete time models are onstructed ina similar way to continous time models. The user provides the right hand side of a differnce equation with the function `step` and initial paramters. The function `step(u,t,p)` takes three arguments the value of the state variables `u`, time `t` and model paramters `p`.
 
 ```@docs
-UniversalDiffEq.CustomDiffernce(data,step,initial_parameters;kwrags...)
+UniversalDiffEq.CustomDifference(data,step,initial_parameters;kwrags...)
 ```
 
 ## Adding Covariates
@@ -138,7 +138,7 @@ UniversalDiffEq.CustomDerivatives(data::DataFrame,X::DataFrame,derivs!::Function
 
 Covarates can also be added to discrete time framework in the same way. the step function should have four arguments `step(u,X,t,)`.
 ```@docs
-UniversalDiffEq.CustomDiffernce(data::DataFrame,X::DataFrame,step,initial_parameters;kwargs ... )
+UniversalDiffEq.CustomDifference(data::DataFrame,X::DataFrame,step,initial_parameters;kwargs ... )
 ```
 ### Example
 
@@ -179,7 +179,7 @@ nothing
 
 ```@docs
 UniversalDiffEq.CustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,priors::Function;kwargs ... )
-UniversalDiffEq.CustomDiffernce(data::DataFrame,step,initial_parameters,priors::Function;kwargs ... )
+UniversalDiffEq.CustomDifference(data::DataFrame,step,initial_parameters,priors::Function;kwargs ... )
 ```
 
 
