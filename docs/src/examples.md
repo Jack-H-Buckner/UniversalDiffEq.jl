@@ -52,10 +52,10 @@ gradient_decent!(model, verbos = true, maxiter = 250)
 BFGS!(model, verbos = true )
 ```
 
-We can use the `plot_state_estiamtes` and `plot_predictions` funcitons to test the fit of the model to the training data. 
+We can use the `plot_state_estimates` and `plot_predictions` funcitons to test the fit of the model to the training data. 
 
 ```julia
-UniversalDiffEq.plot_state_estiamtes(model)
+UniversalDiffEq.plot_state_estimates(model)
 ```
 ![](figures/regiem_changes_state_estiamtes.png)
 
@@ -155,10 +155,10 @@ gradient_decent!(model,verbos = true)
 BFGS!(model,verbos = true)
 nothing
 ```
-We can evaluate the model fit using `plot_state_estiamtes` and `plot_predictions` functions to compare the estimated state variables to the data and the predicted changes in state to the observed changes between time steps. The fitted model performs well by visual inspction on both metrics.
+We can evaluate the model fit using `plot_state_estimates` and `plot_predictions` functions to compare the estimated state variables to the data and the predicted changes in state to the observed changes between time steps. The fitted model performs well by visual inspction on both metrics.
 
 ```julia
-p1 = plot_state_estiamtes(model)
+p1 = plot_state_estimates(model)
 p2 = plot_predictions(model)
 plot(p1,p2, layout= (2,1))
 ```
