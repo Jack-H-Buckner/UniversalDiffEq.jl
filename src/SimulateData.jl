@@ -1,5 +1,5 @@
 
-function LokaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,sigma = 0.075)
+function LotkaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,sigma = 0.075)
     # set seed 
     Random.seed!(seed)
 
@@ -37,7 +37,7 @@ end
 
 
 
-function LorenzLokaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,sigma = 0.025)
+function LorenzLotkaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,sigma = 0.025)
     # set seed 
     Random.seed!(seed)
 
