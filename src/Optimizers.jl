@@ -16,7 +16,7 @@ function gradient_decent!(UDE; step_size = 0.05, maxiter = 500, verbose = false,
     # print value of loss function at each time step 
     if verbos
       verbose = true
-      print("kwarg: verbos is depricated use verbose")
+      @warn ("kwarg: verbos is depricated use verbose")
     end 
 
     if verbose
@@ -49,7 +49,7 @@ end
 function BFGS!(UDE; verbos = false,verbose = false, initial_step_norm = 0.01)
     if verbos
       verbose = true
-      print("kwarg: verbos is depricated use verbose")
+      @warn ("kwarg: verbos is depricated use verbose")
     end 
     if verbose
         callback = function (p, l; doplot = false)
