@@ -206,7 +206,7 @@ function CustomDerivatives(data::DataFrame,X::DataFrame,derivs!::Function,initia
 end 
 
 """
-    CustomDiffernce(data,step,initial_parameters;kwrags...)
+    CustomDifference(data,step,initial_parameters;kwrags...)
 
 Constructs a UDE model for the data set `data` based on user defined difference equation `step`. An initial guess of model parameters are supplied with the initia_parameters argument.
 ...
@@ -216,7 +216,7 @@ Constructs a UDE model for the data set `data` based on user defined difference 
 - init_parameters: A `NamedTuple` with the model parameters. Neural network parameters must be listed under the key `NN`.
 ...
 """
-function CustomDiffernce(data,step,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type="L2")
+function CustomDifference(data,step,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type="L2")
     
     # convert data
     N, dims, T, times, data, dataframe = process_data(data)
@@ -241,7 +241,7 @@ function CustomDiffernce(data,step,initial_parameters;proc_weight=1.0,obs_weight
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     
     # model constructor
-    constructor = data -> CustomDiffernce(data,step,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type=reg_type)
+    constructor = data -> CustomDifference(data,step,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type=reg_type)
     
     return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor)
@@ -249,7 +249,7 @@ function CustomDiffernce(data,step,initial_parameters;proc_weight=1.0,obs_weight
 end
 
 """
-    CustomDiffernce(data::DataFrame,step,initial_parameters,priors::Function;kwargs ... )
+    CustomDifference(data::DataFrame,step,initial_parameters,priors::Function;kwargs ... )
 
 When a function priors is supplied its value will be added to the loss function as a penalty term for user specified paramters. It should take the a single NamedTuple `p` as an argument penelties for each paramter should be calcualted by accessing `p` with the period operator. 
 
@@ -261,7 +261,7 @@ function priors(p)
 end 
 ```
 """
-function CustomDiffernce(data::DataFrame,step,initial_parameters,priors::Function;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type="L2")
+function CustomDifference(data::DataFrame,step,initial_parameters,priors::Function;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type="L2")
     
     # convert data
     N, dims, T, times, data, dataframe = process_data(data)
@@ -286,7 +286,7 @@ function CustomDiffernce(data::DataFrame,step,initial_parameters,priors::Functio
     loss_ = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     loss_function = parameters -> loss_(parameters) + priors(parameters.process_model)
     # model constructor
-    constructor = data -> CustomDiffernce(data,step,initial_parameters,priors;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type=reg_type)
+    constructor = data -> CustomDifference(data,step,initial_parameters,priors;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type=reg_type)
     
     return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor)
@@ -294,13 +294,13 @@ function CustomDiffernce(data::DataFrame,step,initial_parameters,priors::Functio
 end
 
 """
-    CustomDiffernce(data::DataFrame,X::DataFrame,step,initial_parameters;kwargs ... )
+    CustomDifference(data::DataFrame,X::DataFrame,step,initial_parameters;kwargs ... )
 
 When a dataframe `X` is supplied the model will run with covariates. the argumetn `X` should have a column for time `t` with the vlaue fo time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included int he data frame. 
 
 When `X` is provided the step function must have the form `step(u,x,t,p)` where `x` is a vector with the value of the coarates at time `t`. 
 """
-function CustomDiffernce(data::DataFrame,X::DataFrame,step,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type = "L2")
+function CustomDifference(data::DataFrame,X::DataFrame,step,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type = "L2")
     
     # convert data
     N, dims, T, times, data, dataframe = process_data(data)
@@ -326,7 +326,7 @@ function CustomDiffernce(data::DataFrame,X::DataFrame,step,initial_parameters;pr
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     
     # model constructor
-    constructor = (data,X) -> CustomDiffernce(data,X,step,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type=reg_type)
+    constructor = (data,X) -> CustomDifference(data,X,step,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type=reg_type)
     
     return UDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor)
@@ -334,7 +334,7 @@ function CustomDiffernce(data::DataFrame,X::DataFrame,step,initial_parameters;pr
 end
 
 
-function CustomDiffernce(data::DataFrame,X::DataFrame,step,initial_parameters,priors::Function;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type = "L2")
+function CustomDifference(data::DataFrame,X::DataFrame,step,initial_parameters,priors::Function;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type = "L2")
     
     # convert data
     N, dims, T, times, data, dataframe = process_data(data)
@@ -360,7 +360,7 @@ function CustomDiffernce(data::DataFrame,X::DataFrame,step,initial_parameters,pr
     loss_ = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     loss_function = parameters -> loss_(parameters) + priors(parameters.process_model)
     # model constructor
-    constructor = (data,X) -> CustomDiffernce(data,X,step,initial_parameters,priors;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type=reg_type)
+    constructor = (data,X) -> CustomDifference(data,X,step,initial_parameters,priors;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type=reg_type)
     
     return UDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor)
