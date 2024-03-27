@@ -102,7 +102,7 @@ function plot_predictions(UDE::MultiUDE,test_data::DataFrame)
 end
 
 
-function plot_state_estiamtes(UDE::MultiUDE)
+function plot_state_estimates(UDE::MultiUDE)
     
 
     plots = []

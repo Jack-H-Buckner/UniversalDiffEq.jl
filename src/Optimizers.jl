@@ -5,7 +5,7 @@
 
 # Minimizes the loss funtction of the `UDE` model with the gradent decent algorithm with a step size of `step_size` and a maimum number of itrations of `maxiter`. prints the value fo the loss funciton after each iteration when `maxiter` is true.   
 # """
-function gradient_decent!(UDE; step_size = 0.05, maxiter = 500, verbos = false)
+function gradient_decent!(UDE; step_size = 0.05, maxiter = 500, verbose = false)
     
     # set optimization problem 
     target = (x,p) -> UDE.loss_function(x)
@@ -14,7 +14,7 @@ function gradient_decent!(UDE; step_size = 0.05, maxiter = 500, verbos = false)
     optprob = Optimization.OptimizationProblem(optf, UDE.parameters)
     
     # print value of loss function at each time step 
-    if verbos
+    if verbose
         callback = function (p, l; doplot = false)
           print(round(l,digits = 3), " ")
           return false
@@ -39,11 +39,11 @@ end
 # """
 #     BFGS!(UDE, kwargs ...)
 
-# minimizes the loss function of the `UDE` model using the BFGS algorithm is the inital step norm equal to `initial_step_norm`. The funciton will print the value fo the loss function after each iteration when `verbos` is true.  
+# minimizes the loss function of the `UDE` model using the BFGS algorithm is the inital step norm equal to `initial_step_norm`. The funciton will print the value fo the loss function after each iteration when `verbose` is true.  
 # """
-function BFGS!(UDE; verbos = false, initial_step_norm = 0.01)
+function BFGS!(UDE; verbose = false, initial_step_norm = 0.01)
     
-    if verbos
+    if verbose
         callback = function (p, l; doplot = false)
           print(round(l,digits = 3), " ")
           return false

@@ -6,11 +6,11 @@ end
 
 
 """
-    plot_state_estiamtes(UDE::UDE)
+    plot_state_estimates(UDE::UDE)
 
 Plots the value of the state variables estiamted by the UDE model. 
 """
-function plot_state_estiamtes(UDE::UDE)
+function plot_state_estimates(UDE::UDE)
     
     plots = []
     for dim in 1:size(UDE.data)[1]
@@ -341,7 +341,7 @@ function leave_future_out(model; forecast_length = 10,  forecast_number = 10, sp
            
         if using_BFGS
             try
-                BFGS!(model_i,verbos = false)
+                BFGS!(model_i,verbose = false)
             catch
                 println("BFGS failed running gradient_decent")
                 gradient_decent!(model_i, step_size = 0.25*step_size, maxiter = 2*maxiter)                 
