@@ -61,7 +61,7 @@ function ContinuousProcessModel(derivs!,parameters, dims, l ,extrap_rho)
     
     function right_hand_side(u,parameters,t)
         du = zeros(length(u))
-        derivs!(du,u,p,t)
+        derivs!(du,u,parameters,t)
         return du
     end 
 
