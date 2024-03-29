@@ -168,3 +168,61 @@ function vectorfield_and_nullclines(UDE,X;t = 0, n = 15, lower = [0.0,0.0], uppe
     return p1
 end
 
+
+function root(UDE,lower,upper;t=0)
+    RHS = get_right_hand_side(UDE)
+    f = x -> RHS(x,t)
+    rt = nlsolve(f, (upper .- lower) .* rand(length(lower)) .+ lower)
+    return rt.zero
+end 
+
+
+function roots_(UDE,lower,upper,Ntrials;t=0,tol=10^-3)
+    roots = [root(UDE,lower,upper;t=0)]
+    for i in 1:Ntrials
+        rt = root(UDE,lower,upper;t=t)
+        new = true
+        for root in roots
+            if sum((root .- rt).^2) < tol
+                new = false
+            end
+        end
+        if new & !(any(rt .<lower)|any(rt .> upper))
+            push!(roots,rt)
+        end
+    end
+    return roots
+end
+
+function jacobian(UDE,x,t)
+    RHS = get_right_hand_side(UDE)
+    f = x -> RHS(x,t)
+    return FiniteDiff.finite_difference_jacobian(f,x)
+end
+
+function eigen_values(UDE,x,t)
+   J = jacobian(UDE,x,t)
+   magnitudes = real.(eigvals(J))
+   return magnitudes[argmax(magnitudes)]
+end
+
+"""
+    equilibrium_and_stability(UDE,lower,upper;t=0,Ntrials=100,tol=10^-3)
+
+Attempts to find all the equilibirum points for the UDE model between the upper and lower bound and return the real component of the leading eigen value to analyze stability. 
+
+...
+# kwargs
+- t = 0: The point in time where the UDE model is evaluated, only relevant for time aware UDEs.
+- Ntrials = 100: the number of initializations of the root finding algorithm. 
+- tol = 10^-3: The threshold euclidean distance between point beyond which a new equilbirum is sufficently differnt to be retained. 
+...
+"""
+function equilibrium_and_stability(UDE,lower,upper;t=0,Ntrials=100,tol=10^-3)
+    rts = roots_(UDE,lower,upper,Ntrails;t=t,tol = 10^-3)
+    srs = []
+    for rt in rts
+        push!(srs,eigen_values(UDE,rt,t))
+    end
+    return rts,srs
+end 
