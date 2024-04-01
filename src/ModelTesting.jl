@@ -210,7 +210,7 @@ function forecast(UDE, u0::AbstractVector{}, times::AbstractVector{})
     for t in 2:length(times)
         dt = times[t]-times[t-1]
         x = estimated_map(x,times[t-1],dt)
-        df[t,:] = vcat([times[t-1]],x)
+        df[t,:] = vcat([times[t]],x)
     end 
     
     return df
