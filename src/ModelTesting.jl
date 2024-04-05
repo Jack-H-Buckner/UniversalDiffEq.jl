@@ -188,7 +188,7 @@ end
 """
     forecast(UDE::UDE, u0::AbstractVector{}, times::AbstractVector{})
 
-predicitons from the trained model `UDE` starting at `u0` saving values at `times`.
+predicitons from the trained model `UDE` starting at `u0` saving values at `times`. Assumes `u0` is the value at time `times[1]`
 """
 function forecast(UDE, u0::AbstractVector{}, times::AbstractVector{})
     
@@ -216,7 +216,41 @@ function forecast(UDE, u0::AbstractVector{}, times::AbstractVector{})
     return df
 end 
 
+"""
+    forecast(UDE::UDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{})
 
+predicitons from the trained model `UDE` starting at `u0` saving values at `times`. Assumes `u0` occurs at time `t0` and `times` are all larger than `t0`.
+"""
+function forecast(UDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{})
+    
+    @assert all(times .> t0)
+    uhats = UDE.parameters.uhat
+    
+    umax = mapslices(max_, UDE.parameters.uhat, dims = 2);umax=reshape(umax,length(umax))
+    umin = mapslices(min_, UDE.parameters.uhat, dims = 2);umin=reshape(umin,length(umin))
+    umean = mapslices(mean_, UDE.parameters.uhat, dims = 2);umean=reshape(umean,length(umean))
+    
+    
+    #estimated_map = (x,dt) -> UDE.process_model.forecast(x,dt,UDE.parameters.process_model,umax,umin,umean)
+    estimated_map = (x,t,dt) -> UDE.process_model.forecast(x,t,dt,UDE.parameters.process_model,umax,umin,umean)
+    
+    
+    x = u0
+    df = zeros(length(times),length(x)+1)
+    
+    for t in eachindex(times)
+        dt = times[t] - t0
+        tinit = t0
+        if t > 1
+            dt = times[t]-times[t-1]
+            tinit = times[t-1]
+        end
+        x = estimated_map(x,tinit,dt)
+        df[t,:] = vcat([times[t]],x)
+    end 
+    
+    return df
+end 
 """
     plot_forecast(UDE::UDE, T::Int)
 
@@ -248,7 +282,7 @@ Plots the models forecast over the range of the test_data along with the value o
 function plot_forecast(UDE::UDE, test_data::DataFrame)
     u0 = UDE.parameters.uhat[:,end]
     N, dims, T, times, data, dataframe = process_data(test_data)
-    df = forecast(UDE, u0, times)
+    df = forecast(UDE, u0, UDE.times[end], times)
     plots = []
     for dim in 2:size(df)[2]
         plt = plot(df[:,1],df[:,dim],color = "grey", linestyle=:dash, label = "forecast", xlabel = "Time", ylabel = string("x", dim))
