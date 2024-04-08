@@ -1,11 +1,11 @@
 
 
 # """
-#     gradient_decent!(UDE, kwargs ...)
+#     gradient_descent!(UDE, kwargs ...)
 
-# Minimizes the loss funtction of the `UDE` model with the gradent decent algorithm with a step size of `step_size` and a maimum number of itrations of `maxiter`. prints the value fo the loss funciton after each iteration when `maxiter` is true.   
+# Minimizes the loss function of the `UDE` model with the gradient descent algorithm with a step size of `step_size` and a maximum number of iterations of `maxiter`. Prints the value of the loss function after each iteration when `maxiter` is true.   
 # """
-function gradient_decent!(UDE; step_size = 0.05, maxiter = 500, verbose = false, verbos = false)
+function gradient_descent!(UDE; step_size = 0.05, maxiter = 500, verbose = false, verbos = false)
     
     # set optimization problem 
     target = (x,p) -> UDE.loss_function(x)
@@ -40,7 +40,7 @@ function gradient_decent!(UDE; step_size = 0.05, maxiter = 500, verbose = false,
 end
 
 # adding time steps to skip predictiosn for to accomidate data sets with large gaps
-function gradient_decent!(UDE,t_skip; step_size = 0.05, maxiter = 500, verbose = false, verbos = false)
+function gradient_descent!(UDE,t_skip; step_size = 0.05, maxiter = 500, verbose = false, verbos = false)
     
   # set optimization problem 
   target = (x,p) -> UDE.loss_function(x,t_skip)
