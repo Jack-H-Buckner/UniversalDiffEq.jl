@@ -16,7 +16,7 @@ L(\hat{u}_t,u_t) = \frac{1}{\sigma \sqrt{2\pi}} e^{-\frac{1}{2}(\frac{\hat{u}_t-
 ``` 
 where ``\sigma`` is the variance of the prediction errors. Although in principle any likelihood can be used, we use the mean squared error in our base model specification. 
 
-The UDE models also include submodels to regularize the process and observation models. The regularization models are functions of the model parameters that add to the loss function. The regularization models are in effect priors on the model parameters. Regularization in especially important for neural network models. For example, our default model constructors apply `L2` regularization to neural network parameters in the process model
+The UDE models also include submodels to regularize the process and observation models. The regularization models are functions of the model parameters that add to the loss function. The regularization models are in effect priors on the model parameters. Regularization is especially important for neural network models to reduce overfitting to training data and make the models more generalizable. For example, our default model constructors apply `L2` regularization to neural network parameters in the process model
 ```math
 R(\theta_{proc}) = \omega ||\theta_{proc}||_{L2}
 ``` 
