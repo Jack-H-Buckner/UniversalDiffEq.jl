@@ -2,7 +2,7 @@
 """
     CustomDiffernce(data,step,initial_parameters;kwrags...)
 
-Depreciated spelling of CustomDifference()
+Deprecated spelling of CustomDifference()
 ...
 # Arguments
 - data: a DataFrame object with the time of observations in a column labeled `t` and the remaining columns the value of the state variables at each time point. 
@@ -18,7 +18,7 @@ end
 """
     plot_state_estiamtes(UDE::UDE)
 
-Depreciated spelling of plot_state_estimates() 
+Deprecated spelling of plot_state_estimates() 
 """
 function plot_state_estiamtes(UDE::UDE)
     @warn ("Depreciated due to spelling error, please use plot_state_estimates()")
