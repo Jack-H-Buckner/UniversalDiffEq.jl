@@ -38,13 +38,13 @@ function kfold_cv(model;k=10,leave_out=3)
 
         model_i = model.constructor(training_data[i])
                         
-        gradient_decent!(model_i, t_skip)   
+        gradient_descent!(model_i, t_skip)   
 
         try
             BFGS!(model_i, t_skip, verbose = false)
         catch
-            println("BFGS failed running gradient_decent")
-            gradient_decent!(model_i, t_skip, step_size = 0.01)                 
+            println("BFGS failed running gradient_descent")
+            gradient_descent!(model_i, t_skip, step_size = 0.01)                 
         end   
          
         # forecast

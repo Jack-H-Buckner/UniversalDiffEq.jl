@@ -317,7 +317,7 @@ function forecast_simulation_test(simulator,model,seed;train_fraction=0.9,step_s
     
     # build model 
     model = model.constructor(train_data)
-    gradient_decent!(model, step_size = step_size, maxiter = maxiter) 
+    gradient_descent!(model, step_size = step_size, maxiter = maxiter) 
     
     # forecast
     u0 =  model.parameters.uhat[:,end]
@@ -341,7 +341,7 @@ function forecast_simulation_SE(simulator,model,seed;train_fraction=0.9,step_siz
     
     # build model 
     model = model.constructor(train_data)
-    gradient_decent!(model, step_size = step_size, maxiter = maxiter) 
+    gradient_descent!(model, step_size = step_size, maxiter = maxiter) 
     
     # forecast
     u0 = model.parameters.uhat[:,end]
@@ -371,14 +371,14 @@ function leave_future_out(model; forecast_length = 10,  forecast_number = 10, sp
         
         model_i = model.constructor(training_data[i])
                         
-        gradient_decent!(model_i, step_size = step_size, maxiter = maxiter) 
+        gradient_descent!(model_i, step_size = step_size, maxiter = maxiter) 
            
         if using_BFGS
             try
                 BFGS!(model_i,verbose = false)
             catch
-                println("BFGS failed running gradient_decent")
-                gradient_decent!(model_i, step_size = 0.25*step_size, maxiter = 2*maxiter)                 
+                println("BFGS failed running gradient_descent")
+                gradient_descent!(model_i, step_size = 0.25*step_size, maxiter = 2*maxiter)                 
             end   
         end
                     
@@ -454,8 +454,8 @@ model - the UDE model to test
 forecast_length - the number of steps to calcualte the forecast performance (default 10).
 K - the number of forecast tests to run (default 10).
 spacing - the number of data points to skip between testing sets (default 1).
-step_size - step size parameter for the gradient decent algorithm (default 0.05).
-maxiter - number of iterations for gradent decent (default 500).. 
+step_size - step size parameter for the gradient descent algorithm (default 0.05).
+maxiter - number of iterations for gradient descent (default 500).. 
 ...
 """
 function leave_future_out_cv(model; forecast_length = 10,  K = 10, spacing = 1, step_size = 0.05, maxiter = 500)
