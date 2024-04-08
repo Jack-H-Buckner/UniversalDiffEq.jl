@@ -16,7 +16,7 @@ function gradient_descent!(UDE; step_size = 0.05, maxiter = 500, verbose = false
     # print value of loss function at each time step 
     if verbos
       verbose = true
-      @warn ("kwarg: verbos is depricated use verbose")
+      @warn ("kwarg: verbos is deprecated use verbose")
     end 
 
     if verbose
