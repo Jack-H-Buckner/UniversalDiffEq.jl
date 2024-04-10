@@ -142,12 +142,12 @@ function process_multi_data(data)
     dataframe = sort!(data,[series_alias_,time_alias_])
     
     times = dataframe[:,time_alias_]
-    series =dataframe[:,time_alias_]
+    series =dataframe[:,series_alias_]
     T = times[argmax(times)]
     
     N = length(times); dims = size(dataframe)[2] - 2
     inds_time = names(dataframe).!=time_alias_ 
-    inds_series = names(dataframe).!=series_alias_
+    inds_series = names(dataframe).!= series_alias_
     varnames = names(dataframe)[inds_time .& inds_series]
     data = transpose(Matrix(dataframe[:,varnames]))
 
