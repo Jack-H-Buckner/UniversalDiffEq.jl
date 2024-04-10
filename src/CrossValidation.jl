@@ -162,17 +162,17 @@ function kfold_cv(model::MultiUDE;k=10,leave_out=3,BFGS=false,maxiter=500)
         skip = skips[i]
         model_i = model.constructor(training_data[i])
                         
-        gradient_decent!(model_i, skip,maxiter=maxiter)   
+        gradient_descent!(model_i, skip,maxiter=maxiter)   
 
         if BFGS
             try
                 BFGS!(model_i, skip, verbose = false)
             catch
                 println("BFGS failed running gradient_decent")
-                gradient_decent!(model_i, skip, step_size = 0.01)                 
+                gradient_descent!(model_i, skip, step_size = 0.01)                 
             end  
         else
-            gradient_decent!(model_i, skip, step_size = 0.01,maxiter=maxiter)   
+            gradient_descent!(model_i, skip, step_size = 0.01,maxiter=maxiter)   
         end
         
         predictions =[]
