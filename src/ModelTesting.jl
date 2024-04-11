@@ -185,11 +185,11 @@ function mean_(x)
 end
 
 
-# """
-#     forecast(UDE::UDE, u0::AbstractVector{}, times::AbstractVector{})
+"""
+    forecast(UDE::UDE, u0::AbstractVector{}, times::AbstractVector{})
 
-# predicitons from the trained model `UDE` starting at `u0` saving values at `times`. Assumes `u0` is the value at time `times[1]`
-# """
+predicitons from the trained model `UDE` starting at `u0` saving values at `times`. Assumes `u0` is the value at time `times[1]`
+"""
 function forecast(UDE, u0::AbstractVector{}, times::AbstractVector{})
     
     uhats = UDE.parameters.uhat

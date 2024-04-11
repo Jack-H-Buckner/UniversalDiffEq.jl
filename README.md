@@ -14,7 +14,8 @@ using UniversalDiffEq
 ```
 
 # Tutorial 
-Please see the documentation (https://jack-h-buckner.github.io/UniversalDiffEq.jl/dev/).
+
+Please see the documentation for a detailed tutorial (https://jack-h-buckner.github.io/UniversalDiffEq.jl/dev/).
 
 # Acknowledgements
 <img alt="NSF Logo" width="200px" src="NSF_logo.png" />
