@@ -20,7 +20,7 @@ function LorenzLokaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,sigma
     return LorenzLotkaVolterra(plot=plot, seed=seed, datasize=datasize, T=T, sigma=sigma)
 end
 
-function gradient_decent!()
+function gradient_decent!(model)
     @warn ("Deprecated due to spelling error, please use gradient_descent!()")
-    return gradient_descent!()
+    return gradient_descent!(model)
 end
