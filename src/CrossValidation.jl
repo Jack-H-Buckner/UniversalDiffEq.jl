@@ -36,7 +36,12 @@ function kfold_cv(model::UDE;k=10,leave_out=3)
         
         t_skip = [t_skips[i]] 
 
-        model_i = model.constructor(training_data[i])
+        model_i = 0
+        if model.X == 0
+            model_i = model.constructor(training_data[i])
+        else
+            model_i = model.constructor(training_data[i],model.X)
+        end
                         
         gradient_descent!(model_i, t_skip)   
 
@@ -160,7 +165,13 @@ function kfold_cv(model::MultiUDE;k=10,leave_out=3,BFGS=false,maxiter=500)
     for i in 1:k #Threads.@threads 
         
         skip = skips[i]
-        model_i = model.constructor(training_data[i])
+        
+        model_i = 0
+        if model.X == 0
+            model_i = model.constructor(training_data[i])
+        else
+            model_i = model.constructor(training_data[i],model.X)
+        end
                         
         gradient_descent!(model_i, skip,maxiter=maxiter)   
 

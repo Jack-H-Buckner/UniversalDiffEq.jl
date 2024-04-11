@@ -372,7 +372,12 @@ function leave_future_out(model; forecast_length = 10,  forecast_number = 10, sp
     
     Threads.@threads for i in 1:forecast_number
         
-        model_i = model.constructor(training_data[i])
+        model_i = 0
+        if model.X == 0
+            model_i = model.constructor(training_data[i])
+        else
+            model_i = model.constructor(training_data[i],model.X)
+        end
                         
         gradient_descent!(model_i, step_size = step_size, maxiter = maxiter) 
            
