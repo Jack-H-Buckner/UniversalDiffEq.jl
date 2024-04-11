@@ -2,18 +2,20 @@
 
 [![Build Status](https://github.com/jarroyoe/UniversalDiffEq.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/jarroyoe/UniversalDiffEq.jl/actions/workflows/CI.yml?query=branch%3Amain)
 
-UniversalDiffEq.jl is a front-end for the [DiffEqFlux.jl](https://github.com/SciML/DiffEqFlux.jl) package. DiffEqFlux.jl focuses on the general implementation of [Universal Differential Equations](https://arxiv.org/abs/2001.04385) (UDEs). In particular, this front-end is thought of to implement UDEs as a tool for time series analysis and forecasting.
+UniversalDiffEq.jl builds [Universal Differential Equations](https://arxiv.org/abs/2001.04385) (UDEs) to learn nonlinear dynamics from time series data. The models and training routines are constructed to address several challenges common in ecology and environmental science. Pur package uses [DiffEqFlux.jl](https://github.com/SciML/DiffEqFlux.jl) to implement UDEs. Models built with UniversalDiffEq.jl are constructed within a state-space modeling framework that simultaneously accounts for imperfect (noisy) observations and stochastic (unpredictable) dynamics. UniversalDiffEq.jl also builds training routines based on a state-space framework that can improve the performance of UDEs on data sets from open systems whose dynamics are determined by a combination of endogenous feedback mechanisms and stochastic external forcing. 
 
-This front-end is intended for practitioners not necesarilly proficient in Julia. If you want to go deeper into the technical details of UDEs, please use DiffEqFlux.jl instead.
+The package provides one specific implementation of universal differential equations designed for systems with stochastic dynamics and noisy data. If you want to explore the technical details of UDEs and develop highly customized models, please use DiffEqFlux.jl instead.
 
 UniversalDiffEq.jl is currently under development and not on the Julia registry. To install and load it, open Julia and type the following code:
 
 ```
-]add https://github.com/jarroyoe/UniversalDiffEq.jl
+]add https://github.com/Jack-H-Buckner/UniversalDiffEq.jl
 using UniversalDiffEq
 ```
 
-# Tutorial coming soon!
+# Tutorial 
+
+Please see the documentation for a detailed tutorial (https://jack-h-buckner.github.io/UniversalDiffEq.jl/dev/).
 
 # Acknowledgements
 <img alt="NSF Logo" width="200px" src="NSF_logo.png" />

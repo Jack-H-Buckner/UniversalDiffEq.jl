@@ -146,6 +146,26 @@ function forecast(UDE::MultiUDE, u0::AbstractVector{}, times::AbstractVector{}, 
 end 
 
 
+function forecast(UDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{}, series)
+
+    estimated_map = (x,t,dt) -> UDE.process_model.predict(x,series,t,dt,UDE.parameters.process_model)[1]
+    x = u0
+
+    df = zeros(length(times),length(x)+2)
+    
+    for t in eachindex(times)
+        dt = times[t] - t0
+        tinit = t0
+        if t > 1
+            dt = times[t]-times[t-1]
+            tinit = times[t-1]
+        end
+        x = estimated_map(x,tinit,dt)
+        df[t,:] = vcat([series,times[t]],UDE.observation_model.link(x,UDE.parameters.observation_model))
+    end 
+    
+    return df
+end 
 
 
 function plot_forecast(UDE::MultiUDE, T::Int)

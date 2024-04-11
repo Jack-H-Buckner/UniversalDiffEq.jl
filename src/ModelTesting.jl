@@ -188,7 +188,7 @@ end
 """
     forecast(UDE::UDE, u0::AbstractVector{}, times::AbstractVector{})
 
-predicitons from the trained model `UDE` starting at `u0` saving values at `times`.
+predicitons from the trained model `UDE` starting at `u0` saving values at `times`. Assumes `u0` is the value at time `times[1]`
 """
 function forecast(UDE, u0::AbstractVector{}, times::AbstractVector{})
     
@@ -210,11 +210,48 @@ function forecast(UDE, u0::AbstractVector{}, times::AbstractVector{})
     for t in 2:length(times)
         dt = times[t]-times[t-1]
         x = estimated_map(x,times[t-1],dt)
-        df[t,:] = vcat([times[t-1]],x)
+        df[t,:] = vcat([times[t]],x)
     end 
     
     return df
 end 
+
+# """
+#     forecast(UDE::UDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{})
+
+# predicitons from the trained model `UDE` starting at `u0` saving values at `times`. Assumes `u0` occurs at time `t0` and `times` are all larger than `t0`.
+# """
+function forecast(UDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{})
+    
+    @assert all(times .> t0)
+    uhats = UDE.parameters.uhat
+    
+    umax = mapslices(max_, UDE.parameters.uhat, dims = 2);umax=reshape(umax,length(umax))
+    umin = mapslices(min_, UDE.parameters.uhat, dims = 2);umin=reshape(umin,length(umin))
+    umean = mapslices(mean_, UDE.parameters.uhat, dims = 2);umean=reshape(umean,length(umean))
+    
+    
+    #estimated_map = (x,dt) -> UDE.process_model.forecast(x,dt,UDE.parameters.process_model,umax,umin,umean)
+    estimated_map = (x,t,dt) -> UDE.process_model.forecast(x,t,dt,UDE.parameters.process_model,umax,umin,umean)
+    
+    
+    x = u0
+    df = zeros(length(times),length(x)+1)
+    
+    for t in eachindex(times)
+        dt = times[t] - t0
+        tinit = t0
+        if t > 1
+            dt = times[t]-times[t-1]
+            tinit = times[t-1]
+        end
+        x = estimated_map(x,tinit,dt)
+        df[t,:] = vcat([times[t]],x)
+    end 
+    
+    return df
+end 
+
 
 
 """
@@ -248,7 +285,7 @@ Plots the models forecast over the range of the test_data along with the value o
 function plot_forecast(UDE::UDE, test_data::DataFrame)
     u0 = UDE.parameters.uhat[:,end]
     N, dims, T, times, data, dataframe = process_data(test_data)
-    df = forecast(UDE, u0, times)
+    df = forecast(UDE, u0, UDE.times[end], times)
     plots = []
     for dim in 2:size(df)[2]
         plt = plot(df[:,1],df[:,dim],color = "grey", linestyle=:dash, label = "forecast", xlabel = "Time", ylabel = string("x", dim))
@@ -283,7 +320,7 @@ function forecast_simulation_test(simulator,model,seed;train_fraction=0.9,step_s
     
     # build model 
     model = model.constructor(train_data)
-    gradient_decent!(model, step_size = step_size, maxiter = maxiter) 
+    gradient_descent!(model, step_size = step_size, maxiter = maxiter) 
     
     # forecast
     u0 =  model.parameters.uhat[:,end]
@@ -307,7 +344,7 @@ function forecast_simulation_SE(simulator,model,seed;train_fraction=0.9,step_siz
     
     # build model 
     model = model.constructor(train_data)
-    gradient_decent!(model, step_size = step_size, maxiter = maxiter) 
+    gradient_descent!(model, step_size = step_size, maxiter = maxiter) 
     
     # forecast
     u0 = model.parameters.uhat[:,end]
@@ -335,16 +372,21 @@ function leave_future_out(model; forecast_length = 10,  forecast_number = 10, sp
     
     Threads.@threads for i in 1:forecast_number
         
-        model_i = model.constructor(training_data[i])
+        model_i = 0
+        if model.X == 0
+            model_i = model.constructor(training_data[i])
+        else
+            model_i = model.constructor(training_data[i],model.X)
+        end
                         
-        gradient_decent!(model_i, step_size = step_size, maxiter = maxiter) 
+        gradient_descent!(model_i, step_size = step_size, maxiter = maxiter) 
            
         if using_BFGS
             try
                 BFGS!(model_i,verbose = false)
             catch
-                println("BFGS failed running gradient_decent")
-                gradient_decent!(model_i, step_size = 0.25*step_size, maxiter = 2*maxiter)                 
+                println("BFGS failed running gradient_descent")
+                gradient_descent!(model_i, step_size = 0.25*step_size, maxiter = 2*maxiter)                 
             end   
         end
                     
@@ -420,8 +462,8 @@ model - the UDE model to test
 forecast_length - the number of steps to calcualte the forecast performance (default 10).
 K - the number of forecast tests to run (default 10).
 spacing - the number of data points to skip between testing sets (default 1).
-step_size - step size parameter for the gradient decent algorithm (default 0.05).
-maxiter - number of iterations for gradent decent (default 500).. 
+step_size - step size parameter for the gradient descent algorithm (default 0.05).
+maxiter - number of iterations for gradient descent (default 500).. 
 ...
 """
 function leave_future_out_cv(model; forecast_length = 10,  K = 10, spacing = 1, step_size = 0.05, maxiter = 500)

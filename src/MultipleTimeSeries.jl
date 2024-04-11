@@ -36,9 +36,46 @@ function init_single_loss(process_model,process_loss,observation_model,observati
         for t in 2:(size(dat)[2])
             u0 = uhat[:,t-1]
             u1 = uhat[:,t]
-            dt = times[t]-times[t-1]
-            u1hat, epsilon = process_model.predict(u0,series,times[t-1],dt,parameters.process_model) 
+            dt = time[t]-time[t-1]
+            u1hat, epsilon = process_model.predict(u0,series,time[t-1],dt,parameters.process_model) 
             L_proc += process_loss.loss(u1,u1hat,dt,parameters.process_loss)
+        end
+        
+        # regularization
+        L_reg = process_regularization.loss(parameters.process_model,parameters.process_regularization)
+
+        return L_obs + L_proc + L_reg
+    end
+    return loss
+end
+
+
+
+function init_single_loss_skip(process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization)
+    
+    function loss(parameters,times,data,series,starts,lengths,t_skip)
+        
+        # observation loss
+        L_obs = 0.0 
+        uhat = parameters.uhat[:,starts[series]:(starts[series]+lengths[series]-1)]
+        time = times[starts[series]:(starts[series]+lengths[series]-1)]
+        dat = data[:,starts[series]:(starts[series]+lengths[series]-1)]
+        for t in 1:(size(dat)[2])
+            yt = dat[:,t]
+            yhat = observation_model.link(uhat[:,t],parameters.observation_model)
+            L_obs += observation_loss.loss(yt, yhat,parameters.observation_model)
+        end
+    
+        # dynamics loss 
+        L_proc = 0
+        for t in 2:(size(dat)[2])
+            u0 = uhat[:,t-1]
+            u1 = uhat[:,t]
+            dt = time[t]-time[t-1]
+            if !(isapprox(time[t-1], t_skip))
+                u1hat, epsilon = process_model.predict(u0,series,time[t-1],dt,parameters.process_model) 
+                L_proc += process_loss.loss(u1,u1hat,dt,parameters.process_loss)
+            end
         end
         
         # regularization
@@ -60,6 +97,19 @@ function init_multi_loss_function(data,times,starts,lengths,process_model,proces
         end
         return L
     end   
+
+    single_loss_skip = init_single_loss_skip(process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization)
+    
+    function loss(parameters,skips)
+        L = 0
+        for i in eachindex(starts)
+            t_skip = skips.t[skips.series .== i] # assumes series are given IDs listed 1:n 
+            if length(t_skip) > 0
+                L+= single_loss_skip(parameters,times,data,i,starts,lengths,t_skip[1])
+            end
+        end
+        return L
+    end 
     
     return loss
         
@@ -144,7 +194,7 @@ function MultiNODE(data,X;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.
     
     loss_function = init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization)
     
-    constructor = (data) -> MultiNODE(data,X; hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type, l=l,extrap_rho=extrap_rho)
+    constructor = (data,X) -> MultiNODE(data,X; hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type, l=l,extrap_rho=extrap_rho)
     
     return MultiUDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,constructor)
     
@@ -181,7 +231,7 @@ function MultiNODESimplex(data,X;hidden_units=10,seed = 1,proc_weight=1.0,obs_we
 
     loss_function = init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization)
 
-    constructor = (data) -> MultiNODESimplex(data,X; hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type, l=l,extrap_rho=extrap_rho)
+    constructor = (data,X) -> MultiNODESimplex(data,X; hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type, l=l,extrap_rho=extrap_rho)
 
     return MultiUDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,constructor)
 
@@ -274,7 +324,7 @@ function MultiCustomDerivatives(data,X,derivs!,initial_parameters;proc_weight=1.
     loss_function = init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization)
 
     # model constructor
-    constructor = (data) -> MultiCustomDerivatives(data,X,derivs!,initial_parameters;
+    constructor = (data,X) -> MultiCustomDerivatives(data,X,derivs!,initial_parameters;
                     proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l)
     
     return MultiUDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,

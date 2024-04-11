@@ -1,6 +1,6 @@
 # Model analysis 
 
-UniversalDiffEq provides several functions to analyze the characteristics of the fitted models. The most basic of these is the `get_right_hand_side` funciton. This function takes a `UDE model as an argument and returns the right hand side of the fitted differntial or differnce equation. This function can then be treated like any dynamic model and analyzed for equilibria, stability, tippinging pionts and other phenomina of interest.  
+UniversalDiffEq.jl provides several functions to analyze the characteristics of the fitted models. The most basic of these is the `get_right_hand_side` function. This function takes a UDE model as an argument and returns the right-hand side of the fitted differential or difference equation. This function can then be treated like any dynamic model and analyzed for equilibria, stability, tipping points, and other phenomena of interest.  
 
 ```@docs
 UniversalDiffEq.get_right_hand_side(UDE::UDE)
