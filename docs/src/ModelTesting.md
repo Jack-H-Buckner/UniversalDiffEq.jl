@@ -35,6 +35,6 @@ UniversalDiffEq.leave_future_out_cv(model; forecast_length = 10, K = 10, spacing
 ## forecast functions
 
 ```@docs
-UniversalDiffEq.forecast(UDE::UDE, u0::AbstractVector{}, times::AbstractVector{})
-UniversalDiffEq.forecast(UDE::UDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{})
-```
+UniversalDiffEq.forecast :: Tuple{Any, AbstractVector, Real, AbstractVector}
+UniversalDiffEq.forecast :: Tuple{Any, AbstractVector, AbstractVector}
+```  
