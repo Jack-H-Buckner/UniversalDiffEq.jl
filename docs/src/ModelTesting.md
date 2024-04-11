@@ -31,10 +31,3 @@ Cross-validation is important for model comparison and hyper-parameter tuning. T
 ```@docs
 UniversalDiffEq.leave_future_out_cv(model; forecast_length = 10, K = 10, spacing = 1, step_size = 0.05, maxiter = 500)
 ```
-
-## forecast functions
-
-```@docs
-UniversalDiffEq.forecast :: Tuple{Any, AbstractVector, Real, AbstractVector}
-UniversalDiffEq.forecast :: Tuple{Any, AbstractVector, AbstractVector}
-```  
