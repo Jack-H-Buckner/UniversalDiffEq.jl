@@ -29,26 +29,26 @@ dims_out = 2
 hidden = 10
 
 
-# Define neural network with Lux.jl
+# Define neurla network with Lux.jl
 NN = Lux.Chain(Lux.Dense(dims_in, hidden, tanh), Lux.Dense(hidden,dims_out))
 rng = Random.default_rng() 
 NNparameters, NNstates = Lux.setup(rng,NN) 
 parameters = (NN = NNparameters,)
 
 
-# Define derivatives (time-dependent NODE)
+# Define derivatives (time dependent NODE)
 function derivs!(du,u,X,p,t)
-    inputs = [u[1],u[2],X[1],t/50-1.0]
-    vals = NN(inputs,p.NN,NNstates)[1]
+    vals = NN([u[1],u[2],X[1],t/50-1.0],p.NN,NNstates)[1]
     du[1] = vals[1]
     du[2] = vals[2]
     return du 
 end 
 
-model = UniversalDiffEq.CustomDerivatives(data[1:80,:],X,derivs!,parameters;proc_weight=2.5,obs_weight=10.0,reg_weight=10^-3.5)
+model = UniversalDiffEq.CustomDerivatives(data[1:80,:],X,derivs!,parameters;proc_weight=2.5,obs_weight=10.0,reg_weight=10^-2.5)
 
-gradient_descent!(model, verbose = true, maxiter = 250)
-BFGS!(model, verbose = true )
+gradient_descent!(model, verbose = true, maxiter = 500)
+gradient_descent!(model, verbose = true, maxiter = 500, step_size = 0.01)
+nothing
 ```
 
 We can use the `plot_state_estimates` and `plot_predictions` functions to test the fit of the model to the training data. 
@@ -74,25 +74,40 @@ To identify regime changes, we can extract the right-hand side of the ODE from t
 
 ```julia
 using Plots
-include("vectorfield.jl")
-RHS = UniversalDiffEq.get_right_hand_side(model)
-
-function vector_field_plot(t,X)
-    field = (x,y) -> RHS([y,x],[X],t)
-
-    grid = meshgrid(10) ./ 3 .- [2.0; 2]
-    vectorfield2d(field, grid, arrowlength=0.25)
-    return Plots.plot!(xlabel = "T(Algae)", ylabel = "T(Coral)", title = string("Time = ",t, " X = ", X))
-end 
-
-p1 = vector_field_plot(1,0.0)
-p2 = vector_field_plot(40,0.0)
-p3 = vector_field_plot(80.0,0.0)
-p4 = vector_field_plot(120,0.0)
+p1 = vectorfield_and_nullclines(model,[0.0];t = 0, n = 15, lower = [-2.0,-2.0], upper = [2.0,2.0])
+p2 = vectorfield_and_nullclines(model,[0.0];t = 50, n = 15, lower = [-2.0,-2.0], upper = [2.0,2.0])
+p3 = vectorfield_and_nullclines(model,[0.0];t = 100, n = 15, lower = [-2.0,-2.0], upper = [2.0,2.0])
+p4 = vectorfield_and_nullclines(model,[0.0];t = 150, n = 15, lower = [-2.0,-2.0], upper = [2.0,2.0])
+plt = plot(p1,p2,p3,p4)
+savefig(plt,"../docs/src/figures/regiem_changes_vector plots.png")
+plt
 ```
 ![](figures/regiem_changes_vector plots.png)
 
 The vector plots show clear changes in the dynamics of the system over time that likely constitute a regime change from a coral-dominated state an algae-dominated state. For small values of time, the vector fields all point to the upper left, which is high coral abundance and low algae abundance. Over time, however, a second equilibrium appears in the lower right, low coral and high algae abundance. The final vector field, t = 120, predicts 40 years into the future after the end of the time series. This plot predicts that the basin of attraction around the algae-dominated state will continue to grow, which is consistent with the data, and shows a sudden switch from high coral to high algae abundance.
+
+We can also illustrate the regiem shift in the system by plotting the equilibrium Coral and Algae abundances for differnt values of time using the `equilibrium_and_stability` function. The following code block uses `equilibrium_and_stability` to calcuate the equilibrium point of the model at each point in time and colors stable equilibrium points black and unstable equilibrium points white. This analysis shows the coral dominated equilibrium bifucating into two equilibrium points after time 120. som eadditional equilibrium points are also identified sporatically over time.
+```julia
+p1 = Plots.plot(ylims = (-2.5,2.0), ylabel = "Coral")
+p2 = Plots.plot(ylims = (-2.5,2.0), xlabel = "Time", ylabel = "Algae")
+for t in 1:2:180
+    print(t," ")
+    eqs,evals = equilibrium_and_stability(model,[0.0],[-2.0,-2.0],[2.0,2.0];t=t,Ntrials=50)
+    
+    for i in eachindex(eqs)
+        col = "white"
+        if evals[i] < 0
+            col = "black"
+        end
+        Plots.scatter!(p1,[t],eqs[i][2:2],color=col, label = "")
+        Plots.scatter!(p2,[t],eqs[i][1:1],color=col, label = "")
+    end
+end
+plt=Plots.plot(p1,p2,layout = (2,1))
+savefig(plt,"../docs/src/figures/regiem_changes_bifrucation_plot.png")
+plt
+```
+![](figures/regiem_changes_bifrucation_plot.png)
 
 ## Using UDEs to learn the dynamics of coupled human-natural systems
 

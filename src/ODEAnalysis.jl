@@ -151,8 +151,8 @@ function vectorfield_and_nullclines(UDE;t = 0, n = 15, lower = [0.0,0.0], upper 
     p1 = UniversalDiffEq.vectorfield2d(UDE, t = t, title = title , n = n, lower = lower , upper =  upper , arrowlength=arrowlength,arrow_color = arrow_color)
     Plots.plot!(p1,n21,x2,  label = L"\frac{dx}{dt} = 0", color= color_u1 ,width = 2,xlabel=xlabel,ylabel=ylabel)
     Plots.plot!(p1,n22,x2, label = L"\frac{dy}{dt} = 0", color= color_u2,width = 2,legend = legend)
-    Plots.plot!(p1,x1,n12,  label = "", color= color_u1,width = 2)
-    Plots.plot!(p1,x1,n11,  label ="", color=  color_u2,width = 2)
+    Plots.plot!(p1,x1,n12,  label = "", color= color_u2,width = 2)
+    Plots.plot!(p1,x1,n11,  label ="", color=  color_u1,width = 2)
     return p1
 end
 
@@ -167,8 +167,8 @@ function vectorfield_and_nullclines(UDE,X;t = 0, n = 15, lower = [0.0,0.0], uppe
     p1 = UniversalDiffEq.vectorfield2d(UDE,X, t = t, title = title , n = n, lower = lower , upper =  upper , arrowlength=arrowlength,arrow_color = arrow_color)
     Plots.plot!(p1,n21,x2,  label = L"\frac{dx}{dt} = 0", color= color_u1 ,width = 2,xlabel=xlabel,ylabel=ylabel)
     Plots.plot!(p1,n22,x2, label = L"\frac{dy}{dt} = 0", color= color_u2,width = 2,legend = legend)
-    Plots.plot!(p1,x1,n12,  label = "", color= color_u1,width = 2)
-    Plots.plot!(p1,x1,n11,  label ="", color=  color_u2,width = 2)
+    Plots.plot!(p1,x1,n12,  label = "", color= color_u2,width = 2)
+    Plots.plot!(p1,x1,n11,  label ="", color=  color_u1,width = 2)
     return p1
 end
 
@@ -188,6 +188,10 @@ function roots_(UDE,lower,upper,Ntrials;t=0,tol=10^-3)
         new = true
         for root in roots
             if sum((root .- rt).^2) < tol
+                new = false
+            end
+            
+            if any(isnan.(rt))
                 new = false
             end
         end
@@ -223,10 +227,74 @@ Attempts to find all the equilibirum points for the UDE model between the upper 
 ...
 """
 function equilibrium_and_stability(UDE,lower,upper;t=0,Ntrials=100,tol=10^-3)
-    rts = roots_(UDE,lower,upper,Ntrails;t=t,tol = 10^-3)
+    rts = roots_(UDE,lower,upper,Ntrials;t=t,tol = tol)
     srs = []
     for rt in rts
         push!(srs,eigen_values(UDE,rt,t))
+    end
+    return rts,srs
+end 
+
+
+
+function root(UDE,X,lower,upper;t=0)
+    RHS = get_right_hand_side(UDE)
+    f = x -> RHS(x,X,t)
+    rt = nlsolve(f, (upper .- lower) .* rand(length(lower)) .+ lower)
+    return rt.zero
+end 
+
+
+
+function roots_(UDE,X,lower,upper,Ntrials;t=0,tol=10^-3)
+    roots = [root(UDE,X,lower,upper;t=0)]
+    for i in 1:Ntrials
+        rt = root(UDE,X,lower,upper;t=t)
+        new = true
+        for root in roots
+            if sum((root .- rt).^2) < tol
+                new = false
+            end
+            if any(isnan.(rt))
+                new = false
+            end
+        end
+        if new & !(any(rt .<lower)|any(rt .> upper))
+            push!(roots,rt)
+        end
+    end
+    return roots
+end
+
+function jacobian(UDE,x,X,t)
+    RHS = get_right_hand_side(UDE)
+    f = x -> RHS(x,X,t)
+    return FiniteDiff.finite_difference_jacobian(f,x)
+end
+
+function eigen_values(UDE,x,X,t)
+   J = jacobian(UDE,x,X,t)
+   magnitudes = real.(eigvals(J))
+   return magnitudes[argmax(magnitudes)]
+end
+
+"""
+    equilibrium_and_stability(UDE,X,lower,upper;t=0,Ntrials=100,tol=10^-3)
+
+Attempts to find all the equilibirum points for the UDE model between the upper and lower bound and return the real component of the leading eigen value to analyze stability. 
+
+...
+# kwargs
+- t = 0: The point in time where the UDE model is evaluated, only relevant for time aware UDEs.
+- Ntrials = 100: the number of initializations of the root finding algorithm. 
+- tol = 10^-3: The threshold euclidean distance between point beyond which a new equilbirum is sufficently differnt to be retained. 
+...
+"""
+function equilibrium_and_stability(UDE,X,lower,upper;t=0,Ntrials=100,tol=10^-3)
+    rts = roots_(UDE,X,lower,upper,Ntrials;t=t,tol = tol)
+    srs = []
+    for rt in rts
+        push!(srs,eigen_values(UDE,rt,X,t))
     end
     return rts,srs
 end 
