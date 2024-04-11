@@ -194,7 +194,7 @@ function MultiNODE(data,X;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.
     
     loss_function = init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization)
     
-    constructor = (data) -> MultiNODE(data,X; hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type, l=l,extrap_rho=extrap_rho)
+    constructor = (data,X) -> MultiNODE(data,X; hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type, l=l,extrap_rho=extrap_rho)
     
     return MultiUDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,constructor)
     
@@ -231,7 +231,7 @@ function MultiNODESimplex(data,X;hidden_units=10,seed = 1,proc_weight=1.0,obs_we
 
     loss_function = init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization)
 
-    constructor = (data) -> MultiNODESimplex(data,X; hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type, l=l,extrap_rho=extrap_rho)
+    constructor = (data,X) -> MultiNODESimplex(data,X; hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type, l=l,extrap_rho=extrap_rho)
 
     return MultiUDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,constructor)
 
@@ -324,7 +324,7 @@ function MultiCustomDerivatives(data,X,derivs!,initial_parameters;proc_weight=1.
     loss_function = init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization)
 
     # model constructor
-    constructor = (data) -> MultiCustomDerivatives(data,X,derivs!,initial_parameters;
+    constructor = (data,X) -> MultiCustomDerivatives(data,X,derivs!,initial_parameters;
                     proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l)
     
     return MultiUDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
