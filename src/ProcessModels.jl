@@ -109,7 +109,7 @@ function DiscreteProcessModel(difference, parameters, covariates, dims, l, extra
     forecast = init_forecast(predict,l,extrap_rho)
     
     function right_hand_side(u,x,parameters,t)
-        return difference(u,x,t,parameters)
+        return difference(u,x,t,parameters) .- u
     end 
 
     return ProcessModel(parameters,predict, forecast, covariates,right_hand_side)
@@ -128,7 +128,7 @@ function DiscreteProcessModel(difference, parameters, dims, l, extrap_rho)
     forecast = init_forecast(predict,l,extrap_rho)
     
     function right_hand_side(u,parameters,t)
-        return difference(u,t,parameters)
+        return difference(u,x,t,parameters) .- u
     end 
 
     return ProcessModel(parameters,predict, forecast,x -> 0,right_hand_side)
@@ -166,7 +166,7 @@ function NeuralNetwork(dims,hidden,seed,extrap_rho,l)
     forecast = init_forecast(predict,l,extrap_rho)
 
     function right_hand_side(u,parameters,t)
-        return u .+ NN(u,parameters.NN,NN_states)[1]
+        return NN(u,parameters.NN,NN_states)[1]
     end 
     
     return NeuralNetwork(dims,NN,parameters,predict,forecast,right_hand_side)
