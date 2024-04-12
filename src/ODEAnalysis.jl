@@ -241,15 +241,15 @@ function root(UDE,X,lower,upper;t=0)
     RHS = get_right_hand_side(UDE)
     f = x -> RHS(x,X,t)
     rt = nlsolve(f, (upper .- lower) .* rand(length(lower)) .+ lower)
-    return rt.zero
+    return rt.zero, sum(abs.(f(rt.zero)))
 end 
 
 
 
-function roots_(UDE,X,lower,upper,Ntrials;t=0,tol=10^-3)
-    roots = [root(UDE,X,lower,upper;t=0)]
+function roots_(UDE,X,lower,upper,Ntrials;t=0,tol=10^-3, tol2 = 10^-8)
+    roots = [] #root(UDE,X,lower,upper;t=0)[1]
     for i in 1:Ntrials
-        rt = root(UDE,X,lower,upper;t=t)
+        rt, norm = root(UDE,X,lower,upper;t=t)
         new = true
         for root in roots
             if sum((root .- rt).^2) < tol
@@ -259,7 +259,7 @@ function roots_(UDE,X,lower,upper,Ntrials;t=0,tol=10^-3)
                 new = false
             end
         end
-        if new & !(any(rt .<lower)|any(rt .> upper))
+        if (new & !(any(rt .<lower)|any(rt .> upper))) & (norm < tol2)
             push!(roots,rt)
         end
     end
@@ -290,11 +290,13 @@ Attempts to find all the equilibirum points for the UDE model between the upper 
 - tol = 10^-3: The threshold euclidean distance between point beyond which a new equilbirum is sufficently differnt to be retained. 
 ...
 """
-function equilibrium_and_stability(UDE,X,lower,upper;t=0,Ntrials=100,tol=10^-3)
-    rts = roots_(UDE,X,lower,upper,Ntrials;t=t,tol = tol)
+function equilibrium_and_stability(UDE,X,lower,upper;t=0,Ntrials=100,tol=10^-3,tol2 = 10^-6)
+    rts = roots_(UDE,X,lower,upper,Ntrials;t=t,tol = tol, tol2=tol2)
     srs = []
     for rt in rts
         push!(srs,eigen_values(UDE,rt,X,t))
     end
     return rts,srs
 end 
+
+
