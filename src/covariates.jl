@@ -1,11 +1,27 @@
 using Interpolations
 
-function interpolate_covariates(X)
+function interpolate_covariates(X::DataFrame)
     N, dims, T, times, data, dataframe = process_data(X)
     interpolations = [linear_interpolation(times, data[i,:],extrapolation_bc = Interpolations.Flat()) for i in 1:dims]
     function covariates(t)
         return [interpolation(t) for interpolation in interpolations]
     end 
+    return covariates
+end 
+
+
+function interpolate_covariates(X::AbstractVector{})
+
+    interpolations = []
+    for i in eachindex(X)
+        N, dims, T, times, data, dataframe = process_data(X[i])
+        push!(interpolations, linear_interpolation(times, data[1,:],extrapolation_bc = Interpolations.Flat()))
+    end
+
+    function covariates(t)
+        return [interpolation(t) for interpolation in interpolations]
+    end 
+
     return covariates
 end 
 
