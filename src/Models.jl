@@ -139,7 +139,7 @@ When a dataframe `X` is supplied the model will run with covariates. the argumet
 
 When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)` where `x` is a vector with the value of the coarates at time `t`. 
 """
-function CustomDerivatives(data::DataFrame,X::DataFrame,derivs!::Function,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
     
     # convert data
     N, dims, T, times, data, dataframe = process_data(data)
@@ -173,7 +173,7 @@ function CustomDerivatives(data::DataFrame,X::DataFrame,derivs!::Function,initia
 end
 
 
-function CustomDerivatives(data::DataFrame,X::DataFrame,derivs!::Function,initial_parameters,priors::Function;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters,priors::Function;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
     # convert data
     N, dims, T, times, data, dataframe = process_data(data)
     covariates = interpolate_covariates(X)
@@ -300,7 +300,7 @@ When a dataframe `X` is supplied the model will run with covariates. the argumet
 
 When `X` is provided the step function must have the form `step(u,x,t,p)` where `x` is a vector with the value of the coarates at time `t`. 
 """
-function CustomDifference(data::DataFrame,X::DataFrame,step,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type = "L2")
+function CustomDifference(data::DataFrame,X,step,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type = "L2")
     
     # convert data
     N, dims, T, times, data, dataframe = process_data(data)
@@ -334,7 +334,7 @@ function CustomDifference(data::DataFrame,X::DataFrame,step,initial_parameters;p
 end
 
 
-function CustomDifference(data::DataFrame,X::DataFrame,step,initial_parameters,priors::Function;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type = "L2")
+function CustomDifference(data::DataFrame,X,step,initial_parameters,priors::Function;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type = "L2")
     
     # convert data
     N, dims, T, times, data, dataframe = process_data(data)
