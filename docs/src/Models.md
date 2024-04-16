@@ -174,6 +174,9 @@ init_parameters = (NN = NNparameters, r = 1.0, m = 0.5, theta = 0.5, beta = [0,0
 model = CustomDerivatives(training_data,X,derivs!;init_parameters;proc_weight=2.0,obs_weight=0.5,reg_weight=10^-4)
 nothing
 ```
+### Covariates with different sampling frequencies
+
+If you wish to build a model that has covariates that are measured at differnt points in time you can provide a list of data frames as the covariates argument. Each data frame in the list should have time in the first column and the value of one of the covariates in the second column. The model will interpolate each tie series with a linear spline. The value of the covariates can be accessed in the `derivs` and `step` functions for custom models by indexing into the covarates argument `X` the values will be listed in the same order as the data frames are provided in the covarates argument. 
 
 ## Adding prior information to custom models 
 
