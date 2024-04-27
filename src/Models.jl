@@ -40,7 +40,7 @@ end
 """
     CustomDerivatives(data,derivs!,initial_parameters;kwargs ... )
 
-Constructs a UDE model for the data set `data`  based on user defined derivitivs `derivs`. An initial guess of model parameters are supplied with the `initia_parameters` argument. 
+Constructs a UDE model for the data set `data`  based on user defined derivitives `derivs`. An initial guess of model parameters are supplied with the `initial_parameters` argument. 
 
 ...
 # Arguments
@@ -91,7 +91,7 @@ end
 
 When a function priors is supplied its value will be added to the loss function as a penalty term for user specified paramters. It should take the a single NamedTuple `p` as an argument penelties for each paramter should be calcualted by accessing `p` with the period operator.
     
-The prior function can be used to nudge the fitted model toward prior expectations for a paramter value. For example, the following function increases the loss when a parameter `p.r` has a value other than 1.5, nad a second parameter `p.beta` is greater than zeros. 
+The prior function can be used to nudge the fitted model toward prior expectations for a parameter value. For example, the following function increases the loss when a parameter `p.r` has a value other than 1.5, nad a second parameter `p.beta` is greater than zeros. 
 
 ```julia 
 function priors(p)
@@ -135,7 +135,7 @@ end
 """
     CustomDerivatives(data::DataFrame,X::DataFrame,derivs!::Function,initial_parameters;kwargs ... )
 
-When a dataframe `X` is supplied the model will run with covariates. the argumetn `X` should have a column for time `t` with the vlaue fo time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included int he data frame. 
+When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the vlaue fo time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included int he data frame. 
 
 When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)` where `x` is a vector with the value of the coarates at time `t`. 
 """
@@ -172,7 +172,18 @@ function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameter
 
 end
 
+"""
+    CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters,priors::Function;kwargs...)
 
+When a function priors is supplied its value will be added to the loss function as a penalty term for user specified paramters. It should take the a single NamedTuple `p` as an argument penelties for each paramter should be calcualted by accessing `p` with the period operator.
+    
+The prior function can be used to nudge the fitted model toward prior expectations for a parameter value. For example, the following function increases the loss when a parameter `p.r` has a value other than 1.5, nad a second parameter `p.beta` is greater than zeros. 
+        
+
+When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the vlaue fo time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included int he data frame. 
+
+When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)` where `x` is a vector with the value of the coarates at time `t`.
+"""
 function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters,priors::Function;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
     # convert data
     N, dims, T, times, data, dataframe = process_data(data)
@@ -208,7 +219,7 @@ end
 """
     CustomDifference(data,step,initial_parameters;kwrags...)
 
-Constructs a UDE model for the data set `data` based on user defined difference equation `step`. An initial guess of model parameters are supplied with the initia_parameters argument.
+Constructs a UDE model for the data set `data` based on user defined difference equation `step`. An initial guess of model parameters are supplied with the initial_parameters argument.
 ...
 # Arguments
 - data: a DataFrame object with the time of observations in a column labeled `t` and the remaining columns the value of the state variables at each time point. 
@@ -296,7 +307,7 @@ end
 """
     CustomDifference(data::DataFrame,X::DataFrame,step,initial_parameters;kwargs ... )
 
-When a dataframe `X` is supplied the model will run with covariates. the argumetn `X` should have a column for time `t` with the vlaue fo time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included int he data frame. 
+When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the vlaue fo time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included int he data frame. 
 
 When `X` is provided the step function must have the form `step(u,x,t,p)` where `x` is a vector with the value of the coarates at time `t`. 
 """
@@ -333,7 +344,15 @@ function CustomDifference(data::DataFrame,X,step,initial_parameters;proc_weight=
     
 end
 
+"""
+    CustomDifference(data::DataFrame,X,step,initial_parameters,priors::Function;kwargs...)
 
+ When a function priors is supplied its value will be added to the loss function as a penalty term for user specified paramters. It should take the a single NamedTuple `p` as an argument penelties for each paramter should be calcualted by accessing `p` with the period operator. 
+
+When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the vlaue fo time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included int he data frame. 
+
+When `X` is provided the step function must have the form `step(u,x,t,p)` where `x` is a vector with the value of the covariates at time `t`. 
+"""
 function CustomDifference(data::DataFrame,X,step,initial_parameters,priors::Function;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type = "L2")
     
     # convert data
