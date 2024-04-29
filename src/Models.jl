@@ -8,13 +8,13 @@ Basic data structure used to the model structure, parameters and data for UDE an
 - times: a vector of times for each observation
 - data: a matrix of observaitons at each time point
 - X: a DataFrame with any covariates used by the model
-- data_frame: a DataFrame with colums for the time of each observation and values of the state variables
+- data_frame: a DataFrame with columns for the time of each observation and values of the state variables
 - parameters: a ComponentArray that stores model parameters
 - loss_function: the loss function used to fit the model
 - process_model: a Julia mutable struct used to define model predictions 
-- process_loss: a Julia mutable struct used to measure the peroance of model predictions
-- observation_model: a Julia mutable struct used to predict observaitons given state variable estiamtes
-- observaiton_loss: a Julia mutable struct used to measure the performance of the observaiton model
+- process_loss: a Julia mutable struct used to measure the performance of model predictions
+- observation_model: a Julia mutable struct used to predict observaitons given state variable estimates
+- observaiton_loss: a Julia mutable struct used to measure the performance of the observation model
 - process_regularization: a Julia mutable struct used to store data needed for process model regularization
 - observation_regularization: a Julia mutable struct used to store data needed for observation model regularization
 - constructor: A function that initializes a UDE model with identical structure. 
@@ -40,13 +40,13 @@ end
 """
     CustomDerivatives(data,derivs!,initial_parameters;kwargs ... )
 
-Constructs a UDE model for the data set `data`  based on user defined derivitives `derivs`. An initial guess of model parameters are supplied with the `initial_parameters` argument. 
+Constructs a UDE model for the data set `data`  based on user defined derivatives `derivs`. An initial guess of model parameters are supplied with the `initial_parameters` argument. 
 
 ...
 # Arguments
 
 - data: a DataFrame object with the time of observations in a column labeled `t` and the remaining columns the value of the state variables at each time point. 
-- derivs: a Function of the form `derivs!(du,u,p,t)` where `u` is the value of the state variables, `p` are the model parameters, `t` is time, and du is updated with the value of the derivitives
+- derivs: a Function of the form `derivs!(du,u,p,t)` where `u` is the value of the state variables, `p` are the model parameters, `t` is time, and du is updated with the value of the derivatives
 - init_parameters: A `NamedTuple` with the model parameters. Neural network parameters must be listed under the key `NN`.
 ...
 """
@@ -89,7 +89,7 @@ end
 """
     CustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,priors::Function;kwargs ... )
 
-When a function priors is supplied its value will be added to the loss function as a penalty term for user specified paramters. It should take the a single NamedTuple `p` as an argument penelties for each paramter should be calcualted by accessing `p` with the period operator.
+When a function's priors is supplied its value will be added to the loss function as a penalty term for user specified parameters. It should take the a single NamedTuple `p` as an argument penalties for each paramter should be calculated by accessing `p` with the period operator.
     
 The prior function can be used to nudge the fitted model toward prior expectations for a parameter value. For example, the following function increases the loss when a parameter `p.r` has a value other than 1.5, nad a second parameter `p.beta` is greater than zeros. 
 
@@ -133,11 +133,11 @@ end
     
 
 """
-    CustomDerivatives(data::DataFrame,X::DataFrame,derivs!::Function,initial_parameters;kwargs ... )
+    CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters;kwargs ... )
 
-When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the vlaue fo time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included int he data frame. 
+When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included in the data frame. 
 
-When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)` where `x` is a vector with the value of the coarates at time `t`. 
+When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)` where `x` is a vector with the value of the covariates at time `t`. 
 """
 function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
     
@@ -172,18 +172,7 @@ function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameter
 
 end
 
-"""
-    CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters,priors::Function;kwargs...)
 
-When a function priors is supplied its value will be added to the loss function as a penalty term for user specified paramters. It should take the a single NamedTuple `p` as an argument penelties for each paramter should be calcualted by accessing `p` with the period operator.
-    
-The prior function can be used to nudge the fitted model toward prior expectations for a parameter value. For example, the following function increases the loss when a parameter `p.r` has a value other than 1.5, nad a second parameter `p.beta` is greater than zeros. 
-        
-
-When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the vlaue fo time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included int he data frame. 
-
-When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)` where `x` is a vector with the value of the coarates at time `t`.
-"""
 function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters,priors::Function;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
     # convert data
     N, dims, T, times, data, dataframe = process_data(data)
@@ -262,7 +251,7 @@ end
 """
     CustomDifference(data::DataFrame,step,initial_parameters,priors::Function;kwargs ... )
 
-When a function priors is supplied its value will be added to the loss function as a penalty term for user specified paramters. It should take the a single NamedTuple `p` as an argument penelties for each paramter should be calcualted by accessing `p` with the period operator. 
+When a function's priors is supplied its value will be added to the loss function as a penalty term for user specified paramters. It should take the a single NamedTuple `p` as an argument penalties for each parameter should be calcualted by accessing `p` with the period operator. 
 
 ```julia 
 function priors(p)
@@ -305,11 +294,11 @@ function CustomDifference(data::DataFrame,step,initial_parameters,priors::Functi
 end
 
 """
-    CustomDifference(data::DataFrame,X::DataFrame,step,initial_parameters;kwargs ... )
+    CustomDifference(data::DataFrame,X,step,initial_parameters;kwargs ... )
 
-When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the vlaue fo time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included int he data frame. 
+When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included in the data frame. 
 
-When `X` is provided the step function must have the form `step(u,x,t,p)` where `x` is a vector with the value of the coarates at time `t`. 
+When `X` is provided the step function must have the form `step(u,x,t,p)` where `x` is a vector with the value of the covariates at time `t`. 
 """
 function CustomDifference(data::DataFrame,X,step,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type = "L2")
     
@@ -344,15 +333,7 @@ function CustomDifference(data::DataFrame,X,step,initial_parameters;proc_weight=
     
 end
 
-"""
-    CustomDifference(data::DataFrame,X,step,initial_parameters,priors::Function;kwargs...)
 
- When a function priors is supplied its value will be added to the loss function as a penalty term for user specified paramters. It should take the a single NamedTuple `p` as an argument penelties for each paramter should be calcualted by accessing `p` with the period operator. 
-
-When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the vlaue fo time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included int he data frame. 
-
-When `X` is provided the step function must have the form `step(u,x,t,p)` where `x` is a vector with the value of the covariates at time `t`. 
-"""
 function CustomDifference(data::DataFrame,X,step,initial_parameters,priors::Function;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type = "L2")
     
     # convert data
@@ -391,7 +372,7 @@ end
 """
     NNDE(data;kwargs ...)
 
-Constructs a nonparametric discrete time model for the data set `data` using a single layer neural network to reporesent the systems dynamics. 
+Constructs a nonparametric discrete time model for the data set `data` using a single layer neural network to represent the systems dynamics. 
 """
 function NNDE(data;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
     
@@ -426,7 +407,7 @@ end
 """
     DiscreteUDE(data,step,init_parameters;kwargs ...)
 
-Constructs an additive `UDE` model with user supplied difference equations `step` and a single layer neural network. When `init_parameters` are provided for the use supplied function their values will be estiated in the training process.  
+Constructs an additive `UDE` model with user supplied difference equations `step` and a single layer neural network. When `init_parameters` are provided for the user supplied function their values will be estimated in the training process.  
 
 # Model equaitons
 ```math
@@ -436,11 +417,11 @@ x_{t+1} = f(x_t;\theta) + NN(x_t;w,b)
 ...
 # Key word arguments
 
-- proc_weight=1.0 : Weight given to the model predictiosn in loss funciton
-- obs_weight=1.0 : Weight given to the state estiamtes in loss function 
+- proc_weight=1.0 : Weight given to the model predictions in loss funciton
+- obs_weight=1.0 : Weight given to the state estimates in loss function 
 - reg_weight=10^-6 : Weight given to regularization in the loss function 
-- extrap_rho=0.0 : Asymthotic value of derivitives when extrapolating (negative when extrapolating higher than past observaitons, postive when extrapolating lower)
-- l=0.25 : rate at which extrapolations converge on asymthotic behavior
+- extrap_rho=0.0 : Asymptotic value of derivatives when extrapolating (negative when extrapolating higher than past observations, positive when extrapolating lower)
+- l=0.25 : rate at which extrapolations converge on asymptotic behavior
 ...
 """
 function DiscreteUDE(data,step,init_parameters;
@@ -531,7 +512,7 @@ end
 """
     NODE(data,X;kwargs ... )
 
-When a dataframe `X` is supplied the model will run with covariates. the argumetn `X` should have a column for time `t` with the value fo time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included in the data frame. 
+When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for values of time not included in the data frame. 
 
 """
 function NODE(data,X;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0 )

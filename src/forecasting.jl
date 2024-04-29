@@ -42,9 +42,9 @@ end
 """
     forecast_with_errors(UDE,x0,t0,T,N)
 
-Makes N forcast length dt*T using the model UDE where dt is the average interval between observations in the training data. 
+Makes N forcasts length dt*T using the model UDE where dt is the average interval between observations in the training data. 
 
-The forecast are made by making a deterministic forecasts of length dt. A noise term is added to the prediction by sampling from the process model residuals. The initial condition for each forecast is sampled by sampling a residual from the observaiton model and adding it to the initial dat point `x0`. 
+The forecasts are made by making a deterministic forecast of length dt. A noise term is added to the prediction by sampling from the process model residuals. The initial condition for each forecast is sampled by sampling a residual from the observaiton model and adding it to the initial data point `x0`. 
 """
 function forecast_with_errors(UDE,x0,t0,T,N)
     uhats = UDE.parameters.uhat

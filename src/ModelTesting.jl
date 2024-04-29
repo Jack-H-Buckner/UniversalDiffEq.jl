@@ -8,7 +8,7 @@ end
 """
     plot_state_estimates(UDE::UDE)
 
-Plots the value of the state variables estiamted by the UDE model. 
+Plots the value of the state variables estimated by the UDE model. 
 """
 function plot_state_estimates(UDE::UDE)
     
@@ -31,7 +31,7 @@ end
 """
     print_parameter_estimates(UDE::UDE)
 
-prints the value of the known dynamcis paramters. 
+prints the value of the known dynamcis parameters. 
 """
 function print_parameter_estimates(UDE::UDE)
     println("Estimated parameter values: ")
@@ -70,7 +70,7 @@ end
 """
     get_right_hand_side(UDE::UDE)
 
-Returns the right hand side of the differntial equation (or difference equaiton) used to build the process model.
+Returns the right hand side of the differential equation (or difference equation) used to build the process model.
 
 The fuction will take the state vector `u` and time `t` if the model does not include covariates. If covaraites are included the arguments are the state vector `u` , covariates vector `x`, and time `t`
 """
@@ -257,7 +257,7 @@ end
 """
     plot_forecast(UDE::UDE, T::Int)
 
-Plots the models forecast up to T time steps into the future from the last observaiton.  
+Plots the models forecast up to T time steps into the future from the last observation.  
 """
 function plot_forecast(UDE::UDE, T::Int)
     u0 = UDE.parameters.uhat[:,end]
@@ -454,7 +454,7 @@ end
 """
     leave_future_out_cv(model; forecast_length = 10,  K = 10, spacing = 1, step_size = 0.05, maxiter = 500)
     
-Runs K fold leave future out cross validation and returns the mean squared forecasting error and a plot to visulaize the model fits.
+Runs K fold leave future out cross validation and returns the mean squared forecasting error and a plot to visualize the model fits.
 
 ...
 # Arguments 

@@ -32,7 +32,7 @@ A Julia mutable struct that stores the functions and parameters for the process 
 # Elements
 - parameters: ComponentArray
 - predict: Function the predict one time step ahead
-- forecast: Function, a modified version of rpedict to imporve performace when extrapolating
+- forecast: Function, a modified version of predict to improve performance when extrapolating
 - covariates: Function that returns the value of the covariates at each point in time. 
 ...
 """

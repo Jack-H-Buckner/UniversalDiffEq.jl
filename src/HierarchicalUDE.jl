@@ -133,7 +133,7 @@ function get_series_info(data,nlevels)
 end 
 
 
-function initialize_state_estiamtes(data,dims)
+function initialize_state_estimates(data,dims)
     dims = size(data)[2]-2
     uhat = zeros(size(data)[1],dims)
     return uhat
