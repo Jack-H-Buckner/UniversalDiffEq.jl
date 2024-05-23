@@ -120,6 +120,21 @@ function predictions(UDE::UDE,test_data::DataFrame)
 end 
 
 
+function predict(UDE::UDE,test_data::DataFrame)
+     
+    N, dims, T, times, data, dataframe = process_data(test_data)
+    df = zeros(length(times)-1,dims+1)
+    
+    for t in 1:(length(times)-1)
+        u0 = data[:,t]
+        dt = times[t+1] - times[t]
+        uhat = UDE.process_model.predict(u0,UDE.times[t],dt,UDE.parameters.process_model)[1]
+        df[t,:] = vcat([times[t+1]],uhat)
+    end
+    names = vcat(["t"],[string("x",i) for i in 1:dims])
+    return DataFrame(df,names)
+end 
+
 
 """
     plot_predictions(UDE::UDE)
