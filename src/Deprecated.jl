@@ -20,7 +20,12 @@ function LorenzLokaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,sigma
     return LorenzLotkaVolterra(plot=plot, seed=seed, datasize=datasize, T=T, sigma=sigma)
 end
 
-function gradient_decent!(model)
+function gradient_decent!(UDE,t_skip; step_size = 0.05, maxiter = 500, verbose = false, verbos = false)
     @warn ("Deprecated due to spelling error, please use gradient_descent!()")
-    return gradient_descent!(model)
+    return gradient_descent!(UDE,t_skip; step_size = step_size, maxiter = maxiter, verbose = verbose, verbos = verbos)
+end
+
+function gradient_decent!(UDE; step_size = 0.05, maxiter = 500, verbose = false, verbos = false)
+    @warn ("Deprecated due to spelling error, please use gradient_descent!()")
+    return gradient_descent!(UDE; step_size = step_size, maxiter = maxiter, verbose = verbose, verbos = verbos)
 end

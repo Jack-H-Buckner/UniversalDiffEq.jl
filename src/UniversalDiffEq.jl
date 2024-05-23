@@ -1,6 +1,6 @@
 module UniversalDiffEq
 
-using DiffEqFlux, DifferentialEquations, Optimization, OptimizationOptimisers, OptimizationOptimJL, ComponentArrays, Lux, Random, StatsBase, DelimitedFiles, Plots, DataFrames, Distributions, Roots, LaTeXStrings, NLsolve, FiniteDiff, LinearAlgebra
+using DiffEqFlux, DifferentialEquations, Optimization, OptimizationOptimisers, OptimizationOptimJL, ComponentArrays, Lux, Random, StatsBase, DelimitedFiles, Plots, DataFrames, Distributions, Roots, LaTeXStrings, NLsolve, FiniteDiff, LinearAlgebra, OrdinaryDiffEq, LuxCUDA, DiffEqGPU
 
 include("covariates.jl")
 include("SimulateData.jl")

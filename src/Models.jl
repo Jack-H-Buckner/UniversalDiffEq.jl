@@ -17,7 +17,8 @@ Basic data structure used to the model structure, parameters and data for UDE an
 - observaiton_loss: a Julia mutable struct used to measure the performance of the observation model
 - process_regularization: a Julia mutable struct used to store data needed for process model regularization
 - observation_regularization: a Julia mutable struct used to store data needed for observation model regularization
-- constructor: A function that initializes a UDE model with identical structure. 
+- constructor: A function that initializes a UDE model with identical structure.
+- backend_device: A gpu or cpu device on which the requisite parts of the UDE will be stored (see Lux gpu backend for details) 
 ...
 """
 mutable struct UDE
@@ -34,6 +35,7 @@ mutable struct UDE
     process_regularization
     observation_regularization
     constructor
+    backend_device
 end
 
 
@@ -50,8 +52,10 @@ Constructs a UDE model for the data set `data`  based on user defined derivative
 - init_parameters: A `NamedTuple` with the model parameters. Neural network parameters must be listed under the key `NN`.
 ...
 """
-function CustomDerivatives(data,derivs!,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+function CustomDerivatives(data,derivs!,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2", enable_gpu=false)
     
+    gdev = gpu_device()
+
     # convert data
     N, dims, T, times, data, dataframe = process_data(data)
     
@@ -74,11 +78,18 @@ function CustomDerivatives(data,derivs!,initial_parameters;proc_weight=1.0,obs_w
     # loss function 
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     
+    #backend device loading
+    if(enable_gpu)
+        parameters = parameters |> gdev
+        data = data |> gdev
+
+    end
+
     # model constructor
-    constructor = data -> CustomDerivatives(data,derivs!,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
+    constructor = data -> CustomDerivatives(data,derivs!,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type,enable_gpu=enable_gpu)
     
     return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor)
+                observation_loss,process_regularization,observation_regularization,constructor, gdev)
 
 end
 
