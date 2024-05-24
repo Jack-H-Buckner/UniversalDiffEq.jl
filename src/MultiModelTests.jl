@@ -88,7 +88,7 @@ function predict(UDE::MultiUDE,test_data::DataFrame)
     
     df = dfs[1]
     for i in 2:length(starts)
-        df = vcat(pred,preds[i])
+        df = vcat(df,dfs[i])
     end
     names = vcat(["series","t"], [string("x",i) for i in 1:dims])
     return DataFrame(df,names)
