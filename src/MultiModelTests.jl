@@ -286,3 +286,18 @@ function phase_plane(UDE;u1s=-5:0.25:5, u2s=-5:0.25:5,T = 100)
     return plt
     
 end 
+
+
+function get_parameters(UDE::MultiUDE)
+    return UDE.parameters.process_model
+end
+
+
+function get_right_hand_side(UDE::MultiUDE)
+    pars = get_parameters(UDE)
+    if UDE.X == 0
+        return (u,t) -> UDE.process_model.right_hand_side(u,pars,t)
+    else
+        return (u,x,t) -> UDE.process_model.right_hand_side(u,x,pars,t)
+    end  
+end 
