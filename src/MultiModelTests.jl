@@ -296,8 +296,13 @@ end
 function get_right_hand_side(UDE::MultiUDE)
     pars = get_parameters(UDE)
     if UDE.X == 0
-        return (u,t) -> UDE.process_model.right_hand_side(u,pars,t)
+        return (u,i,t) -> UDE.process_model.right_hand_side(u,i,t,pars)
     else
-        return (u,x,t) -> UDE.process_model.right_hand_side(u,x,pars,t)
+        return (u,i,x,t) -> UDE.process_model.right_hand_side(u,i,x,t,pars)
     end  
+end 
+
+function get_predict(UDE::MultiUDE)
+    pars = get_parameters(UDE)
+    (u,i,t,dt) -> UDE.process_model.predict(u,i,t,dt,pars)
 end 

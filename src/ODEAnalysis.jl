@@ -300,3 +300,95 @@ function equilibrium_and_stability(UDE,X,lower,upper;t=0,Ntrials=100,tol=10^-3,t
 end 
 
 
+### mutiple time series ODE analysis 
+
+rhs = UniversalDiffEq.get_right_hand_side(model)
+
+
+using NLsolve, FiniteDiff, LinearAlgebra
+function root(UDE::MultiUDE,site,X,lower,upper;t=0)
+    RHS = get_right_hand_side(UDE)
+    f = x -> RHS(x,site,X,t)
+    rt = nlsolve(f, (upper .- lower) .* rand(length(lower)) .+ lower)
+    return rt.zero, sum(abs.(f(rt.zero)))
+end 
+
+
+
+function roots_(UDE::MultiUDE,site,X,lower,upper,Ntrials;t=0,tol=10^-3, tol2 = 10^-8)
+    roots = [] #root(UDE,X,lower,upper;t=0)[1]
+    for i in 1:Ntrials
+        rt, norm = root(UDE,site,X,lower,upper;t=t)
+        new = true
+        for root in roots
+            if sum((root .- rt).^2) < tol
+                new = false
+            end
+            if any(isnan.(rt))
+                new = false
+            end
+        end
+        if (new & !(any(rt .<lower)|any(rt .> upper))) & (norm < tol2)
+            push!(roots,rt)
+        end
+    end
+    return roots
+end
+
+
+function jacobian(UDE::MultiUDE,x,site,X,t)
+    RHS = get_right_hand_side(UDE)
+    f = x -> RHS(x,site,X,t)
+    return FiniteDiff.finite_difference_jacobian(f,x)
+end
+
+function eigen_values(UDE::MultiUDE,x,site,X,t)
+   J = jacobian(UDE,x,site,X,t)
+   magnitudes = real.(eigvals(J))
+   return magnitudes[argmax(magnitudes)]
+end
+
+"""
+    equilibrium_and_stability(UDE,X,lower,upper;t=0,Ntrials=100,tol=10^-3)
+
+Attempts to find all the equilibirum points for the UDE model between the upper and lower bound and return the real component of the leading eigen value to analyze stability. 
+
+...
+# kwargs
+- t = 0: The point in time where the UDE model is evaluated, only relevant for time aware UDEs.
+- Ntrials = 100: the number of initializations of the root finding algorithm. 
+- tol = 10^-3: The threshold euclidean distance between point beyond which a new equilbirum is sufficently different to be retained. 
+...
+"""
+function equilibrium_and_stability(UDE::MultiUDE,site,X,lower,upper;t=0,Ntrials=20,tol=10^-3,tol2 = 10^-6)
+    rts = roots_(UDE,site,X,lower,upper,Ntrials;t=t,tol = tol, tol2=tol2)
+    srs = []
+    for rt in rts
+        push!(srs,eigen_values(UDE,rt,site,X,t))
+    end
+    return rts,srs
+end 
+
+
+
+function arguments(UDE)
+    if (string(typeof(UDE)) .== "MultiUDE") | (string(typeof(UDE)) .== "UniversalDiffEq.MultiUDE")
+        if UDE.process_model.covariates == 0
+            println("Right hand side: f(u::Vector,site::Int,t:Float)")
+            println("process_model.predict: f(u::Vector,i::Int,t::Float,dt::Float,parameters::ComponentArray)")
+        else
+            println("Right hand side: f(u::Vector,site::Int,X::Vector,t:Float)")
+            println("process_model.predict: f(u::Vector,i::Int,t::Float,dt::Float,parameters::ComponentArray)")       
+        end
+    elseif (string(typeof(UDE)) .== "UDE") | (string(typeof(UDE)) .== "UniversalDiffEq.UDE")
+        if UDE.process_model.covariates == 0
+            println("Right hand side: f(u::Vector,t:Float)")
+            println("process_model.predict: f(u::Vector,t::Float,dt::Float,parameters::ComponentArray)")
+        else
+            println("Right hand side: f(u::Vector,X::Vector,t:Float)")
+            println("process_model.predict: f(u::Vector,t::Float,dt::Float,parameters::ComponentArray)")        
+        end
+    end
+    print("Not applicable the arguemnt is not aUDE model ")
+    return
+end
