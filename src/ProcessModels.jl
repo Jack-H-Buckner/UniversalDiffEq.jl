@@ -131,8 +131,20 @@ function DiscreteProcessModel(difference, parameters, dims, l, extrap_rho)
         return difference(u,x,t,parameters) .- u
     end 
 
-    return ProcessModel(parameters,predict, forecast,x -> 0,right_hand_side)
+    return ProcessModel(parameters,predict, forecast,0,right_hand_side)
 end 
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 mutable struct NeuralNetwork
@@ -304,7 +316,7 @@ function NODE_process(dims,hidden,seed,l,extrap_rho)
         return NN(u,parameters.NN,states)[1]
     end
 
-    return NODE_process(dims,IVP,derivs!,parameters,predict,forecast,x->0,right_hand_side)
+    return NODE_process(dims,IVP,derivs!,parameters,predict,forecast,[],right_hand_side)
     
 end 
 

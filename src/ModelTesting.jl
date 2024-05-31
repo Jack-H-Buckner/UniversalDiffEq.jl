@@ -83,6 +83,11 @@ function get_right_hand_side(UDE::UDE)
     end  
 end 
 
+function get_predict(UDE::UDE)
+    pars = get_parameters(UDE)
+    (u,t,dt) -> UDE.process_model.predict(u,t,dt,pars)
+end 
+
 
 function predictions(UDE::UDE)
  
@@ -516,3 +521,5 @@ function forecast_simulation_tests(N,simulator,model;train_fraction=0.9,step_siz
     return MSE
   
 end 
+
+
