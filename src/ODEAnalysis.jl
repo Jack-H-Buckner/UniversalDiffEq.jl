@@ -302,9 +302,6 @@ end
 
 ### mutiple time series ODE analysis 
 
-rhs = UniversalDiffEq.get_right_hand_side(model)
-
-
 using NLsolve, FiniteDiff, LinearAlgebra
 function root(UDE::MultiUDE,site,X,lower,upper;t=0)
     RHS = get_right_hand_side(UDE)
