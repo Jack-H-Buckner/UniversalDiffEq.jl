@@ -83,6 +83,11 @@ function get_right_hand_side(UDE::UDE)
     end  
 end 
 
+function get_predict(UDE::UDE)
+    pars = get_parameters(UDE)
+    (u,t,dt) -> UDE.process_model.predict(u,t,dt,pars)
+end 
+
 
 function predictions(UDE::UDE)
  
@@ -119,6 +124,21 @@ function predictions(UDE::UDE,test_data::DataFrame)
     return inits, obs, preds
 end 
 
+
+function predict(UDE::UDE,test_data::DataFrame)
+     
+    N, dims, T, times, data, dataframe = process_data(test_data)
+    df = zeros(length(times)-1,dims+1)
+    
+    for t in 1:(length(times)-1)
+        u0 = data[:,t]
+        dt = times[t+1] - times[t]
+        uhat = UDE.process_model.predict(u0,UDE.times[t],dt,UDE.parameters.process_model)[1]
+        df[t,:] = vcat([times[t+1]],uhat)
+    end
+    names = vcat(["t"],[string("x",i) for i in 1:dims])
+    return DataFrame(df,names)
+end 
 
 
 """
@@ -501,3 +521,5 @@ function forecast_simulation_tests(N,simulator,model;train_fraction=0.9,step_siz
     return MSE
   
 end 
+
+

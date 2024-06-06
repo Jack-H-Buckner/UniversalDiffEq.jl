@@ -67,6 +67,33 @@ function predictions(UDE::MultiUDE,test_data::DataFrame)
 end 
 
 
+function predict(UDE::MultiUDE,test_data::DataFrame)
+     
+    N, T, dims, data, times,  dataframe, series_ls, inds, starts, lengths = process_multi_data(test_data)
+    series_ls =  unique(UDE.data_frame.series)
+    dfs = [zeros(l-1,dims+2) for l in lengths]
+    for series in eachindex(starts)
+        time = times[starts[series]:(starts[series]+lengths[series]-1)]
+        dat = data[:,starts[series]:(starts[series]+lengths[series]-1)]
+        dat = mapslices(u -> UDE.observation_model.inv_link(u,UDE.parameters.observation_model), dat ,dims = 1) 
+        for t in 1:(lengths[series]-1)
+            u0 = dat[:,t];u1 = dat[:,t+1];dt = time[t+1] - time[t]
+            u1hat, epsilon = UDE.process_model.predict(u0,series_ls[series],time[t],dt,UDE.parameters.process_model) 
+            u0 = UDE.observation_model.link(u0,UDE.parameters.observation_model)
+            u1 = UDE.observation_model.link(u1,UDE.parameters.observation_model)
+            u1hat = UDE.observation_model.link(u1hat,UDE.parameters.observation_model)
+            dfs[series][t,:] = vcat([series,time[t+1]],u1hat)
+        end
+    end 
+    
+    df = dfs[1]
+    for i in 2:length(starts)
+        df = vcat(df,dfs[i])
+    end
+    names = vcat(["series","t"], [string("x",i) for i in 1:dims])
+    return DataFrame(df,names)
+end 
+
 function plot_predictions(UDE::MultiUDE)
  
     inits, obs, preds = predictions(UDE)
@@ -258,4 +285,24 @@ function phase_plane(UDE;u1s=-5:0.25:5, u2s=-5:0.25:5,T = 100)
     
     return plt
     
+end 
+
+
+function get_parameters(UDE::MultiUDE)
+    return UDE.parameters.process_model
+end
+
+
+function get_right_hand_side(UDE::MultiUDE)
+    pars = get_parameters(UDE)
+    if UDE.X == 0
+        return (u,i,t) -> UDE.process_model.right_hand_side(u,i,t,pars)
+    else
+        return (u,i,x,t) -> UDE.process_model.right_hand_side(u,i,x,t,pars)
+    end  
+end 
+
+function get_predict(UDE::MultiUDE)
+    pars = get_parameters(UDE)
+    (u,i,t,dt) -> UDE.process_model.predict(u,i,t,dt,pars)
 end 

@@ -41,6 +41,7 @@ mutable struct MultiProcessModel
     predict
     forecast
     covariates
+    right_hand_side
 end
 
 function MultiContinuousProcessModel(derivs!,parameters, dims, l ,extrap_rho)
@@ -58,8 +59,14 @@ function MultiContinuousProcessModel(derivs!,parameters, dims, l ,extrap_rho)
     end 
     
     forecast = init_Multiforecast(predict,l,extrap_rho)
+
+    function right_hand_side(u,i,t,parameters)
+        du = zeros(length(u))
+        derivs!(du,u,i,parameters,t)
+        return du
+    end 
     
-    return MultiProcessModel(parameters,predict, forecast,0)
+    return MultiProcessModel(parameters,predict, forecast, 0, right_hand_side)
 end 
 
 
@@ -79,7 +86,14 @@ function MultiContinuousProcessModel(derivs!,parameters,covariates,dims,l,extrap
     
     forecast = init_Multiforecast(predict,l,extrap_rho)
     
-    return MultiProcessModel(parameters,predict, forecast,0)
+    function right_hand_side(u,i,X,t,parameters)
+        du = zeros(length(u))
+        derivs!(du,u,i,X,parameters,t)
+        return du
+    end 
+    
+
+    return MultiProcessModel(parameters,predict, forecast,covariates,right_hand_side)
 end 
 
 
@@ -93,6 +107,7 @@ mutable struct MultiNODE_process
     predict::Function # neural network 
     forecast
     covariates
+    right_hand_side
 end 
 
 
@@ -125,8 +140,14 @@ function MultiNODE_process(dims,hidden,covariates,seed,l,extrap_rho)
 
     
    forecast = init_Multiforecast(predict,l,extrap_rho)
+
+   function right_hand_side(u,i,X,t,parameters)
+        du = NN(vcat(u,X),parameters.NN,states)[1]
+        return du
+    end 
+
     
-    return MultiNODE_process(dims,IVP,derivs!,parameters,predict,forecast,covariates)
+    return MultiNODE_process(dims,IVP,derivs!,parameters,predict,forecast,covariates,right_hand_side)
     
 end 
 
@@ -157,8 +178,14 @@ function MultiNODE_process(dims,hidden,seed,l,extrap_rho)
     end 
     
    forecast = init_Multiforecast(predict,l,extrap_rho)
+
+
+   function right_hand_side(u,i,t,parameters)
+        du = NN(u,parameters.NN,states)[1]
+        return du
+    end 
     
-    return MultiNODE_process(dims,IVP,derivs!,parameters,predict,forecast,x->0)
+    return MultiNODE_process(dims,IVP,derivs!,parameters,predict,forecast,0,right_hand_side)
     
 end 
 
