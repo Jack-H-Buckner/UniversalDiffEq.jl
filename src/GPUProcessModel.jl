@@ -8,7 +8,7 @@ function ContinuousProcessModel_GPU(derivs!,parameters, dims, l ,extrap_rho, gpu
         tspan =  (t,t+dt)
         sol = solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
                     saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
-        X = Array(sol)
+        X = Array(sol) |> gpu_device
         return (X[:,end], 0)
     end 
     

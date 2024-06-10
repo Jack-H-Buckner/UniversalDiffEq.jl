@@ -16,14 +16,14 @@ end
 
 function ObservationMSE(N, weight)
     parameters = NamedTuple()
-    loss = (u,uhat,parameters) -> weight*sum((u.-uhat).^2)/N
+    loss = (u,uhat,parameters) -> weight*CUDA.sum((u.-uhat).^2)/N
     return LossFunction(parameters,loss)
 end
 
 
 function ProcessMSE(N,T, weight)
     parameters = NamedTuple()
-    loss = (u,uhat,dt,parameters) -> T/dt*weight*sum((u.-uhat).^2)/N^2
+    loss = (u,uhat,dt,parameters) -> T/dt*weight*CUDA.sum((u.-uhat).^2)/N^2
     return LossFunction(parameters,loss)
 end
 
