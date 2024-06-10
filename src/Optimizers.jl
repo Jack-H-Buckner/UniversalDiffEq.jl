@@ -184,3 +184,30 @@ function BFGS!(UDE,t_skip; verbos = false,verbose = false, initial_step_norm = 0
   UDE.parameters = sol.u
   
 end 
+
+
+# """
+#     NUTS(UDE, kwargs ...)
+
+# performs Bayesian estimation on the parameters of an UDE using the NUTS sampling algorithm
+# """
+function NUTS!(UDE;delta = 0.45,samples = 500, progress = true)
+
+  target = (x,p) -> UDE.loss_function(x) * UDE.times
+  l(θ) = -target(θ,nothing) - sum(θ .* θ)
+  function dldθ(θ)
+    x, λ = Zygote.pullback(l,θ)
+    grad = first(λ(1))
+    return x, grad
+  end
+
+  metric = DiagEuclideanMetric(length(UDE.parameters))
+  h = Hamiltonian(metric, l, dldθ)
+  integrator = Leapfrog(find_good_stepsize(h, UDE.parameters))
+  kernel = HMCKernel(Trajectory{MultinomialTS}(integrator,GeneralisedNoUTurn()))
+  adaptor = StanHMCAdaptor(MassMatrixAdaptor(metric), StepSizeAdaptor(delta, integrator))
+  draws, stats = sample(h, kernel, UDE.parameters, samples, adaptor; progress = progress)
+
+  # assign parameters to model 
+  UDE.parameters = draws
+end
