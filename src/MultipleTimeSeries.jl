@@ -100,7 +100,7 @@ function init_multi_loss_function(data,times,starts,lengths,process_model,proces
 
     single_loss_skip = init_single_loss_skip(process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization)
     
-    function loss(parameters,skips)
+    function loss(parameters,skips::DataFrame)
         L = 0
         for i in eachindex(starts)
             t_skip = skips.t[skips.series .== i] # assumes series are given IDs listed 1:n 
@@ -110,6 +110,15 @@ function init_multi_loss_function(data,times,starts,lengths,process_model,proces
         end
         return L
     end 
+
+    function loss(parameters,inds::Vector)
+        L = 0
+        for i in inds
+            L+= single_loss(parameters,times,data,i,starts,lengths)
+        end
+        return L
+    end 
+    
     
     return loss
         
