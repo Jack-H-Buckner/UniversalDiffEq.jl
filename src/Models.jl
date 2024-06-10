@@ -509,6 +509,7 @@ function NODE(data;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_w
                 observation_loss,process_regularization,observation_regularization,constructor)
 end 
 
+
 """
     NODE(data,X;kwargs ... )
 

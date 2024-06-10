@@ -109,6 +109,51 @@ function BFGS!(UDE; verbos = false,verbose = false, initial_step_norm = 0.01)
     
 end 
 
+
+function sgd!(UDE::MultiUDE,nepoch::Int,iter::Int,m::Int,n::Int; step_size = 0.05, maxiter = 500, verbose = false, verbos = false)
+    
+  # set optimization problem 
+  inds = sample(1:m,n)
+  target = (x,p) -> UDE.loss_function(x,inds)
+  adtype = Optimization.AutoZygote()
+  optf = Optimization.OptimizationFunction(target, adtype)
+  optprob = Optimization.OptimizationProblem(optf, UDE.parameters)
+  
+  # print value of loss function at each time step 
+  if verbos
+    verbose = true
+    @warn ("kwarg: verbos is deprecated use verbose")
+  end 
+
+  if verbose
+      callback = function (p, l; doplot = false)
+        print(round(l,digits = 3), " ")
+        return false
+      end
+  else
+      callback = function (p, l; doplot = false)
+        return false
+      end 
+  end
+
+  # run optimizer
+  sol = Optimization.solve(optprob, OptimizationOptimisers.ADAM(step_size), callback = callback, maxiters = iter)
+  for i in 1:nepoch
+    inds = sample(1:m,n)
+    target = (x,p) -> UDE.loss_function(x,inds)
+    adtype = Optimization.AutoZygote()
+    optf = Optimization.OptimizationFunction(target, adtype)
+    optprob = Optimization.OptimizationProblem(optf, sol.u)
+    sol = Optimization.solve(optprob, OptimizationOptimisers.ADAM(step_size), callback = callback, maxiters = iter)
+    print(target(sol.u,0)," ")
+  end
+  # assign parameters to model 
+  UDE.parameters = sol.u
+  
+  return nothing
+end
+
+
 # adding time steps to skip predictiosn for to accomidate data sets with large gaps
 function BFGS!(UDE,t_skip; verbos = false,verbose = false, initial_step_norm = 0.01)
   if verbos
