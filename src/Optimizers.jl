@@ -139,3 +139,53 @@ function BFGS!(UDE,t_skip; verbos = false,verbose = false, initial_step_norm = 0
   UDE.parameters = sol.u
   
 end 
+
+# """
+#     NUTS!(UDE, kwargs ...)
+
+# performs Bayesian estimation on the parameters of an UDE using the NUTS sampling algorithm
+# """
+function NUTS!(UDE;delta = 0.45,samples = 500, burnin = Int(samples/10), verbose = true)
+
+  target = (x,p) -> UDE.loss_function(x) * UDE.times
+  l(θ) = -target(θ,nothing) - sum(θ .* θ)
+  function dldθ(θ)
+    x, λ = Zygote.pullback(l,θ)
+    grad = first(λ(1))
+    return x, grad
+  end
+
+  metric = DiagEuclideanMetric(length(UDE.parameters))
+  h = Hamiltonian(metric, l, dldθ)
+  integrator = Leapfrog(find_good_stepsize(h, UDE.parameters))
+  kernel = HMCKernel(Trajectory{MultinomialTS}(integrator,GeneralisedNoUTurn()))
+  adaptor = StanHMCAdaptor(MassMatrixAdaptor(metric), StepSizeAdaptor(delta, integrator))
+  draws, stats = sample(h, kernel, UDE.parameters, samples, adaptor, burnin; progress = verbose)
+
+  # assign parameters to model 
+  UDE.parameters = draws
+end
+
+# """
+#     SGLD!(UDE, kwargs ...)
+
+# performs Bayesian estimation on the parameters of an UDE using the SGLD sampling algorithm
+# """
+function SGLD!((UDE;samples = 500, burnin = Int(samples/10)),a = 10.0, b = 1000, γ = 0.9, verbose = true)
+  target = (x,p) -> UDE.loss_function(x) * UDE.times
+
+  parameters = Vector{typeof(UDE.parameters)}(undef, samples+1)
+  
+  for t in 2:(samples+1)
+    dL = gradient(x -> target(x,nothing), parameters[t-1])
+    ϵ = a*(b + t-1)^-γ
+    η = ϵ.*(randn(size(parameters[t-1])))
+
+    parameters[t] = parameters[t-1] .- .5ϵ*dL[1] + η
+    if verbose
+      print(round(target(parameters[t],nothing),digits = 3)," ")
+    end
+  end
+
+  UDE.parameters = parameters[(end-burnin):end]
+end

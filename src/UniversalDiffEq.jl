@@ -1,6 +1,6 @@
 module UniversalDiffEq
 
-using DiffEqFlux, OrdinaryDiffEq, Optimization, OptimizationOptimisers, OptimizationOptimJL, ComponentArrays, Lux, Random, StatsBase, DelimitedFiles, Plots, DataFrames, Distributions, Roots, LaTeXStrings, NLsolve, FiniteDiff, LinearAlgebra, LuxCUDA, DiffEqGPU
+using DiffEqFlux, OrdinaryDiffEq, Optimization, OptimizationOptimisers, OptimizationOptimJL, ComponentArrays, Lux, Random, StatsBase, DelimitedFiles, Plots, DataFrames, Distributions, Roots, LaTeXStrings, NLsolve, FiniteDiff, LinearAlgebra, AdvancedHMC, MCMCChains, LuxCUDA, DiffEqGPU
 
 include("covariates.jl")
 include("SimulateData.jl")
@@ -18,7 +18,8 @@ include("Optimizers.jl")
 include("CrossValidation.jl")
 include("Deprecated.jl")
 include("GPUBackend.jl")
+include("EasyModels.jl")
 
-export UDE, CustomDerivatives, CustomDiffernce, NNDE, DiscreteUDE, NODE, gradient_decent!, BFGS!, plot_state_estiamtes, plot_predictions, plot_forecast, leave_future_out_cv, LokaVolterra,plot_leave_future_out_cv, func, LorenzLokaVolterra, plot_covariates, vectorfield2d, nullclines2d, vectorfield_and_nullclines, get_right_hand_side, CustomDifference, plot_state_estimates, LotkaVolterra, LorenzLotkaVolterra, kfold_cv, gradient_descent!, equilibrium_and_stability
+export UDE, CustomDerivatives, CustomDiffernce, NNDE, DiscreteUDE, NODE, gradient_decent!, BFGS!, plot_state_estiamtes, plot_predictions, plot_forecast, leave_future_out_cv, LokaVolterra,plot_leave_future_out_cv, func, LorenzLokaVolterra, plot_covariates, vectorfield2d, nullclines2d, vectorfield_and_nullclines, get_right_hand_side, CustomDifference, plot_state_estimates, LotkaVolterra, LorenzLotkaVolterra, kfold_cv, gradient_descent!, equilibrium_and_stability, EasyNODE, EasyUDE, NUTS!, SGLD!
 
 end
