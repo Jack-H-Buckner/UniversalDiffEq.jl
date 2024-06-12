@@ -3,6 +3,10 @@
 function get_final_state(UDE::UDE)
     return UDE.parameters.uhat[:,end]
 end 
+function get_final_state(UDE::MultiUDE)
+    return UDE.parameters.uhat[:,end]
+end 
+
 
 
 """
@@ -45,6 +49,19 @@ function print_parameter_estimates(UDE::UDE)
         end
     end 
 end
+function print_parameter_estimates(UDE::MultiUDE)
+    println("Estimated parameter values: ")
+    i = 0
+    for name in keys(UDE.parameters.process_model)
+        i += 1
+        if name == "NN"
+        elseif name == :NN
+        else
+            println(name, ": ", round(UDE.parameters.process_model[name], digits = 3))
+        end
+    end 
+end
+
 
 
 """
@@ -55,6 +72,9 @@ Returns model parameters.
 function get_parameters(UDE::UDE)
     return UDE.parameters.process_model
 end
+function get_parameters(UDE::MultiUDE)
+    return UDE.parameters.process_model
+end
 
 
 """
@@ -63,6 +83,9 @@ end
 Returns value weights and biases of the neural network 
 """
 function get_NN_parameters(UDE::UDE)
+    return UDE.parameters.process_model.NN
+end
+function get_NN_parameters(UDE::MultiUDE)
     return UDE.parameters.process_model.NN
 end
 
@@ -83,7 +106,21 @@ function get_right_hand_side(UDE::UDE)
     end  
 end 
 
+function get_right_hand_side(UDE::MultiUDE)
+    pars = get_parameters(UDE)
+    if UDE.X == 0
+        return (u,t) -> UDE.process_model.right_hand_side(u,pars,t)
+    else
+        return (u,x,t) -> UDE.process_model.right_hand_side(u,x,pars,t)
+    end  
+end 
+
+
 function get_predict(UDE::UDE)
+    pars = get_parameters(UDE)
+    (u,t,dt) -> UDE.process_model.predict(u,t,dt,pars)
+end 
+function get_predict(UDE::MultiUDE)
     pars = get_parameters(UDE)
     (u,t,dt) -> UDE.process_model.predict(u,t,dt,pars)
 end 
@@ -210,7 +247,32 @@ end
 
 predicitons from the trained model `UDE` starting at `u0` saving values at `times`. Assumes `u0` is the value at time `times[1]`
 """
-function forecast(UDE, u0::AbstractVector{}, times::AbstractVector{})
+function forecast(UDE::UDE, u0::AbstractVector{}, times::AbstractVector{})
+    
+    uhats = UDE.parameters.uhat
+    
+    umax = mapslices(max_, UDE.parameters.uhat, dims = 2);umax=reshape(umax,length(umax))
+    umin = mapslices(min_, UDE.parameters.uhat, dims = 2);umin=reshape(umin,length(umin))
+    umean = mapslices(mean_, UDE.parameters.uhat, dims = 2);umean=reshape(umean,length(umean))
+    
+    
+    #estimated_map = (x,dt) -> UDE.process_model.forecast(x,dt,UDE.parameters.process_model,umax,umin,umean)
+    estimated_map = (x,t,dt) -> UDE.process_model.forecast(x,t,dt,UDE.parameters.process_model,umax,umin,umean)
+    
+    
+    x = u0
+    df = zeros(length(times),length(x)+1)
+    df[1,:] = vcat([times[1]],x)
+    
+    for t in 2:length(times)
+        dt = times[t]-times[t-1]
+        x = estimated_map(x,times[t-1],dt)
+        df[t,:] = vcat([times[t]],x)
+    end 
+    
+    return df
+end 
+function forecast(UDE::MultiUDE, u0::AbstractVector{}, times::AbstractVector{})
     
     uhats = UDE.parameters.uhat
     
@@ -241,7 +303,37 @@ end
 
 # predicitons from the trained model `UDE` starting at `u0` saving values at `times`. Assumes `u0` occurs at time `t0` and `times` are all larger than `t0`.
 # """
-function forecast(UDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{})
+function forecast(UDE::UDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{})
+    
+    @assert all(times .> t0)
+    uhats = UDE.parameters.uhat
+    
+    umax = mapslices(max_, UDE.parameters.uhat, dims = 2);umax=reshape(umax,length(umax))
+    umin = mapslices(min_, UDE.parameters.uhat, dims = 2);umin=reshape(umin,length(umin))
+    umean = mapslices(mean_, UDE.parameters.uhat, dims = 2);umean=reshape(umean,length(umean))
+    
+    
+    #estimated_map = (x,dt) -> UDE.process_model.forecast(x,dt,UDE.parameters.process_model,umax,umin,umean)
+    estimated_map = (x,t,dt) -> UDE.process_model.forecast(x,t,dt,UDE.parameters.process_model,umax,umin,umean)
+    
+    
+    x = u0
+    df = zeros(length(times),length(x)+1)
+    
+    for t in eachindex(times)
+        dt = times[t] - t0
+        tinit = t0
+        if t > 1
+            dt = times[t]-times[t-1]
+            tinit = times[t-1]
+        end
+        x = estimated_map(x,tinit,dt)
+        df[t,:] = vcat([times[t]],x)
+    end 
+    
+    return df
+end 
+function forecast(UDE::MultiUDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{})
     
     @assert all(times .> t0)
     uhats = UDE.parameters.uhat
