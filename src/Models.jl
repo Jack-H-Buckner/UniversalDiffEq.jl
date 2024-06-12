@@ -34,7 +34,6 @@ mutable struct UDE
     process_regularization
     observation_regularization
     constructor
-    bayesian
 end
 
 """
@@ -78,7 +77,7 @@ function CustomDerivatives(data,derivs!,initial_parameters;proc_weight=1.0,obs_w
     constructor = data -> CustomDerivatives(data,derivs!,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
     
     return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor,false)
+                observation_loss,process_regularization,observation_regularization,constructor)
 
 end
 
@@ -127,7 +126,7 @@ function CustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,
     # model constructor
     constructor = data -> CustomDerivatives(data,derivs!,initial_parameters,priors;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
     
-    return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,constructor,false)
+    return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,constructor)
 
 end 
     
@@ -168,7 +167,7 @@ function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameter
     constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type)
     
     return UDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor,false)
+                observation_loss,process_regularization,observation_regularization,constructor)
 
 end
 
@@ -201,7 +200,7 @@ function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameter
     constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters,priors;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type)
     
     return UDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor,false)
+                observation_loss,process_regularization,observation_regularization,constructor)
    
 end 
 
@@ -244,7 +243,7 @@ function CustomDifference(data,step,initial_parameters;proc_weight=1.0,obs_weigh
     constructor = data -> CustomDifference(data,step,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type=reg_type)
     
     return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor,false)
+                observation_loss,process_regularization,observation_regularization,constructor)
     
 end
 
@@ -289,7 +288,7 @@ function CustomDifference(data::DataFrame,step,initial_parameters,priors::Functi
     constructor = data -> CustomDifference(data,step,initial_parameters,priors;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type=reg_type)
     
     return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor,false)
+                observation_loss,process_regularization,observation_regularization,constructor)
     
 end
 
@@ -329,7 +328,7 @@ function CustomDifference(data::DataFrame,X,step,initial_parameters;proc_weight=
     constructor = (data,X) -> CustomDifference(data,X,step,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type=reg_type)
     
     return UDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor,false)
+                observation_loss,process_regularization,observation_regularization,constructor)
     
 end
 
@@ -363,7 +362,7 @@ function CustomDifference(data::DataFrame,X,step,initial_parameters,priors::Func
     constructor = (data,X) -> CustomDifference(data,X,step,initial_parameters,priors;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type=reg_type)
     
     return UDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor,false)
+                observation_loss,process_regularization,observation_regularization,constructor)
     
 end
 
@@ -397,7 +396,7 @@ function NNDE(data;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_w
     constructor = data -> NNDE(data;hidden_units=hidden_units,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
     
     return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-                                observation_loss,process_regularization,observation_regularization,constructor,false)
+                                observation_loss,process_regularization,observation_regularization,constructor)
     
 end 
 
@@ -456,7 +455,7 @@ function DiscreteUDE(data,step,init_parameters;
     
     
     return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor,false)
+                observation_loss,process_regularization,observation_regularization,constructor)
 end 
 
 
@@ -506,7 +505,7 @@ function NODE(data;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_w
     constructor = (data) -> NODE(data;hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight)
     
     return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor,false)
+                observation_loss,process_regularization,observation_regularization,constructor)
 end 
 
 
@@ -546,7 +545,7 @@ function NODE(data,X;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg
     constructor = (data,X) -> NODE(data,X;hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type,l=l,extrap_rho=extrap_rho)
     
     return UDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor,false)
+                observation_loss,process_regularization,observation_regularization,constructor)
 end 
 
 
@@ -674,7 +673,7 @@ end
 When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included in the data frame. 
 When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)` where `x` is a vector with the value of the covariates at time `t`. 
 """
-function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+function EasyUDE(data::DataFrame,X,derivs!::Function,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
     
     # convert data
     N, dims, T, times, data, dataframe = process_data(data)
@@ -718,3 +717,286 @@ function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameter
                 observation_loss,process_regularization,observation_regularization,constructor)
     return gradient_descent!(untrainedUDE, step_size = step_size, maxiter = maxiter, verbose = verbose)
 end
+
+"""
+    BayesianUDE
+
+Basic data structure used to the model structure, parameters and data for Bayesian UDE and NODE models. 
+...
+# Elements
+- times: a vector of times for each observation
+- data: a matrix of observaitons at each time point
+- X: a DataFrame with any covariates used by the model
+- data_frame: a DataFrame with columns for the time of each observation and values of the state variables
+- parameters: a ComponentArray that stores model parameters
+- loss_function: the loss function used to fit the model
+- process_model: a Julia mutable struct used to define model predictions 
+- process_loss: a Julia mutable struct used to measure the performance of model predictions
+- observation_model: a Julia mutable struct used to predict observaitons given state variable estimates
+- observaiton_loss: a Julia mutable struct used to measure the performance of the observation model
+- process_regularization: a Julia mutable struct used to store data needed for process model regularization
+- observation_regularization: a Julia mutable struct used to store data needed for observation model regularization
+- constructor: A function that initializes a UDE model with identical structure. 
+...
+"""
+mutable struct BayesianUDE
+    times
+    data
+    X
+    data_frame
+    parameters
+    loss_function
+    process_model
+    process_loss 
+    observation_model
+    observation_loss 
+    process_regularization
+    observation_regularization
+    constructor
+end
+
+"""
+    BayesianNODE(data;kwargs ... )
+Constructs a Bayesian continuous time model for the data set `data` using a single layer neural network to represent the systems dynamics. 
+"""
+function BayesianNODE(data;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0, step_size = 0.05, maxiter = 500, verbose = false)
+   
+    # convert data
+    N, dims, T, times, data, dataframe = process_data(data)
+    
+    # submodels
+    process_model = NODE_process(dims,hidden_units,seed,l,extrap_rho)
+    process_loss = ProcessMSE(N,T,proc_weight)
+    observation_model = Identity()
+    observation_loss = ObservationMSE(N,obs_weight)
+    process_regularization = no_reg()
+    observation_regularization = no_reg()
+    
+    
+    # paramters vector
+    parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+    parameters_vector = Vector{typeof(parameters)}(undef,1)
+    parameters_vector[1] = parameters
+    # loss function 
+    loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+    
+    
+    constructor = (data) -> NODE(data;hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight)
+    
+    return BayesianUDE(times,data,0,dataframe,parameters_vector,loss_function,process_model,process_loss,observation_model,observation_loss,
+            process_regularization,observation_regularization,constructor)
+end 
+"""
+    BayesianNODE(data,X;kwargs ... )
+
+When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for values of time not included in the data frame. 
+
+"""
+function BayesianNODE(data,X;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0 )
+    
+    # convert data
+    N, dims, T, times, data, dataframe = process_data(data)
+    covariates = interpolate_covariates(X)
+
+    # submodels
+    process_model = NODE_process(dims,hidden_units,covariates,seed,l,extrap_rho)
+    process_loss = ProcessMSE(N,T,proc_weight)
+    observation_model = Identity()
+    observation_loss = ObservationMSE(N,obs_weight)
+    process_regularization = no_reg()
+    if reg_type == "L1"
+        process_regularization = no_reg()
+    elseif reg_type != "L2"
+        print("Warning: Invalid choice of regularization: using L2 regularization")
+    end 
+    observation_regularization = no_reg()
+    
+    
+    # paramters vector
+    parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+    parameters_vector = Vector{typeof(parameters)}(undef,1)
+    parameters_vector[1] = parameters
+
+    # loss function 
+    loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+    
+    
+    constructor = (data,X) -> NODE(data,X;hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type,l=l,extrap_rho=extrap_rho)
+    
+    return BayesianUDE(times,data,X,dataframe,parameters_vector,loss_function,process_model,process_loss,observation_model,
+                observation_loss,process_regularization,observation_regularization,constructor)
+end 
+
+"""
+    BayesianCustomDerivatives(data,derivs!,initial_parameters;kwargs ... )
+
+Constructs a Bayesian UDE model for the data set `data`  based on user defined derivatives `derivs`. An initial guess of model parameters are supplied with the `initial_parameters` argument. 
+
+...
+# Arguments
+
+- data: a DataFrame object with the time of observations in a column labeled `t` and the remaining columns the value of the state variables at each time point. 
+- derivs: a Function of the form `derivs!(du,u,p,t)` where `u` is the value of the state variables, `p` are the model parameters, `t` is time, and du is updated with the value of the derivatives
+- init_parameters: A `NamedTuple` with the model parameters. Neural network parameters must be listed under the key `NN`.
+...
+"""
+function BayesianCustomDerivatives(data,derivs!,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+    
+    # convert data
+    N, dims, T, times, data, dataframe = process_data(data)
+    
+    # generate submodels 
+    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),dims,l,extrap_rho)
+    process_loss = ProcessMSE(N,T, proc_weight)
+    observation_model = Identity()
+    observation_loss = ObservationMSE(N,obs_weight)
+    process_regularization = no_reg()
+    if reg_type == "L1"
+        process_regularization = no_reg()
+    elseif reg_type != "L2"
+        println("Invalid regularization type - defaulting to L2")
+    end
+    observation_regularization = no_reg()
+    
+    # paramters vector
+    parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+    parameters_vector = Vector{typeof(parameters)}(undef,1)
+    parameters_vector[1] = parameters
+
+    # loss function 
+    loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+    
+    # model constructor
+    constructor = data -> CustomDerivatives(data,derivs!,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
+    
+    return BayesianUDE(times,data,X,dataframe,parameters_vector,loss_function,process_model,process_loss,observation_model,
+                observation_loss,process_regularization,observation_regularization,constructor)
+   
+
+end
+
+"""
+    CustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,priors::Function;kwargs ... )
+
+When a function's priors is supplied its value will be added to the loss function as a penalty term for user specified parameters. It should take the a single NamedTuple `p` as an argument penalties for each paramter should be calculated by accessing `p` with the period operator.
+    
+The prior function can be used to nudge the fitted model toward prior expectations for a parameter value. For example, the following function increases the loss when a parameter `p.r` has a value other than 1.5, nad a second parameter `p.beta` is greater than zeros. 
+
+```julia 
+function priors(p)
+    l = 0.01*(p.r - 1.5)^2
+    l += 0.01*(p.beta)^2
+    return l
+end 
+```
+"""
+function BayesianCustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,priors::Function;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+    # convert data
+    N, dims, T, times, data, dataframe = process_data(data)
+    
+    # generate submodels 
+    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),dims,l,extrap_rho)
+    process_loss = ProcessMSE(N,T, proc_weight)
+    observation_model = Identity()
+    observation_loss = ObservationMSE(N,obs_weight)
+    process_regularization = no_reg()
+    if reg_type == "L1"
+        process_regularization = no_reg()
+    elseif reg_type != "L2"
+        println("Invalid regularization type - defaulting to L2")
+    end
+    observation_regularization = no_reg()
+    
+    # paramters vector
+    parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+    parameters_vector = Vector{typeof(parameters)}(undef,1)
+    parameters_vector[1] = parameters
+
+    # loss function 
+    loss_ = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+    loss_function = parameters -> loss_(parameters) + priors(parameters.process_model)
+    # model constructor
+    constructor = data -> CustomDerivatives(data,derivs!,initial_parameters,priors;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
+    
+    return BayesianUDE(times,data,X,dataframe,parameters_vector,loss_function,process_model,process_loss,observation_model,
+                observation_loss,process_regularization,observation_regularization,constructor)
+   
+end 
+    
+
+"""
+    CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters;kwargs ... )
+
+When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included in the data frame. 
+
+When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)` where `x` is a vector with the value of the covariates at time `t`. 
+"""
+function BayesianCustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+    
+    # convert data
+    N, dims, T, times, data, dataframe = process_data(data)
+    covariates = interpolate_covariates(X)
+
+    # generate submodels 
+    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),covariates,dims,l,extrap_rho)
+    process_loss = ProcessMSE(N,T, proc_weight)
+    observation_model = Identity()
+    observation_loss = ObservationMSE(N,obs_weight)
+    process_regularization = no_reg()
+    if reg_type == "L1"
+        process_regularization = no_reg()
+    elseif reg_type != "L2"
+        println("Invalid regularization type - defaulting to L2")
+    end
+    observation_regularization = no_reg()
+    
+    # paramters vector
+    parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+    parameters_vector = Vector{typeof(parameters)}(undef,1)
+    parameters_vector[1] = parameters
+
+    # loss function 
+    loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+    
+    # model constructor
+    constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type)
+    
+    return BayesianUDE(times,data,X,dataframe,parameters_vector,loss_function,process_model,process_loss,observation_model,
+                observation_loss,process_regularization,observation_regularization,constructor)
+   
+end
+
+
+function BayesianCustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters,priors::Function;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+    # convert data
+    N, dims, T, times, data, dataframe = process_data(data)
+    covariates = interpolate_covariates(X)
+
+    # generate submodels 
+    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),covariates,dims,l,extrap_rho)
+    process_loss = ProcessMSE(N,T, proc_weight)
+    observation_model = Identity()
+    observation_loss = ObservationMSE(N,obs_weight)
+    process_regularization = no_reg()
+    if reg_type == "L1"
+        process_regularization = no_reg()
+    elseif reg_type != "L2"
+        println("Invalid regularization type - defaulting to L2")
+    end
+    observation_regularization = no_reg()
+    
+    # paramters vector
+    parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+    parameters_vector = Vector{typeof(parameters)}(undef,1)
+    parameters_vector[1] = parameters
+
+    # loss function 
+    loss_ = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+    loss_function = parameters -> loss_(parameters) + priors(parameters.process_model)
+    # model constructor
+    constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters,priors;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type)
+    
+    return BayesianUDE(times,data,X,dataframe,parameters_vector,loss_function,process_model,process_loss,observation_model,
+                observation_loss,process_regularization,observation_regularization,constructor)
+   
+end 
