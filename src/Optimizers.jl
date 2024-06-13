@@ -1,5 +1,3 @@
-
-
 # """
 #     gradient_descent!(UDE, kwargs ...)
 
@@ -172,7 +170,7 @@ end
 
 # performs Bayesian estimation on the parameters of an UDE using the SGLD sampling algorithm
 # """
-function SGLD!((UDE::BayesianUDE;samples = 500, burnin = Int(samples/10)),a = 10.0, b = 1000, γ = 0.9, verbose = true)
+function SGLD!(UDE::BayesianUDE;samples = 500, burnin = Int(samples/10),a = 10.0, b = 1000, γ = 0.9, verbose = true)
   UDE.parameters = UDE.parameters[end]
 
   target = (x,p) -> UDE.loss_function(x) * UDE.times

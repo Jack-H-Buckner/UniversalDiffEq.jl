@@ -1,4 +1,3 @@
-include("Optimizers.jl")
 """
     UDE
 
@@ -35,6 +34,45 @@ mutable struct UDE
     observation_regularization
     constructor
 end
+
+"""
+    BayesianUDE
+
+Basic data structure used to the model structure, parameters and data for Bayesian UDE and NODE models. 
+...
+# Elements
+- times: a vector of times for each observation
+- data: a matrix of observaitons at each time point
+- X: a DataFrame with any covariates used by the model
+- data_frame: a DataFrame with columns for the time of each observation and values of the state variables
+- parameters: a ComponentArray that stores model parameters
+- loss_function: the loss function used to fit the model
+- process_model: a Julia mutable struct used to define model predictions 
+- process_loss: a Julia mutable struct used to measure the performance of model predictions
+- observation_model: a Julia mutable struct used to predict observaitons given state variable estimates
+- observaiton_loss: a Julia mutable struct used to measure the performance of the observation model
+- process_regularization: a Julia mutable struct used to store data needed for process model regularization
+- observation_regularization: a Julia mutable struct used to store data needed for observation model regularization
+- constructor: A function that initializes a UDE model with identical structure. 
+...
+"""
+mutable struct BayesianUDE
+    times
+    data
+    X
+    data_frame
+    parameters
+    loss_function
+    process_model
+    process_loss 
+    observation_model
+    observation_loss 
+    process_regularization
+    observation_regularization
+    constructor
+end
+
+include("Optimizers.jl")
 
 """
     CustomDerivatives(data,derivs!,initial_parameters;kwargs ... )
@@ -548,7 +586,6 @@ function NODE(data,X;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg
                 observation_loss,process_regularization,observation_regularization,constructor)
 end 
 
-
 """
     EasyNODE(data;kwargs ... )
 Constructs a pretrained continuous time model for the data set `data` using a single layer neural network to represent the systems dynamics. 
@@ -585,6 +622,7 @@ function EasyNODE(data;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,r
     
     return gradient_descent!(untrainedNODE, step_size = step_size, maxiter = maxiter, verbose = verbose)
 end 
+
 """
     EasyNODE(data,X;kwargs ... )
 When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for values of time not included in the data frame. 
@@ -620,6 +658,7 @@ function EasyNODE(data,X;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0
         observation_loss,process_regularization,observation_regularization,constructor)
         return gradient_descent!(untrainedNODE, step_size = step_size, maxiter = maxiter, verbose = verbose)
 end 
+
 """
     EasyUDE(data,derivs!,initial_parameters;kwargs ... )
 Constructs a pretrained UDE model for the data set `data`  based on user defined derivatives `derivs`. An initial guess of model parameters are supplied with the `initial_parameters` argument. 
@@ -668,12 +707,13 @@ function EasyUDE(data,known_dynamics!,initial_parameters;hidden_units = 10, seed
                 observation_loss,process_regularization,observation_regularization,constructor)
     return gradient_descent!(untrainedUDE, step_size = step_size, maxiter = maxiter, verbose = verbose)
 end
+
 """
     EasyUDE(data::DataFrame,X,derivs!::Function,initial_parameters;kwargs ... )
 When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included in the data frame. 
 When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)` where `x` is a vector with the value of the covariates at time `t`. 
 """
-function EasyUDE(data::DataFrame,X,derivs!::Function,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+function EasyUDE(data::DataFrame,X,known_dynamics!::Function,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
     
     # convert data
     N, dims, T, times, data, dataframe = process_data(data)
@@ -718,42 +758,6 @@ function EasyUDE(data::DataFrame,X,derivs!::Function,initial_parameters;proc_wei
     return gradient_descent!(untrainedUDE, step_size = step_size, maxiter = maxiter, verbose = verbose)
 end
 
-"""
-    BayesianUDE
-
-Basic data structure used to the model structure, parameters and data for Bayesian UDE and NODE models. 
-...
-# Elements
-- times: a vector of times for each observation
-- data: a matrix of observaitons at each time point
-- X: a DataFrame with any covariates used by the model
-- data_frame: a DataFrame with columns for the time of each observation and values of the state variables
-- parameters: a ComponentArray that stores model parameters
-- loss_function: the loss function used to fit the model
-- process_model: a Julia mutable struct used to define model predictions 
-- process_loss: a Julia mutable struct used to measure the performance of model predictions
-- observation_model: a Julia mutable struct used to predict observaitons given state variable estimates
-- observaiton_loss: a Julia mutable struct used to measure the performance of the observation model
-- process_regularization: a Julia mutable struct used to store data needed for process model regularization
-- observation_regularization: a Julia mutable struct used to store data needed for observation model regularization
-- constructor: A function that initializes a UDE model with identical structure. 
-...
-"""
-mutable struct BayesianUDE
-    times
-    data
-    X
-    data_frame
-    parameters
-    loss_function
-    process_model
-    process_loss 
-    observation_model
-    observation_loss 
-    process_regularization
-    observation_regularization
-    constructor
-end
 
 """
     BayesianNODE(data;kwargs ... )
