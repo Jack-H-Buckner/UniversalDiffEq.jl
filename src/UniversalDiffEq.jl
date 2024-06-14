@@ -17,8 +17,9 @@ include("MultiModelTests.jl")
 include("Optimizers.jl")
 include("CrossValidation.jl")
 include("Deprecated.jl")
+include("GPUBackend.jl")
 
 
-export UDE, CustomDerivatives, CustomDiffernce, NNDE, DiscreteUDE, NODE, gradient_decent!, BFGS!, plot_state_estiamtes, plot_predictions, plot_forecast, leave_future_out_cv, LokaVolterra,plot_leave_future_out_cv, func, LorenzLokaVolterra, plot_covariates, vectorfield2d, nullclines2d, vectorfield_and_nullclines, get_right_hand_side, CustomDifference, plot_state_estimates, LotkaVolterra, LorenzLotkaVolterra, kfold_cv, gradient_descent!, equilibrium_and_stability, EasyNODE, EasyUDE, BayesianUDE, NUTS!, SGLD!
+export UDE, CustomDerivatives, CustomDiffernce, NNDE, DiscreteUDE, NODE, gradient_decent!, BFGS!, plot_state_estiamtes, plot_predictions, plot_forecast, leave_future_out_cv, LokaVolterra,plot_leave_future_out_cv, func, LorenzLokaVolterra, plot_covariates, vectorfield2d, nullclines2d, vectorfield_and_nullclines, get_right_hand_side, CustomDifference, plot_state_estimates, LotkaVolterra, LorenzLotkaVolterra, kfold_cv, gradient_descent!, equilibrium_and_stability, EasyNODE, EasyUDE, BayesianUDE, NUTS!, SGLD!, CustomDerivativesGPU
 
 end

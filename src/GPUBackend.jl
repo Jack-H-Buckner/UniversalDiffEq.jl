@@ -16,7 +16,7 @@ function init_loss_GPU(data,times,observation_model,observation_loss,process_mod
         # dynamics loss 
         L_proc = 0
         for t in 2:(size(data)[2])
-            u0 = parameters.uhat[:,t-1]  |> cpu_device
+            u0 = parameters.uhat[:,t-1]  |> cpu_device()
             u1 = parameters.uhat[:,t]
             dt = times[t]-times[t-1]
             #=
@@ -26,12 +26,12 @@ function init_loss_GPU(data,times,observation_model,observation_loss,process_mod
             println(typeof(u0))
             print("u1: ")
             println(typeof(u1))
-            =#
+            
             print("t: ")
             println(typeof(times[t]))
             print("dt: ")
             println(typeof(dt))
-            #=
+            
             =#
             u1hat, epsilon = process_model.predict(u0,times[t-1],dt,parameters.process_model)
             #=
@@ -86,8 +86,7 @@ function CustomDerivativesGPU(data,derivs!,initial_parameters, gpu_device;proc_w
     
     # convert data
     N, dims, T, times, data, dataframe = process_data(data)
-    data = data |> gpu_device
-    times = times |> gpu_device
+    
 
     # generate submodels 
     process_model = ContinuousProcessModel_GPU(derivs!,ComponentArray(initial_parameters),dims,l,extrap_rho, gpu_device)
@@ -106,6 +105,9 @@ function CustomDerivativesGPU(data,derivs!,initial_parameters, gpu_device;proc_w
     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     parameters = parameters |> gpu_device
     
+    data = data |> gpu_device
+    
+
     # loss function 
     loss_function = init_loss_GPU(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization, gpu_device)
     

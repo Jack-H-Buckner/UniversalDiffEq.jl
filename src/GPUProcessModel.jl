@@ -1,8 +1,7 @@
 function ContinuousProcessModel_GPU(derivs!,parameters, dims, l ,extrap_rho, gpu_device)
    
     u0 = zeros(dims) |> gpu_device; tspan = (0.0f0,1000.0f0) # assing value for the inital conditions and time span (these dont matter)
-    parameters = parameters |> gpu_device
-    IVP = ODEProblem(derivs!, u0, tspan, parameters)
+    IVP = ODEProblem(derivs!, u0, tspan, parameters |> gpu_device)
     
     function predict(u,t,dt,parameters) 
         tspan =  (t,t+dt)
