@@ -18,7 +18,7 @@ function kfold_rmse(standard_errors)
 end 
 
 
-function kfold_cv(model::UDE;k=10,leave_out=3)
+function kfold_cv(model::UDE;k=10,leave_out=3,BFGS = false,maxiter = 500)
     
     # get final time
     data = model.data_frame
@@ -43,15 +43,17 @@ function kfold_cv(model::UDE;k=10,leave_out=3)
             model_i = model.constructor(training_data[i],model.X)
         end
                         
-        gradient_descent!(model_i, t_skip)   
+        gradient_descent!(model_i, t_skip, maxiter = maxiter)   
 
-        try
-            BFGS!(model_i, t_skip, verbose = false)
-        catch
-            println("BFGS failed running gradient_descent")
-            gradient_descent!(model_i, t_skip, step_size = 0.01)                 
-        end   
-         
+        if BFGS
+            try
+                BFGS!(model_i, t_skip, verbose = false)
+            catch
+                println("BFGS failed running gradient_descent")
+                gradient_descent!(model_i, t_skip, step_size = 0.01)                 
+            end   
+        end
+        gradient_descent!(model_i, t_skip, maxiter = maxiter, step_size = 0.01)  
         # forecast
         u0 = model_i.parameters.uhat[:,starts[i]]
         times = testing_data[i].t
