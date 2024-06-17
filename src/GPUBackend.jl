@@ -1,4 +1,3 @@
-include("GPUProcessModel.jl")
 
 function init_loss_GPU(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization, gpu_device)
     # loss function 
@@ -64,7 +63,7 @@ end
 
 
 function CustomDerivativesGPU(data,derivs!,initial_parameters, gpu_device;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
-    
+    @warn ("GPU backend support is still experimental, and often slower than using a CPU. Use at own risk")
     # convert data
     N, dims, T, times, data, dataframe = process_data(data)
     
