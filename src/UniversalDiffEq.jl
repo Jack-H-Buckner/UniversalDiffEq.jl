@@ -1,6 +1,7 @@
 module UniversalDiffEq
 
-using DiffEqFlux, OrdinaryDiffEq, Optimization, OptimizationOptimisers, OptimizationOptimJL, ComponentArrays, Lux, Random, StatsBase, DelimitedFiles, Plots, DataFrames, Distributions, Roots, LaTeXStrings, NLsolve, FiniteDiff, LinearAlgebra, AdvancedHMC, MCMCChains, LuxCUDA, DiffEqGPU
+using DiffEqFlux, OrdinaryDiffEq, Optimization, OptimizationOptimisers, OptimizationOptimJL, ComponentArrays, Lux, Random, StatsBase, DelimitedFiles, Plots, DataFrames, Distributions, Roots, LaTeXStrings, NLsolve, FiniteDiff, LinearAlgebra, AdvancedHMC, MCMCChains, Interpolations, Optim, LuxCUDA, DiffEqGPU
+
 
 include("covariates.jl")
 include("SimulateData.jl")
@@ -10,6 +11,7 @@ include("ProcessModels.jl")
 include("LossFunctions.jl")
 include("Regularization.jl")
 include("Models.jl")
+include("MultiProcessModel.jl")
 include("MultipleTimeSeries.jl")
 include("ModelTesting.jl")
 include("ODEAnalysis.jl")

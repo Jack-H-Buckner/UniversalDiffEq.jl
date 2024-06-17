@@ -3,9 +3,7 @@
 function get_final_state(UDE::UDE)
     return UDE.parameters.uhat[:,end]
 end 
-function get_final_state(UDE::MultiUDE)
-    return UDE.parameters.uhat[:,end]
-end 
+
 function get_final_state(UDE::BayesianUDE;summary = true,ci = 95)
     uhats = reduce(hcat,[UDE.parameters[i].uhat[:,end] for i in 1:length(UDE.parameters)])
     if summary
@@ -57,18 +55,6 @@ function print_parameter_estimates(UDE::UDE)
         end
     end 
 end
-function print_parameter_estimates(UDE::MultiUDE)
-    println("Estimated parameter values: ")
-    i = 0
-    for name in keys(UDE.parameters.process_model)
-        i += 1
-        if name == "NN"
-        elseif name == :NN
-        else
-            println(name, ": ", round(UDE.parameters.process_model[name], digits = 3))
-        end
-    end 
-end
 
 
 
@@ -78,9 +64,6 @@ end
 Returns model parameters.
 """
 function get_parameters(UDE::UDE)
-    return UDE.parameters.process_model
-end
-function get_parameters(UDE::MultiUDE)
     return UDE.parameters.process_model
 end
 
@@ -93,9 +76,7 @@ Returns value weights and biases of the neural network
 function get_NN_parameters(UDE::UDE)
     return UDE.parameters.process_model.NN
 end
-function get_NN_parameters(UDE::MultiUDE)
-    return UDE.parameters.process_model.NN
-end
+
 
 
 """
@@ -114,21 +95,9 @@ function get_right_hand_side(UDE::UDE)
     end  
 end 
 
-function get_right_hand_side(UDE::MultiUDE)
-    pars = get_parameters(UDE)
-    if UDE.X == 0
-        return (u,t) -> UDE.process_model.right_hand_side(u,pars,t)
-    else
-        return (u,x,t) -> UDE.process_model.right_hand_side(u,x,pars,t)
-    end  
-end 
 
 
 function get_predict(UDE::UDE)
-    pars = get_parameters(UDE)
-    (u,t,dt) -> UDE.process_model.predict(u,t,dt,pars)
-end 
-function get_predict(UDE::MultiUDE)
     pars = get_parameters(UDE)
     (u,t,dt) -> UDE.process_model.predict(u,t,dt,pars)
 end 
@@ -370,9 +339,9 @@ function forecast(UDE::UDE, u0::AbstractVector{}, times::AbstractVector{})
     
     uhats = UDE.parameters.uhat
     
-    umax = mapslices(max_, UDE.parameters.uhat, dims = 2);umax=reshape(umax,length(umax))
-    umin = mapslices(min_, UDE.parameters.uhat, dims = 2);umin=reshape(umin,length(umin))
-    umean = mapslices(mean_, UDE.parameters.uhat, dims = 2);umean=reshape(umean,length(umean))
+    umax = mapslices(max_, uhats, dims = 2);umax=reshape(umax,length(umax))
+    umin = mapslices(min_, uhats, dims = 2);umin=reshape(umin,length(umin))
+    umean = mapslices(mean_, uhats, dims = 2);umean=reshape(umean,length(umean))
     
     
     #estimated_map = (x,dt) -> UDE.process_model.forecast(x,dt,UDE.parameters.process_model,umax,umin,umean)
@@ -391,30 +360,38 @@ function forecast(UDE::UDE, u0::AbstractVector{}, times::AbstractVector{})
     
     return df
 end 
-function forecast(UDE::MultiUDE, u0::AbstractVector{}, times::AbstractVector{})
+
+
+function forecast(UDE::BayesianUDE, u0::AbstractVector{}, times::AbstractVector{};summary = true, ci = 95)
+    dfs = zeros(length(UDE.parameters),length(times),length(x)+1)
+
+    for i in 1:length(UDE.parameters)
+        uhats = UDE.parameters[i].uhat
     
-    uhats = UDE.parameters.uhat
-    
-    umax = mapslices(max_, UDE.parameters.uhat, dims = 2);umax=reshape(umax,length(umax))
-    umin = mapslices(min_, UDE.parameters.uhat, dims = 2);umin=reshape(umin,length(umin))
-    umean = mapslices(mean_, UDE.parameters.uhat, dims = 2);umean=reshape(umean,length(umean))
+        umax = mapslices(max_, uhats, dims = 2);umax=reshape(umax,length(umax))
+        umin = mapslices(min_, uhats, dims = 2);umin=reshape(umin,length(umin))
+        umean = mapslices(mean_, uhats, dims = 2);umean=reshape(umean,length(umean))
     
     
-    #estimated_map = (x,dt) -> UDE.process_model.forecast(x,dt,UDE.parameters.process_model,umax,umin,umean)
-    estimated_map = (x,t,dt) -> UDE.process_model.forecast(x,t,dt,UDE.parameters.process_model,umax,umin,umean)
+        #estimated_map = (x,dt) -> UDE.process_model.forecast(x,dt,UDE.parameters.process_model,umax,umin,umean)
+        estimated_map = (x,t,dt) -> UDE.process_model.forecast(x,t,dt,UDE.parameters[i].process_model,umax,umin,umean)
     
     
-    x = u0
-    df = zeros(length(times),length(x)+1)
-    df[1,:] = vcat([times[1]],x)
+        x = u0
+        df[i,1,:] = vcat([times[1]],x)
     
-    for t in 2:length(times)
-        dt = times[t]-times[t-1]
-        x = estimated_map(x,times[t-1],dt)
-        df[t,:] = vcat([times[t]],x)
-    end 
-    
-    return df
+        for t in 2:length(times)
+            dt = times[t]-times[t-1]
+            x = estimated_map(x,times[t-1],dt)
+            df[i,t,:] = vcat([times[t]],x)
+        end 
+    end
+
+    if summary
+        dfs = [percentile(dfs[:,i,j],[(100-ci)/2,50,ci+(100-ci)/2]) for i in 1:10, j in 1:3] 
+    end
+
+    return dfs
 end 
 
 # """
@@ -427,39 +404,9 @@ function forecast(UDE::UDE, u0::AbstractVector{}, t0::Real, times::AbstractVecto
     @assert all(times .> t0)
     uhats = UDE.parameters.uhat
     
-    umax = mapslices(max_, UDE.parameters.uhat, dims = 2);umax=reshape(umax,length(umax))
-    umin = mapslices(min_, UDE.parameters.uhat, dims = 2);umin=reshape(umin,length(umin))
-    umean = mapslices(mean_, UDE.parameters.uhat, dims = 2);umean=reshape(umean,length(umean))
-    
-    
-    #estimated_map = (x,dt) -> UDE.process_model.forecast(x,dt,UDE.parameters.process_model,umax,umin,umean)
-    estimated_map = (x,t,dt) -> UDE.process_model.forecast(x,t,dt,UDE.parameters.process_model,umax,umin,umean)
-    
-    
-    x = u0
-    df = zeros(length(times),length(x)+1)
-    
-    for t in eachindex(times)
-        dt = times[t] - t0
-        tinit = t0
-        if t > 1
-            dt = times[t]-times[t-1]
-            tinit = times[t-1]
-        end
-        x = estimated_map(x,tinit,dt)
-        df[t,:] = vcat([times[t]],x)
-    end 
-    
-    return df
-end 
-function forecast(UDE::MultiUDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{})
-    
-    @assert all(times .> t0)
-    uhats = UDE.parameters.uhat
-    
-    umax = mapslices(max_, UDE.parameters.uhat, dims = 2);umax=reshape(umax,length(umax))
-    umin = mapslices(min_, UDE.parameters.uhat, dims = 2);umin=reshape(umin,length(umin))
-    umean = mapslices(mean_, UDE.parameters.uhat, dims = 2);umean=reshape(umean,length(umean))
+    umax = mapslices(max_, uhats, dims = 2);umax=reshape(umax,length(umax))
+    umin = mapslices(min_, uhats, dims = 2);umin=reshape(umin,length(umin))
+    umean = mapslices(mean_, uhats, dims = 2);umean=reshape(umean,length(umean))
     
     
     #estimated_map = (x,dt) -> UDE.process_model.forecast(x,dt,UDE.parameters.process_model,umax,umin,umean)
@@ -483,35 +430,43 @@ function forecast(UDE::MultiUDE, u0::AbstractVector{}, t0::Real, times::Abstract
     return df
 end 
 
-function forecast(UDE::BayesianUDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{})
+
+function forecast(UDE::BayesianUDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{};summary = true, ci = 95)
     
     @assert all(times .> t0)
-    uhats = UDE.parameters.uhat
+    dfs = zeros(length(UDE.parameters),length(times),length(x)+1)
+
+    for i in 1:length(UDE.parameters)
+        uhats = UDE.parameters[i].uhat
     
-    umax = mapslices(max_, UDE.parameters.uhat, dims = 2);umax=reshape(umax,length(umax))
-    umin = mapslices(min_, UDE.parameters.uhat, dims = 2);umin=reshape(umin,length(umin))
-    umean = mapslices(mean_, UDE.parameters.uhat, dims = 2);umean=reshape(umean,length(umean))
+        umax = mapslices(max_, uhats, dims = 2);umax=reshape(umax,length(umax))
+        umin = mapslices(min_, uhats, dims = 2);umin=reshape(umin,length(umin))
+        umean = mapslices(mean_, uhats, dims = 2);umean=reshape(umean,length(umean))
     
     
-    #estimated_map = (x,dt) -> UDE.process_model.forecast(x,dt,UDE.parameters.process_model,umax,umin,umean)
-    estimated_map = (x,t,dt) -> UDE.process_model.forecast(x,t,dt,UDE.parameters.process_model,umax,umin,umean)
+        #estimated_map = (x,dt) -> UDE.process_model.forecast(x,dt,UDE.parameters.process_model,umax,umin,umean)
+        estimated_map = (x,t,dt) -> UDE.process_model.forecast(x,t,dt,UDE.parameters[i].process_model,umax,umin,umean)
     
     
-    x = u0
-    df = zeros(length(times),length(x)+1)
+        x = u0
+
+        for t in eachindex(times)
+            dt = times[t] - t0
+            tinit = t0
+            if t > 1
+                dt = times[t]-times[t-1]
+                tinit = times[t-1]
+            end
+            x = estimated_map(x,tinit,dt)
+            dfs[i,t,:] = vcat([times[t]],x)
+        end 
+    end
     
-    for t in eachindex(times)
-        dt = times[t] - t0
-        tinit = t0
-        if t > 1
-            dt = times[t]-times[t-1]
-            tinit = times[t-1]
-        end
-        x = estimated_map(x,tinit,dt)
-        df[t,:] = vcat([times[t]],x)
-    end 
-    
-    return df
+    if summary
+        dfs = [percentile(dfs[:,i,j],[(100-ci)/2,50,ci+(100-ci)/2]) for i in 1:10, j in 1:3] 
+    end
+
+    return dfs
 end 
 
 
@@ -528,8 +483,30 @@ function plot_forecast(UDE::UDE, T::Int)
     times = UDE.times[end]:dt:(UDE.times[end] + T*dt )
     df = forecast(UDE, u0, times)
     plots = []
-    for dim in 2:size(df)[2]
+    for dim in 2:size(df,2)
         plt = plot(df[:,1],df[:,dim],color = "grey", linestyle=:dash, label = "forecast",
+                    xlabel = "Time", ylabel = string("x", dim))
+        plot!(UDE.times,UDE.data[dim-1,:],c=1, label = "data",
+                    xlabel = "Time", ylabel = string("x", dim))
+        push!(plots, plt)
+    end 
+    return plot(plots...), plots
+end 
+
+function plot_forecast(UDE::BayesianUDE, T::Int;ci = 95)
+    u0 = reduce((x,y) -> cat(x,y,dims = 3),[UDE.parameters[i].uhat[:,end] for i in 1:length(UDE.parameters)])
+    u0 = mean(u0,dims = 3)
+    dts = UDE.times[2:end] .- UDE.times[1:(end-1)]
+    dt = sum(dts)/length(dts)
+    times = UDE.times[end]:dt:(UDE.times[end] + T*dt )
+    df = forecast(UDE, u0, times,summary = true, ci = ci)
+    meanForecast = [df[i,j][2] for i in 1:size(df,1), j in 1:size(df,2)]
+    lowerForecast = [df[i,j][1] for i in 1:size(df,1), j in 1:size(df,2)]
+    upperForecast = [df[i,j][3] for i in 1:size(df,1), j in 1:size(df,2)]
+    plots = []
+    for dim in 2:size(df,2)
+        plt = plot(meanForecast[:,1],meanForecast[:,dim],ribbon = (meanForecast[:,dim]-lowerForecast[:,dim],upperForecast[:,dim]-meanForecast[:,dim]),
+                    color = "grey", linestyle=:dash, label = "forecast",
                     xlabel = "Time", ylabel = string("x", dim))
         plot!(UDE.times,UDE.data[dim-1,:],c=1, label = "data",
                     xlabel = "Time", ylabel = string("x", dim))
@@ -551,6 +528,26 @@ function plot_forecast(UDE::UDE, test_data::DataFrame)
     plots = []
     for dim in 2:size(df)[2]
         plt = plot(df[:,1],df[:,dim],color = "grey", linestyle=:dash, label = "forecast", xlabel = "Time", ylabel = string("x", dim))
+        scatter!(UDE.times,UDE.data[dim-1,:],c=1, label = "data", xlabel = "Time", ylabel = string("x", dim))
+        scatter!(times,data[dim-1,:],c=2, label = "data", xlabel = "Time", ylabel = string("x", dim))
+        push!(plots, plt)
+    end 
+    return plot(plots...), plots
+end 
+
+function plot_forecast(UDE::BayesianUDE, test_data::DataFrame;ci = 95)
+    u0 = reduce((x,y) -> cat(x,y,dims = 3),[UDE.parameters[i].uhat[:,end] for i in 1:length(UDE.parameters)])
+    u0 = mean(u0,dims = 3)
+    N, dims, T, times, data, dataframe = process_data(test_data)
+    df = forecast(UDE, u0, UDE.times[end], times,summary = true, ci = ci)
+    meanForecast = [df[i,j][2] for i in 1:size(df,1), j in 1:size(df,2)]
+    lowerForecast = [df[i,j][1] for i in 1:size(df,1), j in 1:size(df,2)]
+    upperForecast = [df[i,j][3] for i in 1:size(df,1), j in 1:size(df,2)]
+    plots = []
+    for dim in 2:size(df)[2]
+        plt = plot(meanForecast[:,1],meanForecast[:,dim],ribbon = (meanForecast[:,dim]-lowerForecast[:,dim],upperForecast[:,dim]-meanForecast[:,dim]),
+            color = "grey", linestyle=:dash, label = "forecast",
+            xlabel = "Time", ylabel = string("x", dim))
         scatter!(UDE.times,UDE.data[dim-1,:],c=1, label = "data", xlabel = "Time", ylabel = string("x", dim))
         scatter!(times,data[dim-1,:],c=2, label = "data", xlabel = "Time", ylabel = string("x", dim))
         push!(plots, plt)

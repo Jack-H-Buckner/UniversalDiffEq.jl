@@ -72,7 +72,6 @@ mutable struct BayesianUDE
     constructor
 end
 
-include("Optimizers.jl")
 
 """
     CustomDerivatives(data,derivs!,initial_parameters;kwargs ... )

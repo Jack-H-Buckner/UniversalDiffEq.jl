@@ -3,7 +3,7 @@
 
 # Minimizes the loss function of the `UDE` model with the gradient descent algorithm with a step size of `step_size` and a maximum number of iterations of `maxiter`. Prints the value of the loss function after each iteration when `maxiter` is true.   
 # """
-function gradient_descent!(UDE::UDE; step_size = 0.05, maxiter = 500, verbose = false, verbos = false)
+function gradient_descent!(UDE; step_size = 0.05, maxiter = 500, verbose = false, verbos = false)
     
     # set optimization problem 
     target = (x,p) -> UDE.loss_function(x)
@@ -38,7 +38,7 @@ function gradient_descent!(UDE::UDE; step_size = 0.05, maxiter = 500, verbose = 
 end
 
 # adding time steps to skip predictiosn for to accomidate data sets with large gaps
-function gradient_descent!(UDE::UDE,t_skip; step_size = 0.05, maxiter = 500, verbose = false, verbos = false)
+function gradient_descent!(UDE,t_skip; step_size = 0.05, maxiter = 500, verbose = false, verbos = false)
     
   # set optimization problem 
   target = (x,p) -> UDE.loss_function(x,t_skip)
@@ -77,7 +77,7 @@ end
 
 # minimizes the loss function of the `UDE` model using the BFGS algorithm is the inital step norm equal to `initial_step_norm`. The funciton will print the value fo the loss function after each iteration when `verbose` is true.  
 # """
-function BFGS!(UDE::UDE; verbos = false,verbose = false, initial_step_norm = 0.01)
+function BFGS!(UDE; verbos = false,verbose = false, initial_step_norm = 0.01)
     if verbos
       verbose = true
       @warn ("kwarg: verbos is depricated use verbose")
@@ -108,7 +108,7 @@ function BFGS!(UDE::UDE; verbos = false,verbose = false, initial_step_norm = 0.0
 end 
 
 # adding time steps to skip predictiosn for to accomidate data sets with large gaps
-function BFGS!(UDE::UDE,t_skip; verbos = false,verbose = false, initial_step_norm = 0.01)
+function BFGS!(UDE,t_skip; verbos = false,verbose = false, initial_step_norm = 0.01)
   if verbos
     verbose = true
     @warn ("kwarg: verbos is depricated use verbose")

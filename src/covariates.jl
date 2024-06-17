@@ -1,4 +1,4 @@
-using Interpolations
+
 
 function interpolate_covariates(X::DataFrame)
     N, dims, T, times, data, dataframe = process_data(X)
