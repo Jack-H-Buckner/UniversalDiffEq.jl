@@ -32,7 +32,7 @@ function init_loss(data,times,observation_model,observation_loss,process_model,p
             u0 = parameters.uhat[:,t-1]
             u1 = parameters.uhat[:,t]
             dt = times[t]-times[t-1]
-            u1hat, epsilon = process_model.predict(u0,times[t-1],dt,parameters.process_model)
+            u1hat, epsilon = process_model.predict(u0,times[t-1],dt,parameters.process_model) 
             L_proc += process_loss.loss(u1,u1hat,dt,parameters.process_loss)
         end
         

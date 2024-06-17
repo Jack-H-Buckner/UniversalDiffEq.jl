@@ -111,7 +111,6 @@ function CustomDerivatives(data,derivs!,initial_parameters;proc_weight=1.0,obs_w
     # loss function 
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     
-
     # model constructor
     constructor = data -> CustomDerivatives(data,derivs!,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
     

@@ -63,7 +63,7 @@ end
 
 
 function CustomDerivativesGPU(data,derivs!,initial_parameters, gpu_device;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
-    @warn ("GPU backend support is still experimental, and often slower than using a CPU. Use at own risk")
+    @warn ("GPU backend support for UniversalDiffEq is still experimental, and often slower than using a CPU. Use at own risk")
     # convert data
     N, dims, T, times, data, dataframe = process_data(data)
     
