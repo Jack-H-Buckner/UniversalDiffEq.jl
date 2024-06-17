@@ -176,7 +176,7 @@ nothing
 ```
 ### Covariates with different sampling frequencies
 
-If you wish to build a model that has covariates that are measured at differnt points in time you can provide a list of data frames as the covariates argument. Each data frame in the list should have time in the first column and the value of one of the covariates in the second column. The model will interpolate each tie series with a linear spline. The value of the covariates can be accessed in the `derivs` and `step` functions for custom models by indexing into the covarates argument `X` the values will be listed in the same order as the data frames are provided in the covarates argument. 
+If you wish to build a model with covariates that are measured at different points in time, then you can provide a list of data frames as the covariates argument. Each data frame in the list should have time in the first column and the value of one of the covariates in the second column. The model will interpolate each time series with a linear spline. The value of the covariates can be accessed in the `derivs` and `step` functions for custom models by indexing into the covariates argument `X`. The values will be listed in the same order as the data frames are provided in the covariates argument.
 
 ## Adding prior information to custom models 
 
