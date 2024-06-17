@@ -17,7 +17,6 @@ Basic data structure used to the model structure, parameters and data for UDE an
 - process_regularization: a Julia mutable struct used to store data needed for process model regularization
 - observation_regularization: a Julia mutable struct used to store data needed for observation model regularization
 - constructor: A function that initializes a UDE model with identical structure.
-- backend_device: A gpu or cpu device on which the requisite parts of the UDE will be stored (see Lux gpu backend for details) 
 ...
 """
 mutable struct UDE
