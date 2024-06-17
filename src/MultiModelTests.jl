@@ -1,4 +1,47 @@
 
+function get_final_state(UDE::MultiUDE)
+    return UDE.parameters.uhat[:,end]
+end 
+
+
+function print_parameter_estimates(UDE::MultiUDE)
+    println("Estimated parameter values: ")
+    i = 0
+    for name in keys(UDE.parameters.process_model)
+        i += 1
+        if name == "NN"
+        elseif name == :NN
+        else
+            println(name, ": ", round(UDE.parameters.process_model[name], digits = 3))
+        end
+    end 
+end
+
+
+function get_parameters(UDE::MultiUDE)
+    return UDE.parameters.process_model
+end
+
+
+function get_NN_parameters(UDE::MultiUDE)
+    return UDE.parameters.process_model.NN
+end
+
+
+function get_right_hand_side(UDE::MultiUDE)
+    pars = get_parameters(UDE)
+    if UDE.X == 0
+        return (u,t) -> UDE.process_model.right_hand_side(u,pars,t)
+    else
+        return (u,x,t) -> UDE.process_model.right_hand_side(u,x,pars,t)
+    end  
+end 
+
+function get_predict(UDE::MultiUDE)
+    pars = get_parameters(UDE)
+    (u,t,dt) -> UDE.process_model.predict(u,t,dt,pars)
+end 
+
 
 function predictions(UDE::MultiUDE)
      
@@ -173,7 +216,7 @@ function forecast(UDE::MultiUDE, u0::AbstractVector{}, times::AbstractVector{}, 
 end 
 
 
-function forecast(UDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{}, series)
+function forecast(UDE::MultiUDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{}, series)
 
     estimated_map = (x,t,dt) -> UDE.process_model.predict(x,series,t,dt,UDE.parameters.process_model)[1]
     x = u0
@@ -266,7 +309,7 @@ end
 
 
 
-function phase_plane(UDE;u1s=-5:0.25:5, u2s=-5:0.25:5,T = 100)
+function phase_plane(UDE::MultiUDE;u1s=-5:0.25:5, u2s=-5:0.25:5,T = 100)
     
     # caclaute time to evaluate 
     lengths = [sum(UDE.data_frame.series .== i) for i in unique(UDE.data_frame.series)]
@@ -288,21 +331,4 @@ function phase_plane(UDE;u1s=-5:0.25:5, u2s=-5:0.25:5,T = 100)
 end 
 
 
-function get_parameters(UDE::MultiUDE)
-    return UDE.parameters.process_model
-end
 
-
-function get_right_hand_side(UDE::MultiUDE)
-    pars = get_parameters(UDE)
-    if UDE.X == 0
-        return (u,i,t) -> UDE.process_model.right_hand_side(u,i,t,pars)
-    else
-        return (u,i,x,t) -> UDE.process_model.right_hand_side(u,i,x,t,pars)
-    end  
-end 
-
-function get_predict(UDE::MultiUDE)
-    pars = get_parameters(UDE)
-    (u,i,t,dt) -> UDE.process_model.predict(u,i,t,dt,pars)
-end 
