@@ -2,3 +2,4 @@
 docs/build/
 *.ipynb
 examples/
+.Rproj.user
