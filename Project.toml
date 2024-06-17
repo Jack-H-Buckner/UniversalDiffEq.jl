@@ -25,8 +25,6 @@ Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Roots = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
-AdvancedHMC="0bf59076-c3b1-5ca4-86bd-e02cd72cde3d"
-MCMCChains="c7f686f2-ff18-58e9-bc7b-31028e88f75d"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

@@ -1,7 +1,5 @@
 ## functions to generate forecast from fitted UDE models 
 
-using Optim, DataFrames
-
 function get_residuals(UDE)
     inits, obs, preds = UniversalDiffEq.predictions(UDE,UDE.data_frame)
     proc_resids = preds .- obs
