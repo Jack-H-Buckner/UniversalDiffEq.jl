@@ -19,26 +19,7 @@ function init_loss_GPU(data,times,observation_model,observation_loss,process_mod
             u0 = parameters.uhat[:,t-1]  |> cpu_device()
             u1 = parameters.uhat[:,t]
             dt = times[t]-times[t-1]
-            #=
-            print("data: ")
-            println(typeof(data))
-            print("u0: ")
-            println(typeof(u0))
-            print("u1: ")
-            println(typeof(u1))
-            
-            print("t: ")
-            println(typeof(times[t]))
-            print("dt: ")
-            println(typeof(dt))
-            
-            =#
             u1hat, epsilon = process_model.predict(u0,times[t-1],dt,parameters.process_model)
-            #=
-            print("u1hat: ")
-            println(typeof(u1hat))
-            println()
-            =#
             L_proc += process_loss.loss(u1,u1hat,dt,parameters.process_loss)
         end
         
