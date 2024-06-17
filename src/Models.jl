@@ -16,7 +16,7 @@ Basic data structure used to the model structure, parameters and data for UDE an
 - observaiton_loss: a Julia mutable struct used to measure the performance of the observation model
 - process_regularization: a Julia mutable struct used to store data needed for process model regularization
 - observation_regularization: a Julia mutable struct used to store data needed for observation model regularization
-- constructor: A function that initializes a UDE model with identical structure. 
+- constructor: A function that initializes a UDE model with identical structure.
 ...
 """
 mutable struct UDE
