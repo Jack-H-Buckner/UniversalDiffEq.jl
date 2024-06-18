@@ -113,7 +113,7 @@ function CustomDerivatives(data,derivs!,initial_parameters;time_column_name = "t
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     
     # model constructor
-    constructor = data -> CustomDerivatives(data,derivs!,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
+    constructor = data -> CustomDerivatives(data,derivs!,initial_parameters;time_column_name=time_column_name,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
     
     return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name)
@@ -160,7 +160,7 @@ function CustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,
     loss_ = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     loss_function = parameters -> loss_(parameters) + priors(parameters.process_model)
     # model constructor
-    constructor = data -> CustomDerivatives(data,derivs!,initial_parameters,priors;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
+    constructor = data -> CustomDerivatives(data,derivs!,initial_parameters,priors;time_column_name = time_column_name ,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
     
     return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,constructor,time_column_name )
 
@@ -200,7 +200,7 @@ function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameter
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     
     # model constructor
-    constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type)
+    constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters;time_column_name = time_column_name ,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type)
     
     return UDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name)
@@ -233,7 +233,7 @@ function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameter
     loss_ = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     loss_function = parameters -> loss_(parameters) + priors(parameters.process_model)
     # model constructor
-    constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters,priors;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type)
+    constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters,priors;time_column_name=time_column_name,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type)
     
     return UDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name)
@@ -276,7 +276,7 @@ function CustomDifference(data,step,initial_parameters;time_column_name = "time"
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     
     # model constructor
-    constructor = data -> CustomDifference(data,step,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type=reg_type)
+    constructor = data -> CustomDifference(data,step,initial_parameters;time_column_name=time_column_name,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type=reg_type)
     
     return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name)
@@ -321,7 +321,7 @@ function CustomDifference(data::DataFrame,step,initial_parameters,priors::Functi
     loss_ = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     loss_function = parameters -> loss_(parameters) + priors(parameters.process_model)
     # model constructor
-    constructor = data -> CustomDifference(data,step,initial_parameters,priors;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type=reg_type)
+    constructor = data -> CustomDifference(data,step,initial_parameters,priors;time_column_name=time_column_name,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type=reg_type)
     
     return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name)
@@ -361,7 +361,7 @@ function CustomDifference(data::DataFrame,X,step,initial_parameters;time_column_
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     
     # model constructor
-    constructor = (data,X) -> CustomDifference(data,X,step,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type=reg_type)
+    constructor = (data,X) -> CustomDifference(data,X,step,initial_parameters;time_column_name=time_column_name,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type=reg_type)
     
     return UDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name)
@@ -395,7 +395,7 @@ function CustomDifference(data::DataFrame,X,step,initial_parameters,priors::Func
     loss_ = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     loss_function = parameters -> loss_(parameters) + priors(parameters.process_model)
     # model constructor
-    constructor = (data,X) -> CustomDifference(data,X,step,initial_parameters,priors;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type=reg_type)
+    constructor = (data,X) -> CustomDifference(data,X,step,initial_parameters,priors;time_column_name=time_column_name,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type=reg_type)
     
     return UDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name)
@@ -429,7 +429,7 @@ function NNDE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_weigh
     # loss function 
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     
-    constructor = data -> NNDE(data;hidden_units=hidden_units,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
+    constructor = data -> NNDE(data;time_column_name=time_column_name,hidden_units=hidden_units,seed = seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho = 0.1,l = 0.25)
     
     return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
                                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name)
@@ -471,7 +471,7 @@ function NODE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_weigh
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     
     
-    constructor = (data) -> NODE(data;hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight)
+    constructor = (data) -> NODE(data;time_column_name=time_column_name,hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight)
     
     return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name)
@@ -511,7 +511,7 @@ function NODE(data,X;time_column_name = "time",hidden_units=10,seed = 1,proc_wei
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     
     
-    constructor = (data,X) -> NODE(data,X;hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type,l=l,extrap_rho=extrap_rho)
+    constructor = (data,X) -> NODE(data,X;time_column_name=time_column_name,hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type,l=l,extrap_rho=extrap_rho)
     
     return UDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name)
@@ -546,7 +546,7 @@ function EasyNODE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_w
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     
     
-    constructor = (data) -> NODE(data;hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight)
+    constructor = (data) -> NODE(data;time_column_name=time_column_name,hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight)
     
     untrainedNODE = UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
         observation_loss,process_regularization,observation_regularization,constructor,time_column_name)
@@ -583,7 +583,7 @@ function EasyNODE(data,X;time_column_name = "time",hidden_units=10,seed = 1,proc
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     
     
-    constructor = (data,X) -> NODE(data,X;hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type,l=l,extrap_rho=extrap_rho)
+    constructor = (data,X) -> NODE(data,X;time_column_name=time_column_name,hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type,l=l,extrap_rho=extrap_rho)
     
     untrainedNODE = UDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
         observation_loss,process_regularization,observation_regularization,constructor,time_column_name )
@@ -632,7 +632,7 @@ function EasyUDE(data,known_dynamics!,initial_parameters;time_column_name = "tim
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     
     # model constructor
-    constructor = data -> CustomDerivatives(data,derivs!,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
+    constructor = data -> CustomDerivatives(data,derivs!,initial_parameters;time_column_name=time_column_name,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
     
     untrainedUDE = UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name)
@@ -682,7 +682,7 @@ function EasyUDE(data::DataFrame,X,known_dynamics!::Function,initial_parameters;
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     
     # model constructor
-    constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type)
+    constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters;time_column_name=time_column_name,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type)
     
     untrainedUDE = UDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name)
@@ -716,7 +716,7 @@ function BayesianNODE(data;time_column_name = "time",hidden_units=10,seed = 1,pr
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     
     
-    constructor = (data) -> NODE(data;hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight)
+    constructor = (data) -> NODE(data;time_column_name=time_column_name,hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight)
     
     return BayesianUDE(times,data,0,dataframe,parameters_vector,loss_function,process_model,process_loss,observation_model,observation_loss,
             process_regularization,observation_regularization,constructor,time_column_name )
@@ -756,7 +756,7 @@ function BayesianNODE(data,X;time_column_name = "time",hidden_units=10,seed = 1,
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     
     
-    constructor = (data,X) -> NODE(data,X;hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type,l=l,extrap_rho=extrap_rho)
+    constructor = (data,X) -> NODE(data,X;time_column_name=time_column_name,hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type,l=l,extrap_rho=extrap_rho)
     
     return BayesianUDE(times,data,X,dataframe,parameters_vector,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name )
@@ -802,7 +802,7 @@ function BayesianCustomDerivatives(data,derivs!,initial_parameters;time_column_n
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     
     # model constructor
-    constructor = data -> CustomDerivatives(data,derivs!,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
+    constructor = data -> CustomDerivatives(data,derivs!,initial_parameters;time_column_name=time_column_name,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
     
     return BayesianUDE(times,data,X,dataframe,parameters_vector,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name )
@@ -851,7 +851,7 @@ function BayesianCustomDerivatives(data::DataFrame,derivs!::Function,initial_par
     loss_ = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     loss_function = parameters -> loss_(parameters) + priors(parameters.process_model)
     # model constructor
-    constructor = data -> CustomDerivatives(data,derivs!,initial_parameters,priors;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
+    constructor = data -> CustomDerivatives(data,derivs!,initial_parameters,priors;time_column_name=time_column_name,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
     
     return BayesianUDE(times,data,X,dataframe,parameters_vector,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name )
@@ -894,7 +894,7 @@ function BayesianCustomDerivatives(data::DataFrame,X,derivs!::Function,initial_p
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     
     # model constructor
-    constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type)
+    constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters;time_column_name=time_column_name,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type)
     
     return BayesianUDE(times,data,X,dataframe,parameters_vector,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name )
@@ -929,7 +929,7 @@ function BayesianCustomDerivatives(data::DataFrame,X,derivs!::Function,initial_p
     loss_ = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     loss_function = parameters -> loss_(parameters) + priors(parameters.process_model)
     # model constructor
-    constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters,priors;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type)
+    constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters,priors;time_column_name=time_column_name,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type)
     
     return BayesianUDE(times,data,X,dataframe,parameters_vector,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name )

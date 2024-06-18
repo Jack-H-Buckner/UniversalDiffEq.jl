@@ -16,6 +16,8 @@ mutable struct MultiUDE
     constructor
     time_column_name
     series_column_name
+    series_labels
+    varnames
 end
 
 function init_single_loss(process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization)
@@ -136,7 +138,7 @@ builds a NODE model to fit to the data. `data` is a DataFrame object with time a
 function MultiNODE(data;time_column_name = "time", series_column_name = "series",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,reg_type="L2",l=0.5,extrap_rho=0.0)
     
     # convert data
-    N, T, dims, data, times,  dataframe, series, inds, starts, lengths = process_multi_data(data, time_column_name, series_column_name)
+    N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames, labels_df = process_multi_data(data, time_column_name, series_column_name)
 
     process_model =  MultiNODE_process(dims,hidden_units,seed,l,extrap_rho)
     process_loss = ProcessMSE(N,T,proc_weight)
@@ -163,9 +165,9 @@ function MultiNODE(data;time_column_name = "time", series_column_name = "series"
     
     loss_function = init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization)
     
-    constructor = (data) -> MultiNODE(data; hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type, l=l,extrap_rho=extrap_rho)
+    constructor = (data) -> MultiNODE(data;time_column_name = time_column_name , series_column_name = time_column_name ,hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type, l=l,extrap_rho=extrap_rho)
     
-    return MultiUDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name)
+    return MultiUDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name,labels_df,varnames)
     
 end 
 
@@ -177,7 +179,7 @@ When a dataframe `X` is supplied the model will run with covariates. the argumen
 """
 function MultiNODE(data,X;time_column_name = "time", series_column_name = "series",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,reg_type="L2",l=0.5,extrap_rho=0.0)
 
-    N, T, dims, data, times,  dataframe, series, inds, starts, lengths = process_multi_data(data, time_column_name, series_column_name)
+    N, T, dims, data, times,  dataframe, series, inds, starts, lengths,varnames, labels_df = process_multi_data(data, time_column_name, series_column_name)
     covariates = interpolate_covariates_multi(X,time_column_name,series_column_name)
 
     process_model = MultiNODE_process(dims,hidden_units,covariates,seed,l,extrap_rho)
@@ -205,9 +207,9 @@ function MultiNODE(data,X;time_column_name = "time", series_column_name = "serie
     
     loss_function = init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization)
     
-    constructor = (data,X) -> MultiNODE(data,X; hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type, l=l,extrap_rho=extrap_rho)
+    constructor = (data,X) -> MultiNODE(data,X;time_column_name = time_column_name , series_column_name =  series_column_name, hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type, l=l,extrap_rho=extrap_rho)
     
-    return MultiUDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name)
+    return MultiUDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name,labels_df,varnames)
     
 end 
 
@@ -215,7 +217,7 @@ end
 function MultiCustomDerivatives(data,derivs!,initial_parameters;time_column_name = "time", series_column_name = "series",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
     
     # convert data
-    N, T, dims, data, times,  dataframe, series, inds, starts, lengths = process_multi_data(data, time_column_name, series_column_name)
+    N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames, labels_df = process_multi_data(data, time_column_name, series_column_name)
     
     # generate submodels 
     process_model = MultiContinuousProcessModel(derivs!,ComponentArray(initial_parameters),dims,l,extrap_rho)
@@ -232,11 +234,11 @@ function MultiCustomDerivatives(data,derivs!,initial_parameters;time_column_name
     loss_function = init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization)
 
     # model constructor
-    constructor = (data) -> MultiCustomDerivatives(data,derivs!,initial_parameters;
+    constructor = (data) -> MultiCustomDerivatives(data,derivs!,initial_parameters;time_column_name = time_column_name , series_column_name =  series_column_name,
                     proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l)
     
     return MultiUDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name)
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name,labels_df,varnames)
 
 end
 
@@ -244,9 +246,9 @@ end
 function MultiCustomDerivatives(data,X,derivs!,initial_parameters;time_column_name = "time", series_column_name = "series",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
     
     # convert data
-    N, T, dims, data, times,  dataframe, series, inds, starts, lengths = process_multi_data(data, time_column_name, series_column_name)
+    N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames, labels_df = process_multi_data(data, time_column_name, series_column_name)
     covariates = interpolate_covariates_multi(X,time_column_name,series_column_name)
-    
+
     # generate submodels 
     process_model = MultiContinuousProcessModel(derivs!,ComponentArray(initial_parameters),covariates,dims,l,extrap_rho)
     process_loss = ProcessMSE(N,T, proc_weight)
@@ -262,11 +264,11 @@ function MultiCustomDerivatives(data,X,derivs!,initial_parameters;time_column_na
     loss_function = init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization)
 
     # model constructor
-    constructor = (data,X) -> MultiCustomDerivatives(data,X,derivs!,initial_parameters;
+    constructor = (data,X) -> MultiCustomDerivatives(data,X,derivs!,initial_parameters;time_column_name = time_column_name , series_column_name =  series_column_name,
                     proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l)
     
     return MultiUDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name)
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name,labels_df,varnames)
 
 end
 

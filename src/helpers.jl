@@ -116,25 +116,34 @@ end
 
 
 function process_multi_data(data, time_column_name, series_column_name)
-    
+
     time_alias_ = time_column_name
     series_alias_ = series_column_name
+
+    # collect series index names 
+    inds = levelcode.(CategoricalArray(data[:,series_alias_]))
+
+    labels_df = DataFrame(label = unique(data[:,series_alias_]),
+                         index = levelcode.(CategoricalArray(unique(data[:,series_alias_])))
+                        )
     
-    dataframe = sort!(data,[series_alias_,time_alias_])
+
+    data.series .= inds
+    dataframe = sort!(data,["series",time_alias_])
     
     times = dataframe[:,time_alias_]
-    series =dataframe[:,series_alias_]
+    series =dataframe.series
     T = times[argmax(times)]
     
     N = length(times); dims = size(dataframe)[2] - 2
     inds_time = names(dataframe).!=time_alias_ 
-    inds_series = names(dataframe).!= series_alias_
+    inds_series = (names(dataframe).!=series_alias_) .& (names(dataframe).!= "series")
     varnames = names(dataframe)[inds_time .& inds_series]
     data = transpose(Matrix(dataframe[:,varnames]))
 
     series, inds, starts, lengths, times_ls= series_indexes(dataframe,series_column_name)
     dims = size(data)[1]
-    return N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames
+    return N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames, labels_df
 end 
 
 
@@ -142,9 +151,13 @@ function process_multi_data2(data,time_column_name,series_column_name)
     
     time_alias_ = time_column_name
     series_alias_ = series_column_name
-    dataframe = sort!(data,[series_alias_,time_alias_])
+
+    inds = levelcode.(CategoricalArray(data[:,series_alias_]))
+    data.series = inds
+
+    dataframe = sort!(data,["series",time_alias_])
     inds_time = names(dataframe).!=time_alias_ 
-    inds_series = names(dataframe).!=series_alias_
+    inds_series = (names(dataframe).!=series_alias_) .& (names(dataframe).!= "series")
     varnames = names(dataframe)[inds_time .& inds_series]
 
     
