@@ -33,6 +33,7 @@ mutable struct UDE
     process_regularization
     observation_regularization
     constructor
+    time_column_name 
 end
 
 """
@@ -70,6 +71,7 @@ mutable struct BayesianUDE
     process_regularization
     observation_regularization
     constructor
+    time_column_name 
 end
 
 
@@ -86,10 +88,10 @@ Constructs a UDE model for the data set `data`  based on user defined derivative
 - init_parameters: A `NamedTuple` with the model parameters. Neural network parameters must be listed under the key `NN`.
 ...
 """
-function CustomDerivatives(data,derivs!,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+function CustomDerivatives(data,derivs!,initial_parameters;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
     
     # convert data
-    N, dims, T, times, data, dataframe = process_data(data)
+    N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     
     # generate submodels 
     process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),dims,l,extrap_rho)
@@ -114,13 +116,10 @@ function CustomDerivatives(data,derivs!,initial_parameters;proc_weight=1.0,obs_w
     constructor = data -> CustomDerivatives(data,derivs!,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
     
     return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor)
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name)
 
 end
 
-function CustomDerivs(data,derivs!,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25)
-    CustomDerivatives(data,derivs!,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l)
-end
 
 """
     CustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,priors::Function;kwargs ... )
@@ -137,9 +136,9 @@ function priors(p)
 end 
 ```
 """
-function CustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,priors::Function;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+function CustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,priors::Function;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
     # convert data
-    N, dims, T, times, data, dataframe = process_data(data)
+    N, dims, T, times, data, dataframe = process_data(data,time_column_name )
     
     # generate submodels 
     process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),dims,l,extrap_rho)
@@ -163,7 +162,7 @@ function CustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,
     # model constructor
     constructor = data -> CustomDerivatives(data,derivs!,initial_parameters,priors;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
     
-    return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,constructor)
+    return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,constructor,time_column_name )
 
 end 
     
@@ -175,11 +174,11 @@ When a dataframe `X` is supplied the model will run with covariates. the argumen
 
 When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)` where `x` is a vector with the value of the covariates at time `t`. 
 """
-function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
     
     # convert data
-    N, dims, T, times, data, dataframe = process_data(data)
-    covariates = interpolate_covariates(X)
+    N, dims, T, times, data, dataframe = process_data(data,time_column_name)
+    covariates = interpolate_covariates(X,time_column_name)
 
     # generate submodels 
     process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),covariates,dims,l,extrap_rho)
@@ -204,15 +203,15 @@ function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameter
     constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type)
     
     return UDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor)
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name)
 
 end
 
 
-function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters,priors::Function;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters,priors::Function;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
     # convert data
-    N, dims, T, times, data, dataframe = process_data(data)
-    covariates = interpolate_covariates(X)
+    N, dims, T, times, data, dataframe = process_data(data,time_column_name)
+    covariates = interpolate_covariates(X,time_column_name)
 
     # generate submodels 
     process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),covariates,dims,l,extrap_rho)
@@ -237,7 +236,7 @@ function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameter
     constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters,priors;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type)
     
     return UDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor)
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name)
    
 end 
 
@@ -252,10 +251,10 @@ Constructs a UDE model for the data set `data` based on user defined difference 
 - init_parameters: A `NamedTuple` with the model parameters. Neural network parameters must be listed under the key `NN`.
 ...
 """
-function CustomDifference(data,step,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type="L2")
+function CustomDifference(data,step,initial_parameters;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type="L2")
     
     # convert data
-    N, dims, T, times, data, dataframe = process_data(data)
+    N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     
     # generate submodels 
     process_model = DiscreteProcessModel(step,ComponentArray(initial_parameters),dims,l,extrap_rho)
@@ -280,7 +279,7 @@ function CustomDifference(data,step,initial_parameters;proc_weight=1.0,obs_weigh
     constructor = data -> CustomDifference(data,step,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type=reg_type)
     
     return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor)
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name)
     
 end
 
@@ -297,10 +296,10 @@ function priors(p)
 end 
 ```
 """
-function CustomDifference(data::DataFrame,step,initial_parameters,priors::Function;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type="L2")
+function CustomDifference(data::DataFrame,step,initial_parameters,priors::Function;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type="L2")
     
     # convert data
-    N, dims, T, times, data, dataframe = process_data(data)
+    N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     
     # generate submodels 
     process_model = DiscreteProcessModel(step,ComponentArray(initial_parameters),dims,l,extrap_rho)
@@ -325,7 +324,7 @@ function CustomDifference(data::DataFrame,step,initial_parameters,priors::Functi
     constructor = data -> CustomDifference(data,step,initial_parameters,priors;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type=reg_type)
     
     return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor)
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name)
     
 end
 
@@ -336,11 +335,11 @@ When a dataframe `X` is supplied the model will run with covariates. the argumen
 
 When `X` is provided the step function must have the form `step(u,x,t,p)` where `x` is a vector with the value of the covariates at time `t`. 
 """
-function CustomDifference(data::DataFrame,X,step,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type = "L2")
+function CustomDifference(data::DataFrame,X,step,initial_parameters;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type = "L2")
     
     # convert data
-    N, dims, T, times, data, dataframe = process_data(data)
-    covariates = interpolate_covariates(X)
+    N, dims, T, times, data, dataframe = process_data(data,time_column_name)
+    covariates = interpolate_covariates(X,time_column_name)
 
     # generate submodels 
     process_model = DiscreteProcessModel(step,ComponentArray(initial_parameters),covariates,dims,l,extrap_rho)
@@ -365,16 +364,16 @@ function CustomDifference(data::DataFrame,X,step,initial_parameters;proc_weight=
     constructor = (data,X) -> CustomDifference(data,X,step,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type=reg_type)
     
     return UDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor)
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name)
     
 end
 
 
-function CustomDifference(data::DataFrame,X,step,initial_parameters,priors::Function;proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type = "L2")
+function CustomDifference(data::DataFrame,X,step,initial_parameters,priors::Function;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type = "L2")
     
     # convert data
-    N, dims, T, times, data, dataframe = process_data(data)
-    covariates = interpolate_covariates(X)
+    N, dims, T, times, data, dataframe = process_data(data,time_column_name)
+    covariates = interpolate_covariates(X,time_column_name)
 
     # generate submodels 
     process_model = DiscreteProcessModel(step,ComponentArray(initial_parameters),covariates,dims,l,extrap_rho)
@@ -399,7 +398,7 @@ function CustomDifference(data::DataFrame,X,step,initial_parameters,priors::Func
     constructor = (data,X) -> CustomDifference(data,X,step,initial_parameters,priors;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type=reg_type)
     
     return UDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor)
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name)
     
 end
 
@@ -410,10 +409,10 @@ end
 
 Constructs a nonparametric discrete time model for the data set `data` using a single layer neural network to represent the systems dynamics. 
 """
-function NNDE(data;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
+function NNDE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
     
     # convert data
-    N, dims, T, times, data, dataframe = process_data(data)
+    N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     
     # submodels
     process_model = NeuralNetwork(dims,hidden_units,seed,extrap_rho,l)
@@ -433,78 +432,11 @@ function NNDE(data;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_w
     constructor = data -> NNDE(data;hidden_units=hidden_units,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
     
     return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-                                observation_loss,process_regularization,observation_regularization,constructor)
+                                observation_loss,process_regularization,observation_regularization,constructor,time_column_name)
     
 end 
 
 
-
-
-"""
-    DiscreteUDE(data,step,init_parameters;kwargs ...)
-
-Constructs an additive `UDE` model with user supplied difference equations `step` and a single layer neural network. When `init_parameters` are provided for the user supplied function their values will be estimated in the training process.  
-
-# Model equaitons
-```math
-x_{t+1} = f(x_t;\theta) + NN(x_t;w,b)
-```
-
-...
-# Key word arguments
-
-- proc_weight=1.0 : Weight given to the model predictions in loss funciton
-- obs_weight=1.0 : Weight given to the state estimates in loss function 
-- reg_weight=10^-6 : Weight given to regularization in the loss function 
-- extrap_rho=0.0 : Asymptotic value of derivatives when extrapolating (negative when extrapolating higher than past observations, positive when extrapolating lower)
-- l=0.25 : rate at which extrapolations converge on asymptotic behavior
-...
-"""
-function DiscreteUDE(data,step,init_parameters;
-                        hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 0.0,extrap_rho = 0.1,l = 0.25)
-    
-    # convert data
-    N, dims, T, times, data, dataframe = process_data(data)
-    
-    # submodels
-    process_model = DiscreteModelErrors(dims,step,init_parameters,hidden_units,seed,extrap_rho,l)
-    process_loss = ProcessMSE(N,T,proc_weight)
-    observation_model = Identity()
-    observation_loss = ObservationMSE(N,obs_weight)
-    process_regularization = L2(weight=reg_weight)
-    if reg_type == "L1"
-        process_regularization = L1(weight=reg_weight)
-    elseif reg_type != "L2"
-        println("Invalid regularization type - defaulting to L2")
-    end
-    observation_regularization = no_reg()
-    
-    # paramters vector
-    parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
-
-    # loss function 
-    loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
-    
-    DiscreteUDE(data,step,init_parameters;
-                        hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 0.0,extrap_rho = 0.1,l = 0.25)
-    
-    constructor = data -> DiscreteUDE(data,step,init_parameters; hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l)
-    
-    
-    return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor)
-end 
-
-
-
-function DiscreteUDE(data,known_dynamics;hidden_units=10,seed = 1,errors_weight=0.1,MSE_weight=1.0,obs_weight=1.0,reg_weight = 0.00)
-    
-    init_parameters = NamedTuple()
-    step = (x,p) -> known_dynamics(x)
-    
-    return DiscreteUDE(data,step,init_parameters; hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l)
-    
-end 
 
 
 """
@@ -513,10 +445,10 @@ end
 
 Constructs a nonparametric continuous time model for the data set `data` using a single layer neural network to represent the systems dynamics. 
 """
-function NODE(data;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0 )
+function NODE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0 )
     
     # convert data
-    N, dims, T, times, data, dataframe = process_data(data)
+    N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     
     # submodels
     process_model = NODE_process(dims,hidden_units,seed,l,extrap_rho)
@@ -542,7 +474,7 @@ function NODE(data;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_w
     constructor = (data) -> NODE(data;hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight)
     
     return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor)
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name)
 end 
 
 
@@ -552,11 +484,11 @@ end
 When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for values of time not included in the data frame. 
 
 """
-function NODE(data,X;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0 )
+function NODE(data,X;time_column_name = "time",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0 )
     
     # convert data
-    N, dims, T, times, data, dataframe = process_data(data)
-    covariates = interpolate_covariates(X)
+    N, dims, T, times, data, dataframe = process_data(data,time_column_name)
+    covariates = interpolate_covariates(X,time_column_name)
 
     # submodels
     process_model = NODE_process(dims,hidden_units,covariates,seed,l,extrap_rho)
@@ -582,17 +514,17 @@ function NODE(data,X;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg
     constructor = (data,X) -> NODE(data,X;hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type,l=l,extrap_rho=extrap_rho)
     
     return UDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor)
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name)
 end 
 
 """
     EasyNODE(data;kwargs ... )
 Constructs a pretrained continuous time model for the data set `data` using a single layer neural network to represent the systems dynamics. 
 """
-function EasyNODE(data;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0, step_size = 0.05, maxiter = 500, verbose = false)
+function EasyNODE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0, step_size = 0.05, maxiter = 500, verbose = false)
    
     # convert data
-    N, dims, T, times, data, dataframe = process_data(data)
+    N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     
     # submodels
     process_model = NODE_process(dims,hidden_units,seed,l,extrap_rho)
@@ -617,7 +549,7 @@ function EasyNODE(data;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,r
     constructor = (data) -> NODE(data;hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight)
     
     untrainedNODE = UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-        observation_loss,process_regularization,observation_regularization,constructor)
+        observation_loss,process_regularization,observation_regularization,constructor,time_column_name)
     
     return gradient_descent!(untrainedNODE, step_size = step_size, maxiter = maxiter, verbose = verbose)
 end 
@@ -626,11 +558,11 @@ end
     EasyNODE(data,X;kwargs ... )
 When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for values of time not included in the data frame. 
 """
-function EasyNODE(data,X;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0, step_size = 0.05, maxiter = 500, verbose = false)
+function EasyNODE(data,X;time_column_name = "time",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0, step_size = 0.05, maxiter = 500, verbose = false)
     
     # convert data
-    N, dims, T, times, data, dataframe = process_data(data)
-    covariates = interpolate_covariates(X)
+    N, dims, T, times, data, dataframe = process_data(data,time_column_name)
+    covariates = interpolate_covariates(X,time_column_name)
     # submodels
     process_model = NODE_process(dims,hidden_units,covariates,seed,l,extrap_rho)
     process_loss = ProcessMSE(N,T,proc_weight)
@@ -654,7 +586,7 @@ function EasyNODE(data,X;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0
     constructor = (data,X) -> NODE(data,X;hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type,l=l,extrap_rho=extrap_rho)
     
     untrainedNODE = UDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-        observation_loss,process_regularization,observation_regularization,constructor)
+        observation_loss,process_regularization,observation_regularization,constructor,time_column_name )
         return gradient_descent!(untrainedNODE, step_size = step_size, maxiter = maxiter, verbose = verbose)
 end 
 
@@ -662,10 +594,10 @@ end
     EasyUDE(data,derivs!,initial_parameters;kwargs ... )
 Constructs a pretrained UDE model for the data set `data`  based on user defined derivatives `derivs`. An initial guess of model parameters are supplied with the `initial_parameters` argument. 
 """
-function EasyUDE(data,known_dynamics!,initial_parameters;hidden_units = 10, seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2", step_size = 0.05, maxiter = 500, verbose = false)
+function EasyUDE(data,known_dynamics!,initial_parameters;time_column_name = "time",hidden_units = 10, seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2", step_size = 0.05, maxiter = 500, verbose = false)
     
     # convert data
-    N, dims, T, times, data, dataframe = process_data(data)
+    N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     
     # generate submodels 
     NN = Lux.Chain(Lux.Dense(dims,hidden_units,tanh), Lux.Dense(hidden_units,dims))
@@ -703,7 +635,7 @@ function EasyUDE(data,known_dynamics!,initial_parameters;hidden_units = 10, seed
     constructor = data -> CustomDerivatives(data,derivs!,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
     
     untrainedUDE = UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor)
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name)
     return gradient_descent!(untrainedUDE, step_size = step_size, maxiter = maxiter, verbose = verbose)
 end
 
@@ -712,11 +644,11 @@ end
 When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included in the data frame. 
 When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)` where `x` is a vector with the value of the covariates at time `t`. 
 """
-function EasyUDE(data::DataFrame,X,known_dynamics!::Function,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+function EasyUDE(data::DataFrame,X,known_dynamics!::Function,initial_parameters;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
     
     # convert data
-    N, dims, T, times, data, dataframe = process_data(data)
-    covariates = interpolate_covariates(X)
+    N, dims, T, times, data, dataframe = process_data(data,time_column_name)
+    covariates = interpolate_covariates(X,time_column_name)
     # generate submodels 
     NN = Lux.Chain(Lux.Dense(dims+length(covariates(0)),hidden,tanh), Lux.Dense(hidden,dims))
     Random.seed!(seed)  # set seed for reproducibility 
@@ -753,7 +685,7 @@ function EasyUDE(data::DataFrame,X,known_dynamics!::Function,initial_parameters;
     constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type)
     
     untrainedUDE = UDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor)
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name)
     return gradient_descent!(untrainedUDE, step_size = step_size, maxiter = maxiter, verbose = verbose)
 end
 
@@ -762,10 +694,10 @@ end
     BayesianNODE(data;kwargs ... )
 Constructs a Bayesian continuous time model for the data set `data` using a single layer neural network to represent the systems dynamics. 
 """
-function BayesianNODE(data;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0, step_size = 0.05, maxiter = 500, verbose = false)
+function BayesianNODE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0, step_size = 0.05, maxiter = 500, verbose = false)
    
     # convert data
-    N, dims, T, times, data, dataframe = process_data(data)
+    N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     
     # submodels
     process_model = NODE_process(dims,hidden_units,seed,l,extrap_rho)
@@ -787,7 +719,7 @@ function BayesianNODE(data;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1
     constructor = (data) -> NODE(data;hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight)
     
     return BayesianUDE(times,data,0,dataframe,parameters_vector,loss_function,process_model,process_loss,observation_model,observation_loss,
-            process_regularization,observation_regularization,constructor)
+            process_regularization,observation_regularization,constructor,time_column_name )
 end 
 """
     BayesianNODE(data,X;kwargs ... )
@@ -795,11 +727,11 @@ end
 When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for values of time not included in the data frame. 
 
 """
-function BayesianNODE(data,X;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0 )
+function BayesianNODE(data,X;time_column_name = "time",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0 )
     
     # convert data
-    N, dims, T, times, data, dataframe = process_data(data)
-    covariates = interpolate_covariates(X)
+    N, dims, T, times, data, dataframe = process_data(data,time_column_name)
+    covariates = interpolate_covariates(X,time_column_name)
 
     # submodels
     process_model = NODE_process(dims,hidden_units,covariates,seed,l,extrap_rho)
@@ -827,7 +759,7 @@ function BayesianNODE(data,X;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight
     constructor = (data,X) -> NODE(data,X;hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type,l=l,extrap_rho=extrap_rho)
     
     return BayesianUDE(times,data,X,dataframe,parameters_vector,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor)
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name )
 end 
 
 """
@@ -843,10 +775,10 @@ Constructs a Bayesian UDE model for the data set `data`  based on user defined d
 - init_parameters: A `NamedTuple` with the model parameters. Neural network parameters must be listed under the key `NN`.
 ...
 """
-function BayesianCustomDerivatives(data,derivs!,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+function BayesianCustomDerivatives(data,derivs!,initial_parameters;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
     
     # convert data
-    N, dims, T, times, data, dataframe = process_data(data)
+    N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     
     # generate submodels 
     process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),dims,l,extrap_rho)
@@ -873,7 +805,7 @@ function BayesianCustomDerivatives(data,derivs!,initial_parameters;proc_weight=1
     constructor = data -> CustomDerivatives(data,derivs!,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
     
     return BayesianUDE(times,data,X,dataframe,parameters_vector,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor)
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name )
    
 
 end
@@ -893,9 +825,9 @@ function priors(p)
 end 
 ```
 """
-function BayesianCustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,priors::Function;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+function BayesianCustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,priors::Function;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
     # convert data
-    N, dims, T, times, data, dataframe = process_data(data)
+    N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     
     # generate submodels 
     process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),dims,l,extrap_rho)
@@ -922,7 +854,7 @@ function BayesianCustomDerivatives(data::DataFrame,derivs!::Function,initial_par
     constructor = data -> CustomDerivatives(data,derivs!,initial_parameters,priors;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
     
     return BayesianUDE(times,data,X,dataframe,parameters_vector,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor)
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name )
    
 end 
     
@@ -934,11 +866,11 @@ When a dataframe `X` is supplied the model will run with covariates. the argumen
 
 When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)` where `x` is a vector with the value of the covariates at time `t`. 
 """
-function BayesianCustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+function BayesianCustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
     
     # convert data
-    N, dims, T, times, data, dataframe = process_data(data)
-    covariates = interpolate_covariates(X)
+    N, dims, T, times, data, dataframe = process_data(data,time_column_name)
+    covariates = interpolate_covariates(X,time_column_name)
 
     # generate submodels 
     process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),covariates,dims,l,extrap_rho)
@@ -965,15 +897,15 @@ function BayesianCustomDerivatives(data::DataFrame,X,derivs!::Function,initial_p
     constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type)
     
     return BayesianUDE(times,data,X,dataframe,parameters_vector,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor)
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name )
    
 end
 
 
-function BayesianCustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters,priors::Function;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+function BayesianCustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters,priors::Function;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
     # convert data
-    N, dims, T, times, data, dataframe = process_data(data)
-    covariates = interpolate_covariates(X)
+    N, dims, T, times, data, dataframe = process_data(data,time_column_name)
+    covariates = interpolate_covariates(X,time_column_name)
 
     # generate submodels 
     process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),covariates,dims,l,extrap_rho)
@@ -1000,6 +932,6 @@ function BayesianCustomDerivatives(data::DataFrame,X,derivs!::Function,initial_p
     constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters,priors;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type)
     
     return BayesianUDE(times,data,X,dataframe,parameters_vector,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor)
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name )
    
 end 

@@ -76,25 +76,14 @@ function init_loss(data,times,observation_model,observation_loss,process_model,p
 end 
 
 
-function find_time_alias(nms)
-    time_alias = ["T", "t","time", "Time", "times", "Times"] 
-    ind = broadcast(nm -> nm in nms, time_alias)
-    if any(ind)
-        return time_alias[ind][1]   
-    end
-    print("Cannot find column for time ")
-    throw(error()) 
-end 
 
-
-
-function process_data(data)
+function process_data(data,time_column_name)
     
-    time_alias_ = find_time_alias(names(data))
+    time_alias_ = time_column_name
     dataframe = sort!(data,[time_alias_])
     times = dataframe[:,time_alias_]
 
-    times = dataframe.t # time in colum 1
+    times = dataframe[:,time_alias_] # time in colum 1
     N = length(times); dims = size(dataframe)[2] - 1; T = times[end] - times[1]
     varnames = names(dataframe)[names(dataframe).!=time_alias_]
     data = transpose(Matrix(dataframe[:,varnames]))
@@ -102,15 +91,6 @@ function process_data(data)
     return  N, dims, T, times, data, dataframe
 end 
 
-function find_series_alias(nms)
-    series_alias = ["location", "site", "series"] 
-    ind = broadcast(nm -> nm in nms, series_alias)
-    if any(ind)
-        return series_alias[ind][1]   
-    end
-    print("Cannot find column for time ")
-    throw(error()) 
-end 
 
 function find_NNparams_alias(nms)
     NN_alias = ["NNparams", "NN", "NN1", "NN2", "NN3", "NN4", "NN5", "Network", "NeuralNetwork", "NNparameters"] 
@@ -122,22 +102,23 @@ function find_NNparams_alias(nms)
     throw(error()) 
 end 
 
-function series_indexes(dataframe)
+function series_indexes(dataframe,series_column_name)
     
-    series = length(unique(dataframe.series))
+    series = length(unique(dataframe[:,series_column_name]))
         
     inds = collect(1:nrow(dataframe))  
-    starts = [inds[dataframe.series .== i][1] for i in unique(dataframe.series)]
-    lengths = [sum(dataframe.series .== i) for i in unique(dataframe.series)]
-    times = [dataframe.t[dataframe.series .== i] for i in unique(dataframe.series)]  
+    starts = [inds[dataframe[:,series_column_name] .== i][1] for i in unique(dataframe[:,series_column_name])]
+    lengths = [sum(dataframe[:,series_column_name] .== i) for i in unique(dataframe[:,series_column_name])]
+    times = [dataframe.t[dataframe[:,series_column_name] .== i] for i in unique(dataframe[:,series_column_name])]  
 
     return series, inds, starts, lengths, times
 end 
 
-function process_multi_data(data)
+
+function process_multi_data(data, time_column_name, series_column_name)
     
-    time_alias_ = find_time_alias(names(data))
-    series_alias_ = find_series_alias(names(data))
+    time_alias_ = time_column_name
+    series_alias_ = series_column_name
     
     dataframe = sort!(data,[series_alias_,time_alias_])
     
@@ -151,16 +132,16 @@ function process_multi_data(data)
     varnames = names(dataframe)[inds_time .& inds_series]
     data = transpose(Matrix(dataframe[:,varnames]))
 
-    series, inds, starts, lengths, times_ls= series_indexes(dataframe)
+    series, inds, starts, lengths, times_ls= series_indexes(dataframe,series_column_name)
     dims = size(data)[1]
-    return N, T, dims, data, times,  dataframe, series, inds, starts, lengths
+    return N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames
 end 
 
 
-function process_multi_data2(data)
+function process_multi_data2(data,time_column_name,series_column_name)
     
-    time_alias_ = find_time_alias(names(data))
-    series_alias_ = find_series_alias(names(data))
+    time_alias_ = time_column_name
+    series_alias_ = series_column_name
     dataframe = sort!(data,[series_alias_,time_alias_])
     inds_time = names(dataframe).!=time_alias_ 
     inds_series = names(dataframe).!=series_alias_
