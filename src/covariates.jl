@@ -31,8 +31,8 @@ function interpolate_covariates_multi(X,time_column_name,series_column_name)
     data_sets, times = process_multi_data2(X,time_column_name,series_column_name)
     dims = size(data_sets[1])[1]
     interpolations = [[linear_interpolation(times[j], data_sets[j][i,:],extrapolation_bc = Interpolations.Flat()) for i in 1:dims] for j in eachindex(times)]
-    function covariates(t,j)
-        return [interpolation(t) for interpolation in interpolations[round(Int,j)]]
+    function covariates(t,series)
+        return [interpolation(t) for interpolation in interpolations[round(Int,series)]]
     end 
     return covariates
 end 

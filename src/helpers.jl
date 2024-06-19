@@ -102,14 +102,14 @@ function find_NNparams_alias(nms)
     throw(error()) 
 end 
 
-function series_indexes(dataframe,series_column_name)
+function series_indexes(dataframe,series_column_name,time_column_name)
     
     series = length(unique(dataframe[:,series_column_name]))
         
     inds = collect(1:nrow(dataframe))  
     starts = [inds[dataframe[:,series_column_name] .== i][1] for i in unique(dataframe[:,series_column_name])]
     lengths = [sum(dataframe[:,series_column_name] .== i) for i in unique(dataframe[:,series_column_name])]
-    times = [dataframe.t[dataframe[:,series_column_name] .== i] for i in unique(dataframe[:,series_column_name])]  
+    times = [dataframe[dataframe[:,series_column_name] .== i,time_column_name] for i in unique(dataframe[:,series_column_name])]  
 
     return series, inds, starts, lengths, times
 end 
@@ -141,7 +141,7 @@ function process_multi_data(data, time_column_name, series_column_name)
     varnames = names(dataframe)[inds_time .& inds_series]
     data = transpose(Matrix(dataframe[:,varnames]))
 
-    series, inds, starts, lengths, times_ls= series_indexes(dataframe,series_column_name)
+    series, inds, starts, lengths, times_ls= series_indexes(dataframe,series_column_name,time_column_name)
     dims = size(data)[1]
     return N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames, labels_df
 end 
@@ -159,8 +159,6 @@ function process_multi_data2(data,time_column_name,series_column_name)
     inds_time = names(dataframe).!=time_alias_ 
     inds_series = (names(dataframe).!=series_alias_) .& (names(dataframe).!= "series")
     varnames = names(dataframe)[inds_time .& inds_series]
-
-    
     
     times = dataframe[:,time_alias_]
     series =dataframe[:,series_alias_]
