@@ -1,6 +1,6 @@
 module UniversalDiffEq
 
-using DiffEqFlux, OrdinaryDiffEq, Optimization, OptimizationOptimisers, OptimizationOptimJL, ComponentArrays, Lux, Random, StatsBase, DelimitedFiles, Plots, DataFrames, Distributions, Roots, LaTeXStrings, NLsolve, FiniteDiff, LinearAlgebra, AdvancedHMC, MCMCChains, Interpolations, Optim, LuxCUDA, DiffEqGPU
+using DiffEqFlux, OrdinaryDiffEq, Optimization, OptimizationOptimisers, OptimizationOptimJL, ComponentArrays, Lux, Random, StatsBase, DelimitedFiles, Plots, DataFrames, Distributions, Roots, LaTeXStrings, NLsolve, FiniteDiff, LinearAlgebra, AdvancedHMC, MCMCChains, Interpolations, Optim, LuxCUDA, DiffEqGPU, CategoricalArrays
 
 
 include("covariates.jl")

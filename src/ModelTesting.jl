@@ -152,7 +152,7 @@ end
 
 function predictions(UDE::UDE,test_data::DataFrame)
      
-    N, dims, T, times, data, dataframe = process_data(test_data)
+    N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
     inits = data[:,1:(end-1)]
     obs = data[:,2:end]
     preds = data[:,2:end]
@@ -194,7 +194,7 @@ end
 
 function predict(UDE::UDE,test_data::DataFrame)
      
-    N, dims, T, times, data, dataframe = process_data(test_data)
+    N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
     df = zeros(length(times)-1,dims+1)
     
     for t in 1:(length(times)-1)
@@ -523,7 +523,7 @@ Plots the models forecast over the range of the test_data along with the value o
 """
 function plot_forecast(UDE::UDE, test_data::DataFrame)
     u0 = UDE.parameters.uhat[:,end]
-    N, dims, T, times, data, dataframe = process_data(test_data)
+    N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
     df = forecast(UDE, u0, UDE.times[end], times)
     plots = []
     for dim in 2:size(df)[2]
