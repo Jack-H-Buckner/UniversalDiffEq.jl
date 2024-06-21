@@ -2,5 +2,6 @@ using UniversalDiffEq
 using Test
 
 @testset "UniversalDiffEq.jl" begin
-    include("tests.jl")
+    include("NODEtests.jl")
+    include("`BayesNODEtests.jl")
 end
