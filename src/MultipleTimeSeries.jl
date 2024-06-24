@@ -180,7 +180,7 @@ When a dataframe `X` is supplied the model will run with covariates. the argumen
 function MultiNODE(data,X;time_column_name = "time", series_column_name = "series", variable_column_name = "variable", value_column_name = "value",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,reg_type="L2",l=0.5,extrap_rho=0.0)
 
     N, T, dims, data, times,  dataframe, series, inds, starts, lengths,varnames, labels_df = process_multi_data(data, time_column_name, series_column_name)
-    covariates, variables = interpolate_covariates(data, time_column_name, series_column_name,  variable_column_name, value_column_name)
+    covariates, variables = interpolate_covariates(X, time_column_name, series_column_name,  variable_column_name, value_column_name)
 
 
     process_model = MultiNODE_process(dims,hidden_units,covariates,seed,l,extrap_rho)
@@ -248,7 +248,7 @@ function MultiCustomDerivatives(data,X,derivs!,initial_parameters;time_column_na
     
     # convert data
     N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames, labels_df = process_multi_data(data, time_column_name, series_column_name)
-    covariates, variables = interpolate_covariates(data, time_column_name, series_column_name,  variable_column_name, value_column_name)
+    covariates, variables = interpolate_covariates(X, time_column_name, series_column_name,  variable_column_name, value_column_name)
 
     # generate submodels 
     process_model = MultiContinuousProcessModel(derivs!,ComponentArray(initial_parameters),covariates,dims,l,extrap_rho)

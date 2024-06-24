@@ -26,7 +26,7 @@ function process_long_format_data(data, time_column_name, series_column_name,  v
     series = unique(data[:,series_column_name])
     times = []; values = []
     for series_i in series 
-        times_var = [], values_var = []
+        times_var = []; values_var = []
         for var in variables
             inds = (data[:,variable_column_name] .== var) .& (data[:,series_column_name] .== series_i) 
             dat_i = data[inds,:]
@@ -46,6 +46,6 @@ function interpolate_covariates(data, time_column_name, series_column_name,  var
     function covariates(t,series)
         return [interpolation(t) for interpolation in interpolations[round(Int,series)]]
     end 
-    return covariates
+    return covariates, variables
 end 
 
