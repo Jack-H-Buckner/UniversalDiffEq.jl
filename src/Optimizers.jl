@@ -147,7 +147,7 @@ function NUTS!(UDE::BayesianUDE;delta = 0.45,samples = 500, burnin = Int(samples
   UDE.parameters = UDE.parameters[end]
 
   target = (x,p) -> UDE.loss_function(x) * UDE.times
-  l(θ) = -target(θ,nothing) - sum(θ .* θ)
+  l(θ) = sum(abs2,-target(θ,nothing) .- sum(θ .* θ))
   function dldθ(θ)
     x, λ = Zygote.pullback(l,θ)
     grad = first(λ(1))
@@ -173,9 +173,10 @@ end
 function SGLD!(UDE::BayesianUDE;samples = 500, burnin = Int(samples/10),a = 10.0, b = 1000, γ = 0.9, verbose = true)
   UDE.parameters = UDE.parameters[end]
 
-  target = (x,p) -> UDE.loss_function(x) * UDE.times
+  target = (x,p) -> sum(abs2,UDE.loss_function(x) * UDE.times)
 
   parameters = Vector{typeof(UDE.parameters)}(undef, samples+1)
+  parameters[1] = UDE.parameters
   
   for t in 2:(samples+1)
     dL = gradient(x -> target(x,nothing), parameters[t-1])
