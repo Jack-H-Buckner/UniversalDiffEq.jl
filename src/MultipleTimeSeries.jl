@@ -177,10 +177,11 @@ end
 
 When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for values of time not included in the data frame. 
 """
-function MultiNODE(data,X;time_column_name = "time", series_column_name = "series",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,reg_type="L2",l=0.5,extrap_rho=0.0)
+function MultiNODE(data,X;time_column_name = "time", series_column_name = "series", variable_column_name = "variable", value_column_name = "value",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,reg_type="L2",l=0.5,extrap_rho=0.0)
 
     N, T, dims, data, times,  dataframe, series, inds, starts, lengths,varnames, labels_df = process_multi_data(data, time_column_name, series_column_name)
-    covariates = interpolate_covariates_multi(X,time_column_name,series_column_name)
+    covariates, variables = interpolate_covariates(data, time_column_name, series_column_name,  variable_column_name, value_column_name)
+
 
     process_model = MultiNODE_process(dims,hidden_units,covariates,seed,l,extrap_rho)
     process_loss = ProcessMSE(N,T,proc_weight)
@@ -243,11 +244,11 @@ function MultiCustomDerivatives(data,derivs!,initial_parameters;time_column_name
 end
 
 
-function MultiCustomDerivatives(data,X,derivs!,initial_parameters;time_column_name = "time", series_column_name = "series",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
+function MultiCustomDerivatives(data,X,derivs!,initial_parameters;time_column_name = "time", series_column_name = "series", variable_column_name = "variable", value_column_name = "value",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
     
     # convert data
     N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames, labels_df = process_multi_data(data, time_column_name, series_column_name)
-    covariates = interpolate_covariates_multi(X,time_column_name,series_column_name)
+    covariates, variables = interpolate_covariates(data, time_column_name, series_column_name,  variable_column_name, value_column_name)
 
     # generate submodels 
     process_model = MultiContinuousProcessModel(derivs!,ComponentArray(initial_parameters),covariates,dims,l,extrap_rho)
@@ -271,68 +272,4 @@ function MultiCustomDerivatives(data,X,derivs!,initial_parameters;time_column_na
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name,labels_df,varnames)
 
 end
-
-
-
-
-# function MultiCustomDerivatives(data,derivs!,initial_parameters,priors::Function;time_column_name = "time", series_column_name = "series",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
-    
-#     # convert data
-#     N, T, dims, data, times,  dataframe, series, inds, starts, lengths = process_multi_data(data, time_column_name, series_column_name)
-
-#     # generate submodels 
-#     process_model = MultiContinuousProcessModel(derivs!,ComponentArray(initial_parameters),dims,l,extrap_rho)
-#     process_loss = ProcessMSE(N,T, proc_weight)
-#     observation_model = Identity()
-#     observation_loss = ObservationMSE(N,obs_weight)
-#     process_regularization = L2(initial_parameters,weight=reg_weight)
-#     observation_regularization = no_reg()
-    
-#     # paramters vector
-#     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
-
-#     # loss function 
-#     loss_= init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization)
-#     loss_function = parameters -> loss_(parameters) + priors(parameters.process_model)
-#     # model constructor
-#     constructor = (data) -> MultiCustomDerivatives(data,derivs!,initial_parameters;
-#                     proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l)
-    
-#     return MultiUDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-#                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name)
-
-# end
-
-
-# function MultiCustomDerivatives(data,X,derivs!,initial_parameters,priors::Function;time_column_name = "time", series_column_name = "series",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
-    
-#     # convert data
-#     N, T, dims, data, times,  dataframe, series, inds, starts, lengths = process_multi_data(data, time_column_name, series_column_name)
-#     covariates = interpolate_covariates_multi(X,time_column_name,series_column_name)
-
-#     # generate submodels 
-#     process_model = MultiContinuousProcessModel(derivs!,ComponentArray(initial_parameters),covariates,dims,l,extrap_rho)
-#     process_loss = ProcessMSE(N,T, proc_weight)
-#     observation_model = Identity()
-#     observation_loss = ObservationMSE(N,obs_weight)
-#     process_regularization = L2(initial_parameters,weight=reg_weight)
-#     observation_regularization = no_reg()
-    
-#     # paramters vector
-#     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
-
-#     # loss function 
-#     loss_= init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization)
-#     loss_function = parameters -> loss_(parameters) + priors(parameters.process_model)
-
-#     # model constructor
-#     constructor = (data,X) -> MultiCustomDerivatives(data,X,derivs!,initial_parameters;
-#                     proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l)
-    
-#     return MultiUDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-#                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name)
-
-# end
-
-
 
