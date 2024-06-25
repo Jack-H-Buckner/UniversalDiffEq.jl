@@ -29,7 +29,7 @@ function gradient_descent!(UDE; step_size = 0.05, maxiter = 500, verbose = false
     end
 
     # run optimizer
-    sol = Optimization.solve(optprob, OptimizationOptimisers.ADAM(step_size), callback = callback, maxiters = maxiter )
+    sol = Optimization.solve(optprob, OptimizationOptimisers.Adam(step_size), callback = callback, maxiters = maxiter )
     
     # assign parameters to model 
     UDE.parameters = sol.u
@@ -64,7 +64,7 @@ function gradient_descent!(UDE,t_skip; step_size = 0.05, maxiter = 500, verbose 
   end
 
   # run optimizer
-  sol = Optimization.solve(optprob, OptimizationOptimisers.ADAM(step_size), callback = callback, maxiters = maxiter )
+  sol = Optimization.solve(optprob, OptimizationOptimisers.Adam(step_size), callback = callback, maxiters = maxiter )
   
   # assign parameters to model 
   UDE.parameters = sol.u
@@ -147,7 +147,7 @@ function NUTS!(UDE::BayesianUDE;delta = 0.45,samples = 500, burnin = Int(samples
   UDE.parameters = UDE.parameters[end]
 
   target = (x,p) -> UDE.loss_function(x) * UDE.times
-  l(θ) = -target(θ,nothing) - sum(θ .* θ)
+  l(θ) = sum(abs2,-target(θ,nothing) .- sum(θ .* θ))
   function dldθ(θ)
     x, λ = Zygote.pullback(l,θ)
     grad = first(λ(1))
@@ -173,12 +173,13 @@ end
 function SGLD!(UDE::BayesianUDE;samples = 500, burnin = Int(samples/10),a = 10.0, b = 1000, γ = 0.9, verbose = true)
   UDE.parameters = UDE.parameters[end]
 
-  target = (x,p) -> UDE.loss_function(x) * UDE.times
+  target = (x,p) -> sum(abs2,UDE.loss_function(x) * UDE.times)
 
   parameters = Vector{typeof(UDE.parameters)}(undef, samples+1)
+  parameters[1] = UDE.parameters
   
   for t in 2:(samples+1)
-    dL = gradient(x -> target(x,nothing), parameters[t-1])
+    dL = Zygote.gradient(x -> target(x,nothing), parameters[t-1])
     ϵ = a*(b + t-1)^-γ
     η = ϵ.*(randn(size(parameters[t-1])))
 

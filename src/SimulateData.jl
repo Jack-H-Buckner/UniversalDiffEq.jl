@@ -26,11 +26,11 @@ function LotkaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,sigma = 0.
         
     if plot
         plt = Plots.scatter(tsteps,transpose(ode_data), xlabel = "Time", ylabel = "Abundance", label = "")
-        data = DataFrame(t = tsteps, x1 = ode_data[1,:], x2 = ode_data[2,:])
+        data = DataFrame(time = tsteps, x1 = ode_data[1,:], x2 = ode_data[2,:])
         return data, plt
     end
     
-    data = DataFrame(t = tsteps, x1 = ode_data[1,:], x2 = ode_data[2,:])
+    data = DataFrame(time = tsteps, x1 = ode_data[1,:], x2 = ode_data[2,:])
     
     return data
 end 
@@ -67,13 +67,13 @@ function LorenzLotkaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,sigm
         
     if plot
         plt = Plots.scatter(tsteps,transpose(ode_data[1:2,:]), xlabel = "Time", ylabel = "Abundance", label = "")
-        data = DataFrame(t = tsteps, x1 = ode_data[1,:], x2 = ode_data[2,:])
-        X = DataFrame(t = tsteps, X = ode_data[3,:])
+        data = DataFrame(time = tsteps, x1 = ode_data[1,:], x2 = ode_data[2,:])
+        X = DataFrame(time = tsteps, X = ode_data[3,:])
         return data, X, plt
     end
     
-    data = DataFrame(t = tsteps, x1 = ode_data[1,:], x2 = ode_data[2,:])
-    X = DataFrame(t = tsteps, X = ode_data[3,:])
+    data = DataFrame(time = tsteps, x1 = ode_data[1,:], x2 = ode_data[2,:])
+    X = DataFrame(time = tsteps, X = ode_data[3,:])
     return data, X
 end 
 
@@ -105,12 +105,12 @@ function LogisticLorenz(;plot = true, seed = 123, datasize = 100,T = 30.0,sigma 
     ode_data .+= ode_data .* rand(Normal(0.0,sigma), size(ode_data))
     
     if plot
-        data = DataFrame(t = tsteps, x1 = ode_data[4,:])
-        plt = Plots.plot(data.t,data.x1, xlabel = "time", ylabel = "abundance")
+        data = DataFrame(time = tsteps, x1 = ode_data[4,:])
+        plt = Plots.plot(data.time,data.x1, xlabel = "time", ylabel = "abundance")
         return data, plt
     end
     
-    data = DataFrame(t = tsteps, x1 = ode_data[4,:])
+    data = DataFrame(time = tsteps, x1 = ode_data[4,:])
     return data
     
 end 
@@ -132,11 +132,11 @@ function LogisticMap(;plot = true, seed=123,datasize = 100,sigma = 0.05, r = 3.7
     end
     
     if plot
-        data = DataFrame(t = collect(1:T), x = xls .+ rand(Distributions.Normal(0,sigma), length(xls)))
+        data = DataFrame(time = collect(1:T), x = xls .+ rand(Distributions.Normal(0,sigma), length(xls)))
         plt = Plots.plot(data.t,data.x, xlabel = "time", ylabel = "abundance")
         return data, plt
     end 
-    
+    data = DataFrame(time = collect(1:T), x = xls .+ rand(Distributions.Normal(0,sigma), length(xls)))
     return data
     
 end 
