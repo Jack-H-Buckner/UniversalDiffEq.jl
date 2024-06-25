@@ -23,12 +23,24 @@ Plots the value of the state variables estimated by the UDE model.
 function plot_state_estimates(UDE::UDE)
     
     plots = []
+    total_RMSE = 0.0
+    
     for dim in 1:size(UDE.data)[1]
+    
+        # Calculate RMSE for the current dimension
+        RMSE = StatsBase.rmsd(UDE.data[dim,:], UDE.parameters.uhat[dim,:])
+        
+        # Add to total RMSE and calculate the mean RMSE
+        total_RMSE += RMSE
+        avg_RMSE = total_RMSE/size(UDE.data)[1]
     
         plt=Plots.scatter(UDE.times,UDE.data[dim,:], label = "observations")
         
         Plots.plot!(UDE.times,UDE.parameters.uhat[dim,:], color = "grey", label= "estimated states",
                     xlabel = "time", ylabel = string("x", dim))
+                    
+        Plots.annotate!(0.1, 0.9, text("Total RMSE = $(round(total_RMSE, digits=3))\nMean RMSE = $(round(avg_RMSE, digits=3))", :left, 12))
+
        
         push!(plots, plt)
     end 
