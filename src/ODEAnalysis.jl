@@ -346,7 +346,7 @@ function eigen_values(UDE::MultiUDE,x,site,X,t)
 end
 
 """
-    equilibrium_and_stability(UDE,X,lower,upper;t=0,Ntrials=100,tol=10^-3)
+    equilibrium_and_stability(UDE,site,X,lower,upper;t=0,Ntrials=100,tol=10^-3)
 
 Attempts to find all the equilibirum points for the UDE model between the upper and lower bound and return the real component of the leading eigen value to analyze stability. 
 

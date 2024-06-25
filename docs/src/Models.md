@@ -180,13 +180,9 @@ If you wish to build a model with covariates that are measured at different poin
 
 ## Adding prior information to custom models 
 
+For adding prior information to continuous models see the Bayesian Model constructors 
+
 ```@docs
-UniversalDiffEq.CustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,priors::Function;kwargs ... )
 UniversalDiffEq.CustomDifference(data::DataFrame,step,initial_parameters,priors::Function;kwargs ... )
 ```
 
-
-## Other functions
-```@docs
-UniversalDiffEq.DiscreteUDE(data,step,init_parameters;kwargs ...)
-```
