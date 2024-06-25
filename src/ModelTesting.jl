@@ -28,7 +28,7 @@ function plot_state_estimates(UDE::UDE)
     for dim in 1:size(UDE.data)[1]
     
         # Calculate RMSE for the current dimension
-        RMSE = StatsBase.rmsd(UDE.data[dim,:], convert(Float32, UDE.parameters.uhat[dim,:]))
+        RMSE = StatsBase.rmsd(UDE.data[dim,:], UDE.parameters.uhat[dim,:] .|> Float32)
         
         # Add to total RMSE and calculate the mean RMSE
         total_RMSE += RMSE
