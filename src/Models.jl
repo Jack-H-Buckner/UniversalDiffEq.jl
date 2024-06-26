@@ -158,7 +158,12 @@ function CustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,
 
     # loss function 
     loss_ = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
-    loss_function = parameters -> loss_(parameters) + priors(parameters.process_model)
+    function loss_function(parameters)
+        loss_(parameters) + priors(parameters.process_model)
+    end
+    function loss_function(parameters,tskip)
+        loss_(parameters,tskip) + priors(parameters.process_model)
+    end
     # model constructor
     constructor = data -> CustomDerivatives(data,derivs!,initial_parameters,priors;time_column_name = time_column_name ,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
     
@@ -231,7 +236,12 @@ function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameter
 
     # loss function 
     loss_ = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
-    loss_function = parameters -> loss_(parameters) + priors(parameters.process_model)
+    function loss_function(parameters)
+        loss_(parameters) + priors(parameters.process_model)
+    end
+    function loss_function(parameters,tskip)
+        loss_(parameters,tskip) + priors(parameters.process_model)
+    end
     # model constructor
     constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters,priors;time_column_name=time_column_name,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type)
     
