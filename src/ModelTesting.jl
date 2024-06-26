@@ -4,9 +4,9 @@ function get_final_state(UDE::UDE)
     return UDE.parameters.uhat[:,end]
 end 
 
-function get_final_state(UDE::BayesianUDE;summary = true,ci = 95)
+function get_final_state(UDE::BayesianUDE;summarize = true,ci = 95)
     uhats = reduce(hcat,[UDE.parameters[i].uhat[:,end] for i in 1:length(UDE.parameters)])
-    if summary
+    if summarize
         return [percentile(uhats[i,:],[(100-ci)/2,50,ci+(100-ci)/2]) for i in 1:size(uhats,1)]   
     else
         return uhats
@@ -131,22 +131,22 @@ function predictions(UDE::UDE)
     return inits, obs, preds
 end 
 
-function predictions(UDE::BayesianUDE;summary = true,ci = 95)
+function predictions(UDE::BayesianUDE;summarize = true,ci = 95)
  
     inits = [UDE.parameters[i].uhat[:,1:(end-1)] for i in 1:length(UDE.parameters)]
     obs = [UDE.parameters[i].uhat[:,2:end] for i in 1:length(UDE.parameters)]
     preds = [UDE.parameters[i].uhat[:,2:end] for i in 1:length(UDE.parameters)]
     
     for i in 1:length(UDE.parameters)
-        for t in 1:(size(inits)[2])
+        for t in 1:(size(inits[1])[2])
             u0 = inits[i][:,t]
             u1 = obs[i][:,t]
             dt = UDE.times[t+1] - UDE.times[t]
-            preds[i][:,t] = UDE.process_model.predict(u0,UDE.times[t],dt,UDE.parameters.process_model[i])[1]
+            preds[i][:,t] = UDE.process_model.predict(u0,UDE.times[t],dt,UDE.parameters[i].process_model)[1]
         end
     end
 
-    if summary
+    if summarize
         inits = reduce((x,y) -> cat(x,y,dims = 3),inits)
         inits = [percentile(inits[i,j,:],50) for i in 1:size(inits,1), j in 1:size(inits,2)]
 
@@ -179,23 +179,23 @@ function predictions(UDE::UDE,test_data::DataFrame)
     return inits, obs, preds
 end 
 
-function predictions(UDE::BayesianUDE,test_data::DataFrame;summary = true,ci = 95)
+function predictions(UDE::BayesianUDE,test_data::DataFrame;summarize = true,ci = 95)
      
-    N, dims, T, times, data, dataframe = process_data(test_data)
+    N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
     inits = data[:,1:(end-1)]
     obs = data[:,2:end]
     preds = [data[:,2:end] for i in 1:length(UDE.parameters)]
     
     for i in 1:length(UDE.parameters)
-        for t in 1:(size(inits)[2])
-            u0 = inits[:,t]
-            u1 = obs[:,t]
-            dt = times[t+1] - times[t]
-            preds[i][:,t] = UDE.process_model.predict(u0,UDE.times[t],dt,UDE.parameters.process_model[i])[1]
+        for t in 1:(size(inits[1])[2])
+            u0 = inits[i][:,t]
+            u1 = obs[i][:,t]
+            dt = UDE.times[t+1] - UDE.times[t]
+            preds[i][:,t] = UDE.process_model.predict(u0,UDE.times[t],dt,UDE.parameters[i].process_model)[1]
         end
     end
 
-    if summary
+    if summarize
         preds = reduce((x,y) -> cat(x,y,dims = 3),preds)
         preds = [percentile(preds[i,j,:],[(100-ci)/2,50,ci+(100-ci)/2]) for i in 1:size(preds,1), j in 1:size(preds,2)]
     end
@@ -219,9 +219,9 @@ function predict(UDE::UDE,test_data::DataFrame)
     return DataFrame(df,names)
 end 
 
-function predict(UDE::BayesianUDE,test_data::DataFrame;summary = true,ci = 95)
+function predict(UDE::BayesianUDE,test_data::DataFrame;summarize = true,ci = 95)
      
-    N, dims, T, times, data, dataframe = process_data(test_data)
+    N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
     inits = data[:,1:(end-1)]
     obs = data[:,2:end]
     preds = [data[:,2:end] for i in 1:length(UDE.parameters)]
@@ -233,7 +233,7 @@ function predict(UDE::BayesianUDE,test_data::DataFrame;summary = true,ci = 95)
         preds[:,t] = UDE.process_model.predict(u0,UDE.times[t],dt,UDE.parameters.process_model[i])[1]
     end
 
-    if summary
+    if summarize
         preds = reduce((x,y) -> cat(x,y,dims = 3),preds)
         preds = [percentile(preds[i,j,:],[(100-ci)/2,50,ci+(100-ci)/2]) for i in 1:size(preds,1), j in 1:size(preds,2)]
     end
@@ -268,7 +268,7 @@ end
 
 function plot_predictions(UDE::BayesianUDE;ci=95)
  
-    inits, obs, preds = predictions(UDE,summary = true,ci=ci)
+    inits, obs, preds = predictions(UDE,summarize = true,ci=ci)
     
     plots = []
     for dim in 1:size(obs[1],1)
@@ -312,7 +312,7 @@ end
 
 function plot_predictions(UDE::BayesianUDE,test_data::DataFrame;ci=95)
  
-    inits, obs, preds = predictions(UDE,test_data,summary = true,ci=ci)
+    inits, obs, preds = predictions(UDE,test_data,summarize = true,ci=ci)
     
     plots = []
     for dim in 1:size(obs[1],1)
@@ -374,7 +374,7 @@ function forecast(UDE::UDE, u0::AbstractVector{}, times::AbstractVector{})
 end 
 
 
-function forecast(UDE::BayesianUDE, u0::AbstractVector{}, times::AbstractVector{};summary = true, ci = 95)
+function forecast(UDE::BayesianUDE, u0::AbstractVector{}, times::AbstractVector{};summarize = true, ci = 95)
     dfs = zeros(length(UDE.parameters),length(times),length(x)+1)
 
     for i in 1:length(UDE.parameters)
@@ -399,7 +399,7 @@ function forecast(UDE::BayesianUDE, u0::AbstractVector{}, times::AbstractVector{
         end 
     end
 
-    if summary
+    if summarize
         dfs = [percentile(dfs[:,i,j],[(100-ci)/2,50,ci+(100-ci)/2]) for i in 1:10, j in 1:3] 
     end
 
@@ -443,17 +443,18 @@ function forecast(UDE::UDE, u0::AbstractVector{}, t0::Real, times::AbstractVecto
 end 
 
 
-function forecast(UDE::BayesianUDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{};summary = true, ci = 95)
+function forecast(UDE::BayesianUDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{};summarize = true, ci = 95)
     
     @assert all(times .> t0)
+    x = u0
     dfs = zeros(length(UDE.parameters),length(times),length(x)+1)
 
     for i in 1:length(UDE.parameters)
         uhats = UDE.parameters[i].uhat
     
-        umax = mapslices(max_, uhats, dims = 2);umax=reshape(umax,length(umax))
-        umin = mapslices(min_, uhats, dims = 2);umin=reshape(umin,length(umin))
-        umean = mapslices(mean_, uhats, dims = 2);umean=reshape(umean,length(umean))
+        umax = mapslices(maximum, uhats, dims = 2);umax=reshape(umax,length(umax))
+        umin = mapslices(minimum, uhats, dims = 2);umin=reshape(umin,length(umin))
+        umean = mapslices(mean, uhats, dims = 2);umean=reshape(umean,length(umean))
     
     
         #estimated_map = (x,dt) -> UDE.process_model.forecast(x,dt,UDE.parameters.process_model,umax,umin,umean)
@@ -474,8 +475,8 @@ function forecast(UDE::BayesianUDE, u0::AbstractVector{}, t0::Real, times::Abstr
         end 
     end
     
-    if summary
-        dfs = [percentile(dfs[:,i,j],[(100-ci)/2,50,ci+(100-ci)/2]) for i in 1:10, j in 1:3] 
+    if summarize
+        dfs = [percentile(dfs[:,i,j],[(100-ci)/2,50,ci+(100-ci)/2]) for i in 1:length(times), j in 1:(length(x)+1)] 
     end
 
     return dfs
@@ -508,10 +509,11 @@ end
 function plot_forecast(UDE::BayesianUDE, T::Int;ci = 95)
     u0 = reduce((x,y) -> cat(x,y,dims = 3),[UDE.parameters[i].uhat[:,end] for i in 1:length(UDE.parameters)])
     u0 = mean(u0,dims = 3)
+    u0 = vec(u0[:,:,1])
     dts = UDE.times[2:end] .- UDE.times[1:(end-1)]
     dt = sum(dts)/length(dts)
     times = UDE.times[end]:dt:(UDE.times[end] + T*dt )
-    df = forecast(UDE, u0, times,summary = true, ci = ci)
+    df = forecast(UDE, u0, times,summarize = true, ci = ci)
     meanForecast = [df[i,j][2] for i in 1:size(df,1), j in 1:size(df,2)]
     lowerForecast = [df[i,j][1] for i in 1:size(df,1), j in 1:size(df,2)]
     upperForecast = [df[i,j][3] for i in 1:size(df,1), j in 1:size(df,2)]
@@ -550,8 +552,9 @@ end
 function plot_forecast(UDE::BayesianUDE, test_data::DataFrame;ci = 95)
     u0 = reduce((x,y) -> cat(x,y,dims = 3),[UDE.parameters[i].uhat[:,end] for i in 1:length(UDE.parameters)])
     u0 = mean(u0,dims = 3)
-    N, dims, T, times, data, dataframe = process_data(test_data)
-    df = forecast(UDE, u0, UDE.times[end], times,summary = true, ci = ci)
+    u0 = vec(u0[:,:,1])
+    N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
+    df = forecast(UDE, u0, UDE.times[end], times,summarize = true, ci = ci)
     meanForecast = [df[i,j][2] for i in 1:size(df,1), j in 1:size(df,2)]
     lowerForecast = [df[i,j][1] for i in 1:size(df,1), j in 1:size(df,2)]
     upperForecast = [df[i,j][3] for i in 1:size(df,1), j in 1:size(df,2)]
