@@ -5,15 +5,14 @@ function get_final_state(UDE::UDE)
 end 
 
 function get_final_state(UDE::BayesianUDE;summarize = true,ci = 95)
-function get_final_state(UDE::BayesianUDE;summarize = true,ci = 95)
     uhats = reduce(hcat,[UDE.parameters[i].uhat[:,end] for i in 1:length(UDE.parameters)])
-    if summarize
     if summarize
         return [percentile(uhats[i,:],[(100-ci)/2,50,ci+(100-ci)/2]) for i in 1:size(uhats,1)]   
     else
         return uhats
     end
 end 
+
 
 
 
@@ -134,7 +133,6 @@ function predictions(UDE::UDE)
 end 
 
 function predictions(UDE::BayesianUDE;summarize = true,ci = 95)
-function predictions(UDE::BayesianUDE;summarize = true,ci = 95)
  
     inits = [UDE.parameters[i].uhat[:,1:(end-1)] for i in 1:length(UDE.parameters)]
     obs = [UDE.parameters[i].uhat[:,2:end] for i in 1:length(UDE.parameters)]
@@ -150,7 +148,6 @@ function predictions(UDE::BayesianUDE;summarize = true,ci = 95)
         end
     end
 
-    if summarize
     if summarize
         inits = reduce((x,y) -> cat(x,y,dims = 3),inits)
         inits = [percentile(inits[i,j,:],50) for i in 1:size(inits,1), j in 1:size(inits,2)]
@@ -185,7 +182,6 @@ function predictions(UDE::UDE,test_data::DataFrame)
 end 
 
 function predictions(UDE::BayesianUDE,test_data::DataFrame;summarize = true,ci = 95)
-function predictions(UDE::BayesianUDE,test_data::DataFrame;summarize = true,ci = 95)
      
     N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
     N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
@@ -202,7 +198,6 @@ function predictions(UDE::BayesianUDE,test_data::DataFrame;summarize = true,ci =
         end
     end
 
-    if summarize
     if summarize
         preds = reduce((x,y) -> cat(x,y,dims = 3),preds)
         preds = [percentile(preds[i,j,:],[(100-ci)/2,50,ci+(100-ci)/2]) for i in 1:size(preds,1), j in 1:size(preds,2)]
@@ -228,7 +223,6 @@ function predict(UDE::UDE,test_data::DataFrame)
 end 
 
 function predict(UDE::BayesianUDE,test_data::DataFrame;summarize = true,ci = 95)
-function predict(UDE::BayesianUDE,test_data::DataFrame;summarize = true,ci = 95)
      
     N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
     N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
@@ -243,7 +237,6 @@ function predict(UDE::BayesianUDE,test_data::DataFrame;summarize = true,ci = 95)
         preds[:,t] = UDE.process_model.predict(u0,UDE.times[t],dt,UDE.parameters.process_model[i])[1]
     end
 
-    if summarize
     if summarize
         preds = reduce((x,y) -> cat(x,y,dims = 3),preds)
         preds = [percentile(preds[i,j,:],[(100-ci)/2,50,ci+(100-ci)/2]) for i in 1:size(preds,1), j in 1:size(preds,2)]
@@ -388,7 +381,6 @@ end
 
 
 function forecast(UDE::BayesianUDE, u0::AbstractVector{}, times::AbstractVector{};summarize = true, ci = 95)
-function forecast(UDE::BayesianUDE, u0::AbstractVector{}, times::AbstractVector{};summarize = true, ci = 95)
     dfs = zeros(length(UDE.parameters),length(times),length(x)+1)
 
     for i in 1:length(UDE.parameters)
@@ -413,7 +405,7 @@ function forecast(UDE::BayesianUDE, u0::AbstractVector{}, times::AbstractVector{
         end 
     end
 
-    if summarize
+
     if summarize
         dfs = [percentile(dfs[:,i,j],[(100-ci)/2,50,ci+(100-ci)/2]) for i in 1:10, j in 1:3] 
     end
@@ -458,7 +450,7 @@ function forecast(UDE::UDE, u0::AbstractVector{}, t0::Real, times::AbstractVecto
 end 
 
 
-function forecast(UDE::BayesianUDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{};summarize = true, ci = 95)
+
 function forecast(UDE::BayesianUDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{};summarize = true, ci = 95)
     
     @assert all(times .> t0)
@@ -492,8 +484,6 @@ function forecast(UDE::BayesianUDE, u0::AbstractVector{}, t0::Real, times::Abstr
         end 
     end
     
-    if summarize
-        dfs = [percentile(dfs[:,i,j],[(100-ci)/2,50,ci+(100-ci)/2]) for i in 1:length(times), j in 1:(length(x)+1)] 
     if summarize
         dfs = [percentile(dfs[:,i,j],[(100-ci)/2,50,ci+(100-ci)/2]) for i in 1:length(times), j in 1:(length(x)+1)] 
     end
@@ -799,5 +789,3 @@ function forecast_simulation_tests(N,simulator,model;train_fraction=0.9,step_siz
     return MSE
   
 end 
-
-
