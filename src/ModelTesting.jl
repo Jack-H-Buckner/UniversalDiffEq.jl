@@ -184,15 +184,14 @@ end
 function predictions(UDE::BayesianUDE,test_data::DataFrame;summarize = true,ci = 95)
      
     N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
-    N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
     inits = data[:,1:(end-1)]
     obs = data[:,2:end]
     preds = [data[:,2:end] for i in 1:length(UDE.parameters)]
     
     for i in 1:length(UDE.parameters)
         for t in 1:(size(inits)[2])
-            u0 = inits[i][:,t]
-            u1 = obs[i][:,t]
+            u0 = inits[:,t]
+            u1 = obs[:,t]
             dt = UDE.times[t+1] - UDE.times[t]
             preds[i][:,t] = UDE.process_model.predict(u0,UDE.times[t],dt,UDE.parameters[i].process_model)[1]
         end
@@ -224,7 +223,6 @@ end
 
 function predict(UDE::BayesianUDE,test_data::DataFrame;summarize = true,ci = 95)
      
-    N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
     N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
     inits = data[:,1:(end-1)]
     obs = data[:,2:end]
@@ -273,7 +271,6 @@ end
 function plot_predictions(UDE::BayesianUDE;ci=95)
  
     inits, obs, preds = predictions(UDE,summarize = true,ci=ci)
-    inits, obs, preds = predictions(UDE,summarize = true,ci=ci)
     
     plots = []
     for dim in 1:size(obs[1],1)
@@ -317,7 +314,6 @@ end
 
 function plot_predictions(UDE::BayesianUDE,test_data::DataFrame;ci=95)
  
-    inits, obs, preds = predictions(UDE,test_data,summarize = true,ci=ci)
     inits, obs, preds = predictions(UDE,test_data,summarize = true,ci=ci)
     
     plots = []
