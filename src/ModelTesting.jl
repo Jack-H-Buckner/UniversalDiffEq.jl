@@ -206,41 +206,30 @@ function predictions(UDE::BayesianUDE,test_data::DataFrame;summarize = true,ci =
 end 
 
 
-function predict(UDE::UDE,test_data::DataFrame)
-     
-    N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
-    df = zeros(length(times)-1,dims+1)
-    
-    for t in 1:(length(times)-1)
-        u0 = data[:,t]
-        dt = times[t+1] - times[t]
-        uhat = UDE.process_model.predict(u0,UDE.times[t],dt,UDE.parameters.process_model)[1]
-        df[t,:] = vcat([times[t+1]],uhat)
+function predict(UDE::UDE,test_data::DataFrame;df = true)
+    inits, obs, preds = predictions(UDE,test_data)
+    if df
+        N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
+        names = vcat(["t"],[string("x",i) for i in 1:dims])
+        return DataFrame(Array(vcat(times',preds)'),names)
+    else
+        return preds
     end
-    names = vcat(["t"],[string("x",i) for i in 1:dims])
-    return DataFrame(df,names)
+
 end 
 
-function predict(UDE::BayesianUDE,test_data::DataFrame;summarize = true,ci = 95)
-     
-    N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
-    inits = data[:,1:(end-1)]
-    obs = data[:,2:end]
-    preds = [data[:,2:end] for i in 1:length(UDE.parameters)]
-    
-    for t in 1:(size(inits)[2])
-        u0 = inits[:,t]
-        u1 = obs[:,t]
-        dt = times[t+1] - times[t]
-        preds[:,t] = UDE.process_model.predict(u0,UDE.times[t],dt,UDE.parameters.process_model[i])[1]
-    end
+function predict(UDE::BayesianUDE,test_data::DataFrame;summarize = true,ci = 95,df = true)
+    inits, obs, preds = predictions(UDE,test_data,summarize=summarize,ci=ci)
+    if df
+        meanForecast = [preds[i,j][2] for i in 1:size(preds,1), j in 1:size(preds,2)]
+        lowerForecast = [preds[i,j][1] for i in 1:size(preds,1), j in 1:size(preds,2)]
+        upperForecast = [preds[i,j][3] for i in 1:size(preds,1), j in 1:size(preds,2)]
 
-    if summarize
-        preds = reduce((x,y) -> cat(x,y,dims = 3),preds)
-        preds = [percentile(preds[i,j,:],[(100-ci)/2,50,ci+(100-ci)/2]) for i in 1:size(preds,1), j in 1:size(preds,2)]
+        names = vcat(["t"],[string("x",i,"_lower",ci) for i in 1:dims],[string("x",i,"_median") for i in 1:dims],[string("x",i,"_higher",ci) for i in 1:dims])
+        return DataFrame(Array(vcat(times[1:5]',lowerForecast,meanForecast,upperForecast)'),names)
+    else
+        return preds
     end
-
-    return inits, obs, preds
 end 
 
 """
