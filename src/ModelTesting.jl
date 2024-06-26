@@ -5,7 +5,6 @@ function get_final_state(UDE::UDE)
 end 
 
 function get_final_state(UDE::BayesianUDE;summarize = true,ci = 95)
-function get_final_state(UDE::BayesianUDE;summarize = true,ci = 95)
     uhats = reduce(hcat,[UDE.parameters[i].uhat[:,end] for i in 1:length(UDE.parameters)])
     if summarize
     if summarize
@@ -134,7 +133,6 @@ function predictions(UDE::UDE)
 end 
 
 function predictions(UDE::BayesianUDE;summarize = true,ci = 95)
-function predictions(UDE::BayesianUDE;summarize = true,ci = 95)
  
     inits = [UDE.parameters[i].uhat[:,1:(end-1)] for i in 1:length(UDE.parameters)]
     obs = [UDE.parameters[i].uhat[:,2:end] for i in 1:length(UDE.parameters)]
@@ -185,7 +183,6 @@ function predictions(UDE::UDE,test_data::DataFrame)
 end 
 
 function predictions(UDE::BayesianUDE,test_data::DataFrame;summarize = true,ci = 95)
-function predictions(UDE::BayesianUDE,test_data::DataFrame;summarize = true,ci = 95)
      
     N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
     N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
@@ -227,7 +224,6 @@ function predict(UDE::UDE,test_data::DataFrame)
     return DataFrame(df,names)
 end 
 
-function predict(UDE::BayesianUDE,test_data::DataFrame;summarize = true,ci = 95)
 function predict(UDE::BayesianUDE,test_data::DataFrame;summarize = true,ci = 95)
      
     N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
@@ -388,7 +384,6 @@ end
 
 
 function forecast(UDE::BayesianUDE, u0::AbstractVector{}, times::AbstractVector{};summarize = true, ci = 95)
-function forecast(UDE::BayesianUDE, u0::AbstractVector{}, times::AbstractVector{};summarize = true, ci = 95)
     dfs = zeros(length(UDE.parameters),length(times),length(x)+1)
 
     for i in 1:length(UDE.parameters)
@@ -458,7 +453,7 @@ function forecast(UDE::UDE, u0::AbstractVector{}, t0::Real, times::AbstractVecto
 end 
 
 
-function forecast(UDE::BayesianUDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{};summarize = true, ci = 95)
+
 function forecast(UDE::BayesianUDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{};summarize = true, ci = 95)
     
     @assert all(times .> t0)
@@ -799,5 +794,3 @@ function forecast_simulation_tests(N,simulator,model;train_fraction=0.9,step_siz
     return MSE
   
 end 
-
-
