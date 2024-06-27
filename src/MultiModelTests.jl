@@ -285,7 +285,7 @@ function plot_forecast(UDE::MultiUDE, test_data::DataFrame)
         ypos = (ylim[2]-ylim[1])*0.925 + ylim[1]
         xlim = xlims(plt)
         xpos = (xlim[2]-xlim[1])*0.250 + xlim[1]
-        nrmse = round(NRMSE),digits=3)
+        nrmse = round(NRMSE,digits=3)
         Plots.annotate!(plt,[xpos],[ypos],text(string("NRMSE: ", nrmse),9), legend_position = :bottomright)
         push!(plots, plt)
         
