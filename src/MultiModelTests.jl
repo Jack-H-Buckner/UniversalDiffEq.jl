@@ -206,7 +206,7 @@ function plot_state_estimates(UDE::MultiUDE)
         xlim = xlims(plt);xpos = (xlim[2]-xlim[1])*0.250 + xlim[1]
         nrmse = round(NRMSE,digits=3)
 
-        Plots.annotate!(plt,[xpos],[ypos],text(string("NRMSE: ", nrmse),9), legend_position = :bottomright)
+        Plots.annotate!(plt,[xpos],[ypos],text(string("NRMSE: ", nrmse),9), legend_position = :outerbottomright)
 
         push!(plots,plt)
     end
@@ -279,14 +279,14 @@ function plot_forecast(UDE::MultiUDE, test_data::DataFrame)
 
             scatter!(time,dat[d,:],c=i, label = "",ylabel = UDE.varnames[d], alpha = 0.5, markersize = 2.5)
             scatter!(test_time,test_dat[d,:],c=i, label = "", markersize = 2.5)
-            NRMSE += sqrt(sum((dat[d,:] .- yhat).^2)/length(dat[d,:]))/std(dat[d,:])
+            NRMSE += sqrt(sum((test_dat[d,:] .- df[:,d+2]).^2)/length(test_dat[d,:]))/std(test_dat[d,:])
         end 
         ylim = ylims(plt)
         ypos = (ylim[2]-ylim[1])*0.925 + ylim[1]
         xlim = xlims(plt)
         xpos = (xlim[2]-xlim[1])*0.250 + xlim[1]
         nrmse = round(NRMSE,digits=3)
-        Plots.annotate!(plt,[xpos],[ypos],text(string("NRMSE: ", nrmse),9), legend_position = :bottomright)
+        Plots.annotate!(plt,[xpos],[ypos],text(string("NRMSE: ", nrmse),9), legend_position = :outerbottomright)
         push!(plots, plt)
         
     end 
