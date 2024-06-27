@@ -183,7 +183,7 @@ function plot_state_estimates(UDE::MultiUDE)
     N, T, dims, data, times,  dataframe, series, inds, starts, lengths, labs= process_multi_data(UDE.data_frame,UDE.time_column_name,UDE.series_column_name)
 
     for d in 1:dims
-        plt = plot(); SSE = 0; N = 0
+        plt = plot(); NRMSE = 0
         for series in eachindex(starts)
 
             uhat = UDE.parameters.uhat[:,starts[series]:(starts[series]+lengths[series]-1)]
@@ -198,14 +198,13 @@ function plot_state_estimates(UDE::MultiUDE)
             else
                 Plots.plot!(time, yhat,  label= "",xlabel = "time", ylabel = UDE.varnames[d], c = series, width =2, linestyle = :dash)
             end
-            SSE += sum((dat[d,:] .- yhat).^2) #sum of squared error
-            N += length(dat[d,:])
+            NRMSE += sqrt(sum((dat[d,:] .- yhat).^2)/length(dat[d,:]))/std(dat[d,:])
         end 
         
         
         ylim = ylims(plt);ypos = (ylim[2]-ylim[1])*0.925 + ylim[1]
         xlim = xlims(plt);xpos = (xlim[2]-xlim[1])*0.250 + xlim[1]
-        nrmse = round(sqrt(SSE/N) / std(dat[d,:]),digits=3)
+        nrmse = round(NRMSE,digits=3)
 
         Plots.annotate!(plt,[xpos],[ypos],text(string("NRMSE: ", nrmse),9), legend_position = :bottomright)
 
@@ -258,7 +257,7 @@ function plot_forecast(UDE::MultiUDE, test_data::DataFrame)
     series_ls = unique(test_dataframe[:,UDE.series_column_name])
     plots = []
     for d in 1:dims
-        plt = plot();i = 0; N = 0; SSE = 0
+        plt = plot();i = 0; NRMSE = 0
         for series in eachindex(series_ls)
             i += 1
       
@@ -280,14 +279,13 @@ function plot_forecast(UDE::MultiUDE, test_data::DataFrame)
 
             scatter!(time,dat[d,:],c=i, label = "",ylabel = UDE.varnames[d], alpha = 0.5, markersize = 2.5)
             scatter!(test_time,test_dat[d,:],c=i, label = "", markersize = 2.5)
-            SSE += sum((test_dat[d,:] .- df[:,d+2]).^2) #sum of squared error
-            N += length(test_dat[d,:])
+            NRMSE += sqrt(sum((dat[d,:] .- yhat).^2)/length(dat[d,:]))/std(dat[d,:])
         end 
         ylim = ylims(plt)
         ypos = (ylim[2]-ylim[1])*0.925 + ylim[1]
         xlim = xlims(plt)
         xpos = (xlim[2]-xlim[1])*0.250 + xlim[1]
-        nrmse = round(sqrt(SSE/N) / std(test_dat[d,:]),digits=3)
+        nrmse = round(NRMSE),digits=3)
         Plots.annotate!(plt,[xpos],[ypos],text(string("NRMSE: ", nrmse),9), legend_position = :bottomright)
         push!(plots, plt)
         
