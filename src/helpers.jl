@@ -80,6 +80,13 @@ end
 function process_data(data,time_column_name)
     
     time_alias_ = time_column_name
+    try
+        sort!(data,[time_alias_])
+    catch e
+        if isa(e, ArgumentError)
+            error("time_column_name was not found in provided data. Please set the kwarg: time_column_name to the correct value")
+        end
+    end
     dataframe = sort!(data,[time_alias_])
     times = dataframe[:,time_alias_]
 
@@ -98,8 +105,7 @@ function find_NNparams_alias(nms)
     if any(ind)
         return NN_alias[ind]  
     end
-    print("Cannot find column for time ")
-    throw(error()) 
+    error("Cannot find alias for neural network parameters. \n Please try: NNparams, NN, NN1, ... NN5, Network, NeuralNetwork, or NNparameters") 
 end 
 
 function series_indexes(dataframe,series_column_name,time_column_name)
@@ -121,7 +127,13 @@ function process_multi_data(data, time_column_name, series_column_name)
     series_alias_ = series_column_name
 
     # collect series index names 
-    inds = levelcode.(CategoricalArray(data[:,series_alias_]))
+    try
+        inds = levelcode.(CategoricalArray(data[:,series_alias_]))
+    catch e
+        if isa(e, ArgumentError)
+            error("series_column_name was not found in provided data. Please set the kwarg: series_column_name to the correct value")
+        end
+    end
 
     labels_df = DataFrame(label = unique(data[:,series_alias_]),
                          index = levelcode.(CategoricalArray(unique(data[:,series_alias_])))
@@ -129,8 +141,15 @@ function process_multi_data(data, time_column_name, series_column_name)
     
 
     data.series .= inds
+
+    try
+        sort!(data,["series",time_alias_])
+    catch e
+        if isa(e, ArgumentError)
+            error("time_column_name was not found in provided data. Please set the kwarg: time_column_name to the correct value")
+        end
+    end
     dataframe = sort!(data,["series",time_alias_])
-    
     times = dataframe[:,time_alias_]
     series =dataframe.series
     T = times[argmax(times)]
