@@ -185,8 +185,3 @@ UniversalDiffEq.CustomDerivatives(data::DataFrame,derivs!::Function,initial_para
 UniversalDiffEq.CustomDifference(data::DataFrame,step,initial_parameters,priors::Function;kwargs ... )
 ```
 
-
-## Other functions
-```@docs
-UniversalDiffEq.DiscreteUDE(data,step,init_parameters;kwargs ...)
-```

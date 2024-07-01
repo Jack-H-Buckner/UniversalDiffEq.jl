@@ -821,7 +821,7 @@ function BayesianCustomDerivatives(data,derivs!,initial_parameters;time_column_n
 end
 
 """
-    CustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,priors::Function;kwargs ... )
+    BayesianCustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,priors::Function;kwargs ... )
 
 When a function's priors is supplied its value will be added to the loss function as a penalty term for user specified parameters. It should take the a single NamedTuple `p` as an argument penalties for each paramter should be calculated by accessing `p` with the period operator.
     
@@ -870,7 +870,7 @@ end
     
 
 """
-    CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters;kwargs ... )
+    BayesianCustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters;kwargs ... )
 
 When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included in the data frame. 
 

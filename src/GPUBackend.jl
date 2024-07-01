@@ -62,10 +62,10 @@ function init_loss_GPU(data,times,observation_model,observation_loss,process_mod
 end 
 
 
-function CustomDerivativesGPU(data,derivs!,initial_parameters, gpu_device;proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+function CustomDerivativesGPU(data,derivs!,initial_parameters, gpu_device;time_column_name = "time", proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
     @warn ("GPU backend support for UniversalDiffEq is still experimental, and often slower than using a CPU. Use at own risk")
     # convert data
-    N, dims, T, times, data, dataframe = process_data(data)
+    N, dims, T, times, data, dataframe = process_data(data, time_column_name)
     
 
     # generate submodels 
@@ -96,6 +96,6 @@ function CustomDerivativesGPU(data,derivs!,initial_parameters, gpu_device;proc_w
     constructor = data -> CustomDerivativesGPU(data,derivs!,initial_parameters, gpu_device;proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
     
     return UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor)
+                observation_loss,process_regularization,observation_regularization,constructor, time_column_name)
 
 end
