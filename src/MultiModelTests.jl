@@ -175,7 +175,7 @@ function plot_predictions(UDE::MultiUDE,test_data::DataFrame)
 end
 
 
-function plot_state_estimates(UDE::MultiUDE)
+function plot_state_estimates(UDE::MultiUDE; show_legend = true)
     
 
     plots = []
@@ -203,11 +203,13 @@ function plot_state_estimates(UDE::MultiUDE)
         
         
         ylim = ylims(plt);ypos = (ylim[2]-ylim[1])*0.925 + ylim[1]
-        xlim = xlims(plt);xpos = (xlim[2]-xlim[1])*0.250 + xlim[1]
-        nrmse = round(NRMSE,digits=3)
-
-        Plots.annotate!(plt,[xpos],[ypos],text(string("NRMSE: ", nrmse),9), legend_position = :outerbottomright)
-
+        xlim = xlims(plt);xpos = (xlim[2]-xlim[1])*0.750 + xlim[1]
+        nrmse = round(NRMSE/length(series),digits=3)
+        if show_legend
+            Plots.annotate!(plt,[xpos],[ypos],text(string("Mean NRMSE: ", nrmse),9), legend_position = :outerbottomright)
+        else
+            Plots.annotate!(plt,[xpos],[ypos],text(string("Mean NRMSE: ", nrmse),9), legend_position = :none)        
+        end
         push!(plots,plt)
     end
             
@@ -249,7 +251,7 @@ end
 
 
 
-function plot_forecast(UDE::MultiUDE, test_data::DataFrame)
+function plot_forecast(UDE::MultiUDE, test_data::DataFrame; show_legend = true)
 
     N, T, dims, test_data, test_times,  test_dataframe, test_series, inds, test_starts, test_lengths, labs = process_multi_data(test_data,UDE.time_column_name,UDE.series_column_name)
     N, T, dims, data, times,  dataframe, series, inds, starts, lengths, labs = process_multi_data(UDE.data_frame,UDE.time_column_name,UDE.series_column_name)
@@ -284,9 +286,14 @@ function plot_forecast(UDE::MultiUDE, test_data::DataFrame)
         ylim = ylims(plt)
         ypos = (ylim[2]-ylim[1])*0.925 + ylim[1]
         xlim = xlims(plt)
-        xpos = (xlim[2]-xlim[1])*0.250 + xlim[1]
-        nrmse = round(NRMSE,digits=3)
-        Plots.annotate!(plt,[xpos],[ypos],text(string("NRMSE: ", nrmse),9), legend_position = :outerbottomright)
+        xpos = (xlim[2]-xlim[1])*0.750 + xlim[1]
+        nrmse = round(NRMSE/length(series),digits=3)
+        if show_legend
+            Plots.annotate!(plt,[xpos],[ypos],text(string("Mean NRMSE: ", nrmse),9), legend_position = :outerbottomright)
+        else
+            Plots.annotate!(plt,[xpos],[ypos],text(string("Mean NRMSE: ", nrmse),9), legend_position = :none)        
+        end
+       
         push!(plots, plt)
         
     end 

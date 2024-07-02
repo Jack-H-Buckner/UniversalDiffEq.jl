@@ -29,8 +29,9 @@ function plot_state_estimates(UDE::UDE)
     for dim in 1:size(UDE.data)[1]
     
         # Calculate RMSE for the current dimension
-        RMSE = StatsBase.rmsd(UDE.data[dim,:], UDE.parameters.uhat[dim,:] .|> Float32)
-        
+        N = length(UDE.parameters.uhat[dim,:])
+        RMSE = RMSE = sqrt(sum((UDE.data[dim,:] .-UDE.parameters.uhat[dim,:]).^2/N))/std(UDE.data[dim,:])
+
         # Add to total RMSE and calculate the mean RMSE
         total_RMSE += RMSE
         avg_RMSE = total_RMSE/size(UDE.data)[1]
@@ -39,8 +40,16 @@ function plot_state_estimates(UDE::UDE)
         
         Plots.plot!(UDE.times,UDE.parameters.uhat[dim,:], color = "grey", label= "estimated states",
                     xlabel = "time", ylabel = string("x", dim))
-                    
-        Plots.annotate!(0.1, 0.9, text("Total RMSE = $(round(total_RMSE, digits=3))\nMean RMSE = $(round(avg_RMSE, digits=3))", :left, 12))
+        
+        xmax = UDE.times[argmax(UDE.times)]
+        xmin = UDE.times[argmin(UDE.times)]
+        text_x = 0.1*(xmax-xmin)+xmin
+
+        ymax = UDE.data[dim,argmax(UDE.data[dim,:])]
+        ymin = UDE.data[dim,argmin(UDE.data[dim,:])]
+        text_y = 0.9*(ymax-ymin)+ymin 
+
+        Plots.annotate!(text_x, text_y, text("RMSE = $(round(RMSE, digits=3))", :left, 12))
 
        
         push!(plots, plt)
@@ -244,12 +253,28 @@ function plot_predictions(UDE::UDE)
     
     plots = []
     for dim in 1:size(obs,1)
+
         difs = obs[dim,:].-inits[dim,:]
-        xmin = difs[argmin(difs)]
+
         xmax = difs[argmax(difs)]
-        plt = plot([xmin,xmax],[xmin,xmax],color = "grey", linestyle=:dash, label = "45 degree")
-        scatter!(difs,preds[dim,:].-inits[dim,:],color = "white", label = "", xlabel = "Observed change Delta hatu_t", 
-                                ylabel = "Predicted change hatut - hatu_t")
+        xmin = difs[argmin(difs)]
+
+        plt = plot([xmin,xmax],[xmin,xmax],color = "grey", linestyle=:dash, label = "1:1", legend_position = :topleft)
+        duhat = preds[dim,:].-inits[dim,:]
+        scatter!(difs,duhat,color = "white", label = "", xlabel = "Observed change", ylabel = "Predicted change")
+
+        N = length(difs)      
+        RMSE = sqrt(sum((duhat .- difs).^2/N))/std(difs)
+    
+        
+        
+
+        text_x = 0.75*(xmax-xmin)+xmin
+        text_y = 0.1*(xmax-xmin)+xmin 
+
+        Plots.annotate!(text_x, text_y, text("RMSE = $(round(RMSE, digits=3))", :left, 12))
+
+        
         push!(plots, plt)
             
     end
@@ -628,149 +653,3 @@ function forecast_simulation_SE(simulator,model,seed;train_fraction=0.9,step_siz
     return abs.(Matrix(predicted_data[:,2:end]) .- Matrix(test_data[:,2:end]))
 end 
 
-
-
-function leave_future_out(model; forecast_length = 10,  forecast_number = 10, spacing = 1, step_size = 0.05, maxiter = 500,using_BFGS=false)
-    
-    # get final time
-    data = model.data_frame
-    T = length(data.t)
-    start1 = T - forecast_length - spacing*(forecast_number-1)
-    starts = [start1 + spacing *i for i in 0:(forecast_number-1)]
-    training_data = [data[1:t0,:] for t0 in starts]
-    testing_data = [data[t0:(t0+forecast_length),:] for t0 in starts]
-    
-    standard_errors = [[] for i in 1:Threads.nthreads()]
-    predicted = [[] for i in 1:Threads.nthreads()]
-    
-    Threads.@threads for i in 1:forecast_number
-        
-        model_i = 0
-        if model.X == 0
-            model_i = model.constructor(training_data[i])
-        else
-            model_i = model.constructor(training_data[i],model.X)
-        end
-                        
-        gradient_descent!(model_i, step_size = step_size, maxiter = maxiter) 
-           
-        if using_BFGS
-            try
-                BFGS!(model_i,verbose = false)
-            catch
-                println("BFGS failed running gradient_descent")
-                gradient_descent!(model_i, step_size = 0.25*step_size, maxiter = 2*maxiter)                 
-            end   
-        end
-                    
-        # forecast
-        u0 = model_i.parameters.uhat[:,end]
-        times = testing_data[i].t
-        predicted_data = forecast(model_i, u0, times)
-        predicted_data= DataFrame(predicted_data,names(testing_data[i]))
-            
-        SE = copy(predicted_data)
-        SE[:,2:end] .= (predicted_data[:,2:end] .- testing_data[i][:,2:end]).^2
-        
-        push!(standard_errors[Threads.threadid()], SE)
-        push!(predicted[Threads.threadid()], predicted_data)             
-    end 
-    
-    standard_error = standard_errors[1]
-    predicted_data = predicted[1]         
-    for i in 2:Threads.nthreads()
-                            
-        standard_error = vcat(standard_error,standard_errors[i])
-        predicted_data = vcat(predicted_data,predicted[i])
-                            
-    end
-    
-    return training_data, testing_data, standard_error, predicted_data
-    
-end 
-
-
-function leave_future_out_mse(standard_errors)
-    N = length(standard_errors)
-    acc = zeros(size(Matrix(standard_errors[1])[:,2:end]))
-        
-    for i in 1:N
-                                    
-        acc .+= standard_errors[i][:,2:end] ./ N
-                                    
-    end 
-    
-    MSE = DataFrame(hcat(collect(1:size(acc)[1]), acc), names(standard_errors[1]))
-    
-    return MSE
-end 
-
-                                        
-function plot_leave_future_out_cv(data,testing_data, standard_errors , predicted_data)
-    plts1 = []
-    plts2 = []
-    for i in 2:(size(data)[2])
-        p1=Plots.scatter(data.t,data[:,i],label = "")
-        p2 = Plots.plot([0,data.t[end]],[0.0,0.0], color = "black", linestyle = :dash,label = "")
-        for j in 1:length(testing_data)
-            Plots.plot!(p1,predicted_data[j].t,predicted_data[j][:,i], linestyle = :dash, width= 2,label = "") 
-            Plots.plot!(p2,standard_errors[j].t,standard_errors[j][:,i], width= 2,label = "")
-        end 
-        push!(plts1,p1)
-        push!(plts2,p2)
-    end
-    p1 = plot(plts1...)
-    p2 = plot(plts2...)
-    return p1,p2
-end 
-
-"""
-    leave_future_out_cv(model; forecast_length = 10,  K = 10, spacing = 1, step_size = 0.05, maxiter = 500)
-    
-Runs K fold leave future out cross validation and returns the mean squared forecasting error and a plot to visualize the model fits.
-
-...
-# Arguments 
-model - the UDE model to test
-forecast_length - the number of steps to calcualte the forecast performance (default 10).
-K - the number of forecast tests to run (default 10).
-spacing - the number of data points to skip between testing sets (default 1).
-step_size - step size parameter for the gradient descent algorithm (default 0.05).
-maxiter - number of iterations for gradient descent (default 500).. 
-...
-"""
-function leave_future_out_cv(model; forecast_length = 10,  K = 10, spacing = 1, step_size = 0.05, maxiter = 500)
-    training_data, testing_data, standard_errors, predicted_data = leave_future_out(model;forecast_length=forecast_length,forecast_number=K,spacing=spacing,step_size=step_size,maxiter=maxiter)
-    MSE = leave_future_out_mse(standard_errors)
-    plt = plot_leave_future_out_cv(model.data_frame,testing_data, standard_errors , predicted_data)
-    return MSE, plt                             
-end
-
-
-function forecast_simulation_tests(N,simulator,model;train_fraction=0.9,step_size = 0.05, maxiter = 500)
-    
-    # get test data size and set accumulator
-    sizeSE = forecast_simulation_SE(simulator,model,1;
-                    train_fraction=train_fraction,step_size = step_size, maxiter = 1)
-    
-    MSE_acc = [zeros(size(sizeSE)) for i in 1:Threads.nthreads()]
-    
-    # run simulation tests with multithreading
-    Threads.@threads for seed in 1:N
-            
-        MSE_acc[Threads.threadid()] .+= forecast_simulation_SE(simulator,model,seed;train_fraction=train_fraction,step_size=step_size,maxiter=maxiter)./N
-            
-    end 
-        
-    MSE = MSE_acc[1]
-    for i in 2:Threads.nthreads()
-        MSE .+= MSE_acc[i]
-    end 
-                
-    T = size(MSE)[1]
-    MSE = DataFrame(MSE ,:auto)
-    MSE.t = 1:T
-                
-    return MSE
-  
-end 

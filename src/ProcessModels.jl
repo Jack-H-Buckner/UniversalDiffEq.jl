@@ -128,7 +128,7 @@ function DiscreteProcessModel(difference, parameters, dims, l, extrap_rho)
     forecast = init_forecast(predict,l,extrap_rho)
     
     function right_hand_side(u,parameters,t)
-        return difference(u,x,t,parameters) .- u
+        return difference(u,t,parameters) .- u
     end 
 
     return ProcessModel(parameters,predict, forecast,0,right_hand_side)

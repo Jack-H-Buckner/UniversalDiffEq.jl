@@ -90,7 +90,7 @@ function init_single_loss_skip(process_model,process_loss,observation_model,obse
     return loss
 end
 
-function init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization)
+function init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,time_column_name,series_column_name,labels_df)
     
     single_loss = init_single_loss(process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization)
     
@@ -107,7 +107,7 @@ function init_multi_loss_function(data,times,starts,lengths,process_model,proces
     function loss(parameters,skips::DataFrame)
         L = 0
         for i in eachindex(starts)
-            t_skip = skips.t[skips.series .== i] # assumes series are given IDs listed 1:n 
+            t_skip = skips[skips[:,series_column_name] .== labels_df.label[i],time_column_name] # assumes series are given IDs listed 1:n 
             if length(t_skip) > 0
                 L+= single_loss_skip(parameters,times,data,i,starts,lengths,t_skip[1])
             end
@@ -163,7 +163,7 @@ function MultiNODE(data;time_column_name = "time", series_column_name = "series"
     
     parameters = ComponentArray(parameters)
     
-    loss_function = init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization)
+    loss_function = init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,time_column_name,series_column_name,labels_df )
     
     constructor = (data) -> MultiNODE(data;time_column_name = time_column_name , series_column_name = time_column_name ,hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type, l=l,extrap_rho=extrap_rho)
     
@@ -206,9 +206,10 @@ function MultiNODE(data,X;time_column_name = "time", series_column_name = "serie
     
     parameters = ComponentArray(parameters)
     
-    loss_function = init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization)
+    loss_function = init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,time_column_name,series_column_name,labels_df )
     
-    constructor = (data,X) -> MultiNODE(data,X;time_column_name = time_column_name , series_column_name =  series_column_name, hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type, l=l,extrap_rho=extrap_rho)
+    constructor = (data,X) -> MultiNODE(data,X;time_column_name = time_column_name , series_column_name =  series_column_name, variable_column_name = variable_column_name, value_column_name = value_column_name,
+                                        hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type, l=l,extrap_rho=extrap_rho)
     
     return MultiUDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name,labels_df,varnames)
     
@@ -232,7 +233,7 @@ function MultiCustomDerivatives(data,derivs!,initial_parameters;time_column_name
     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
 
     # loss function 
-    loss_function = init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization)
+    loss_function = init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,time_column_name,series_column_name,labels_df )
 
     # model constructor
     constructor = (data) -> MultiCustomDerivatives(data,derivs!,initial_parameters;time_column_name = time_column_name , series_column_name =  series_column_name,
@@ -262,11 +263,11 @@ function MultiCustomDerivatives(data,X,derivs!,initial_parameters;time_column_na
     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
 
     # loss function 
-    loss_function = init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization)
+    loss_function = init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,time_column_name,series_column_name,labels_df )
 
     # model constructor
     constructor = (data,X) -> MultiCustomDerivatives(data,X,derivs!,initial_parameters;time_column_name = time_column_name , series_column_name =  series_column_name,
-                    proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l)
+                        variable_column_name = variable_column_name, value_column_name = value_column_name, proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l)
     
     return MultiUDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name,labels_df,varnames)
