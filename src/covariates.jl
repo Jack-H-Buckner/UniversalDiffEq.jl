@@ -75,3 +75,23 @@ function interpolate_covariates(data, time_column_name, series_column_name,  var
     return covariates, variables
 end 
 
+
+function interpolate_covariates(X::DataFrame,time_column_name, variable_column_name::Nothing, value_column_name::Nothing)
+    N, dims, T, times, data, dataframe = process_data(X,time_column_name)
+    interpolations = [linear_interpolation(times, data[i,:],extrapolation_bc = Interpolations.Flat()) for i in 1:dims]
+    function covariates(t)
+        return [interpolation(t) for interpolation in interpolations]
+    end 
+    return covariates, nothing
+end 
+
+function interpolate_covariates(X::DataFrame,time_column_name,series_column_name, variable_column_name::Nothing, value_column_name::Nothing)
+    data_sets, times = process_multi_data2(X,time_column_name,series_column_name)
+    dims = size(data_sets[1])[1]
+    interpolations = [[linear_interpolation(times[j], data_sets[j][i,:],extrapolation_bc = Interpolations.Flat()) for i in 1:dims] for j in eachindex(times)]
+    function covariates(t,series)
+        return [interpolation(t) for interpolation in interpolations[round(Int,series)]]
+    end 
+    return covariates, nothing
+end 
+
