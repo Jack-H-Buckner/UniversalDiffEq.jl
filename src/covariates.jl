@@ -39,7 +39,7 @@ function process_long_format_data(data, time_column_name, series_column_name,  v
         unique(data[:,variable_column_name])
     catch e
         if isa(e, ArgumentError)
-            error("variable_column_name was not found in provided data. Please set the kwarg: variable_column_name to the correct value")
+            error("variable_column_name was not found in provided data. Please set the kwarg: variable_column_name to the correct value\n for wide-formatted covariate data, set value_column_name and variable_column_name to nothing")
         end
     end
     variables = unique(data[:,variable_column_name])
@@ -55,7 +55,7 @@ function process_long_format_data(data, time_column_name, series_column_name,  v
                 push!(values_var, dat_i[:,value_column_name])
             catch e
                 if isa(e, ArgumentError)
-                    error("value_column_name was not found in provided data. Please set the kwarg: value_column_name to the correct value")
+                    error("value_column_name was not found in provided data. Please set the kwarg: value_column_name to the correct value\n for wide-formatted covariate data, set value_column_name and variable_column_name to nothing")
                 end
             end
         end
