@@ -29,8 +29,9 @@ function plot_state_estimates(UDE::UDE)
     for dim in 1:size(UDE.data)[1]
     
         # Calculate RMSE for the current dimension
-        RMSE = StatsBase.rmsd(UDE.data[dim,:], UDE.parameters.uhat[dim,:] .|> Float32)
-        
+        N = length(UDE.parameters.uhat[dim,:])
+        RMSE = RMSE = sqrt(sum((UDE.data[dim,:] .-UDE.parameters.uhat[dim,:]).^2/N))/std(UDE.data[dim,:])
+
         # Add to total RMSE and calculate the mean RMSE
         total_RMSE += RMSE
         avg_RMSE = total_RMSE/size(UDE.data)[1]
@@ -39,8 +40,16 @@ function plot_state_estimates(UDE::UDE)
         
         Plots.plot!(UDE.times,UDE.parameters.uhat[dim,:], color = "grey", label= "estimated states",
                     xlabel = "time", ylabel = string("x", dim))
-                    
-        Plots.annotate!(0.1, 0.9, text("Total RMSE = $(round(total_RMSE, digits=3))\nMean RMSE = $(round(avg_RMSE, digits=3))", :left, 12))
+        
+        xmax = UDE.times[argmax(UDE.times)]
+        xmin = UDE.times[argmin(UDE.times)]
+        text_x = 0.1*(xmax-xmin)+xmin
+
+        ymax = UDE.data[dim,argmax(UDE.data[dim,:])]
+        ymin = UDE.data[dim,argmin(UDE.data[dim,:])]
+        text_y = 0.9*(ymax-ymin)+ymin 
+
+        Plots.annotate!(text_x, text_y, text("RMSE = $(round(RMSE, digits=3))", :left, 12))
 
        
         push!(plots, plt)
@@ -244,12 +253,28 @@ function plot_predictions(UDE::UDE)
     
     plots = []
     for dim in 1:size(obs,1)
+
         difs = obs[dim,:].-inits[dim,:]
-        xmin = difs[argmin(difs)]
+
         xmax = difs[argmax(difs)]
-        plt = plot([xmin,xmax],[xmin,xmax],color = "grey", linestyle=:dash, label = "45 degree")
-        scatter!(difs,preds[dim,:].-inits[dim,:],color = "white", label = "", xlabel = "Observed change Delta hatu_t", 
-                                ylabel = "Predicted change hatut - hatu_t")
+        xmin = difs[argmin(difs)]
+
+        plt = plot([xmin,xmax],[xmin,xmax],color = "grey", linestyle=:dash, label = "1:1", legend_position = :topleft)
+        duhat = preds[dim,:].-inits[dim,:]
+        scatter!(difs,duhat,color = "white", label = "", xlabel = "Observed change", ylabel = "Predicted change")
+
+        N = length(difs)      
+        RMSE = sqrt(sum((duhat .- difs).^2/N))/std(difs)
+    
+        
+        
+
+        text_x = 0.75*(xmax-xmin)+xmin
+        text_y = 0.1*(xmax-xmin)+xmin 
+
+        Plots.annotate!(text_x, text_y, text("RMSE = $(round(RMSE, digits=3))", :left, 12))
+
+        
         push!(plots, plt)
             
     end
