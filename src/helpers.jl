@@ -75,18 +75,10 @@ function init_loss(data,times,observation_model,observation_loss,process_model,p
     return loss_function
 end 
 
-
-
 function process_data(data,time_column_name)
     
     time_alias_ = time_column_name
-    try
-        sort!(data,[time_alias_])
-    catch e
-        if isa(e, ArgumentError)
-            error("time_column_name was not found in provided data. Please set the kwarg: time_column_name to the correct value")
-        end
-    end
+    
     dataframe = sort!(data,[time_alias_])
     times = dataframe[:,time_alias_]
 
@@ -127,28 +119,13 @@ function process_multi_data(data, time_column_name, series_column_name)
     series_alias_ = series_column_name
 
     # collect series index names 
-    try
-        inds = levelcode.(CategoricalArray(data[:,series_alias_]))
-    catch e
-        if isa(e, ArgumentError)
-            error("series_column_name was not found in provided data. Please set the kwarg: series_column_name to the correct value")
-        end
-    end
-
     labels_df = DataFrame(label = unique(data[:,series_alias_]),
                          index = levelcode.(CategoricalArray(unique(data[:,series_alias_])))
                         )
     
-
+    inds = levelcode.(CategoricalArray(data[:,series_alias_]))
     data.series .= inds
 
-    try
-        sort!(data,["series",time_alias_])
-    catch e
-        if isa(e, ArgumentError)
-            error("time_column_name was not found in provided data. Please set the kwarg: time_column_name to the correct value")
-        end
-    end
     dataframe = sort!(data,["series",time_alias_])
     times = dataframe[:,time_alias_]
     series =dataframe.series
@@ -188,5 +165,121 @@ function process_multi_data2(data,time_column_name,series_column_name)
     return data_sets, times
 end 
 
+function find_time_alias(nms)
+    time_alias = ["T", "t","time", "Time", "times", "Times"] 
+    ind = broadcast(nm -> nm in nms, time_alias)
+    if any(ind)
+        return time_alias[ind][1]   
+    end
+    error("time_column_name was not found in provided data. Please set the kwarg: time_column_name to the correct value")
+end
 
+function find_series_alias(nms)
+    series_alias = ["location", "site", "Series", "series"] 
+    ind = broadcast(nm -> nm in nms, series_alias)
+    if any(ind)
+        return series_alias[ind][1]   
+    end
+    error("series_column_name was not found in provided data. Please set the kwarg: series_column_name to the correct value")
+end 
 
+function find_values_alias(nms)
+    value_alias = ["values", "x", "value", "Value", "Values", "reading", "Reading"] 
+    ind = broadcast(nm -> nm in nms, value_alias)
+    if any(ind)
+        return value_alias[ind][1]   
+    end
+    error("value_column_name was not found in provided data. Please set the kwarg: variable_column_name to the correct value\n for wide-formatted covariate data, set value_column_name and value_column_name to nothing")
+end 
+
+function find_variable_alias(nms)
+    variable_alias = ["variables", "variable", "Variable", "Variables", "measurement"] 
+    ind = broadcast(nm -> nm in nms, variable_alias)
+    if any(ind)
+        return variable_alias[ind][1]   
+    end
+    error("variable_column_name was not found in provided data. Please set the kwarg: variable_column_name to the correct value\n for wide-formatted covariate data, set value_column_name and variable_column_name to nothing")
+end 
+
+function check_column_names(data::DataFrame; time_column_name = nothing, series_column_name = nothing)
+
+    global col_names = [time_column_name, series_column_name]
+
+    if(time_column_name !== nothing)
+        try data[:,time_column_name]
+        catch e
+            if(isa(e, ArgumentError))
+                global col_names[1] = find_time_alias(names(data))
+                @warn("Found unexpected value for time_series_name:" * col_names[1] * ", It is reccomended to set kwarg: time_series_name to match your data")
+            else
+                throw(e)
+            end
+        end
+    end
+    if(series_column_name !== nothing)
+        try data[:,series_column_name]
+        catch e
+            if(isa(e, ArgumentError))
+                global col_names[2] = find_series_alias(names(data))
+                @warn("Found unexpected value for time_series_name:" * col_names[2] * ", It is reccomended to set kwarg: time_series_name to match your data")
+            else
+                throw(e)
+            end
+        end
+
+    end
+    return col_names
+end
+
+function check_column_names(data::DataFrame, covariates::DataFrame; time_column_name = nothing, series_column_name = nothing, value_column_name = nothing, variable_column_name = nothing)
+
+    global col_names = [time_column_name, series_column_name, value_column_name, variable_column_name]
+
+    if(time_column_name !== nothing)
+        try data[:,time_column_name]
+        catch e
+            if(isa(e, ArgumentError))
+                global col_names[1] = find_time_alias(names(data))
+                @warn("Found unexpected value for time_series_name:" * col_names[1] * ", It is reccomended to set kwarg: time_series_name to match your data")
+            else
+                throw(e)
+            end
+        end
+    end
+    if(series_column_name !== nothing)
+        try data[:,series_column_name]
+        catch e
+            if(isa(e, ArgumentError))
+                global col_names[2] = find_series_alias(names(data))
+                @warn("Found unexpected value for time_series_name:" * col_names[2] * ", It is reccomended to set kwarg: time_series_name to match your data")
+            else
+                throw(e)
+            end
+        end
+
+    end
+    if(value_column_name !== nothing)
+        try covariates[:,value_column_name]
+        catch e
+            if(isa(e, ArgumentError))   
+                global col_names[3] = find_value_alias(names(covariates))
+                @warn("Found unexpected value for time_series_name:" * col_names[3] * ", It is reccomended to set kwarg: time_series_name to match your data")
+            else
+                throw(e)
+            end
+        end
+    end
+    if(variable_column_name !== nothing)
+        try covariates[:,variable_column_name]
+        catch e
+            if(isa(e, ArgumentError))
+                
+                global col_names[4] = find_variable_alias(names(covariates))
+                @warn("Found unexpected value for time_series_name:" * col_names[4] * ", It is reccomended to set kwarg: time_series_name to match your data")
+            else
+                throw(e)
+            end
+        end
+    end
+    return col_names
+end

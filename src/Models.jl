@@ -89,7 +89,8 @@ Constructs a UDE model for the data set `data`  based on user defined derivative
 ...
 """
 function CustomDerivatives(data,derivs!,initial_parameters;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
-    
+    time_column_name = check_column_names(data, time_column_name = time_column_name)[1]
+
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     
@@ -137,6 +138,7 @@ end
 ```
 """
 function CustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,priors::Function;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+    time_column_name = check_column_names(data, time_column_name = time_column_name)[1]
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name )
     
@@ -180,7 +182,7 @@ When a dataframe `X` is supplied the model will run with covariates. the argumen
 When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)` where `x` is a vector with the value of the covariates at time `t`. 
 """
 function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters;time_column_name = "time",variable_column_name = "variable",value_column_name = "value",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
-    
+    time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     covariates, vars = interpolate_covariates(X,time_column_name,variable_column_name,value_column_name)
@@ -214,6 +216,7 @@ end
 
 
 function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters,priors::Function;time_column_name = "time",variable_column_name = "variable",value_column_name = "value",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+    time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     covariates, vars = interpolate_covariates(X,time_column_name,variable_column_name,value_column_name)
@@ -262,7 +265,7 @@ Constructs a UDE model for the data set `data` based on user defined difference 
 ...
 """
 function CustomDifference(data,step,initial_parameters;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type="L2")
-    
+    time_column_name = check_column_names(data, time_column_name = time_column_name)[1]
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     
@@ -307,7 +310,7 @@ end
 ```
 """
 function CustomDifference(data::DataFrame,step,initial_parameters,priors::Function;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type="L2")
-    
+    time_column_name = check_column_names(data, time_column_name = time_column_name)[1]
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     
@@ -346,7 +349,7 @@ When a dataframe `X` is supplied the model will run with covariates. the argumen
 When `X` is provided the step function must have the form `step(u,x,t,p)` where `x` is a vector with the value of the covariates at time `t`. 
 """
 function CustomDifference(data::DataFrame,X,step,initial_parameters;time_column_name = "time",variable_column_name = "variable",value_column_name = "value",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type = "L2")
-    
+    time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     covariates, vars = interpolate_covariates(X,time_column_name,variable_column_name,value_column_name)
@@ -380,7 +383,7 @@ end
 
 
 function CustomDifference(data::DataFrame,X,step,initial_parameters,priors::Function;time_column_name = "time",variable_column_name = "variable",value_column_name = "value",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type = "L2")
-    
+    time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     covariates, vars = interpolate_covariates(X,time_column_name,variable_column_name,value_column_name)
@@ -420,7 +423,7 @@ end
 Constructs a nonparametric discrete time model for the data set `data` using a single layer neural network to represent the systems dynamics. 
 """
 function NNDE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
-    
+    time_column_name = check_column_names(data, time_column_name = time_column_name)[1]
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     
@@ -456,7 +459,7 @@ end
 Constructs a nonparametric continuous time model for the data set `data` using a single layer neural network to represent the systems dynamics. 
 """
 function NODE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0 )
-    
+    time_column_name = check_column_names(data, time_column_name = time_column_name)[1]
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     
@@ -495,7 +498,7 @@ When a dataframe `X` is supplied the model will run with covariates. the argumen
 
 """
 function NODE(data,X;time_column_name = "time",variable_column_name = "variable",value_column_name = "value",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0 )
-    
+    time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     covariates, vars = interpolate_covariates(X,time_column_name,variable_column_name,value_column_name)
@@ -532,7 +535,7 @@ end
 Constructs a pretrained continuous time model for the data set `data` using a single layer neural network to represent the systems dynamics. 
 """
 function EasyNODE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0, step_size = 0.05, maxiter = 500, verbose = false)
-   
+    time_column_name = check_column_names(data, time_column_name = time_column_name)[1]
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     
@@ -569,7 +572,7 @@ end
 When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for values of time not included in the data frame. 
 """
 function EasyNODE(data,X;time_column_name = "time",variable_column_name = "variable",value_column_name = "value",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0, step_size = 0.05, maxiter = 500, verbose = false)
-    
+    time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     covariates, vars = interpolate_covariates(X,time_column_name,variable_column_name,value_column_name)
@@ -605,7 +608,7 @@ end
 Constructs a pretrained UDE model for the data set `data`  based on user defined derivatives `derivs`. An initial guess of model parameters are supplied with the `initial_parameters` argument. 
 """
 function EasyUDE(data,known_dynamics!,initial_parameters;time_column_name = "time",variable_column_name = "variable",value_column_name = "value",hidden_units = 10, seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2", step_size = 0.05, maxiter = 500, verbose = false)
-    
+    time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     
@@ -655,7 +658,7 @@ When a dataframe `X` is supplied the model will run with covariates. the argumen
 When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)` where `x` is a vector with the value of the covariates at time `t`. 
 """
 function EasyUDE(data::DataFrame,X,known_dynamics!::Function,initial_parameters;time_column_name = "time",variable_column_name = "variable",value_column_name = "value",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
-    
+    time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     covariates, vars = interpolate_covariates(X,time_column_name,variable_column_name,value_column_name)
@@ -705,7 +708,7 @@ end
 Constructs a Bayesian continuous time model for the data set `data` using a single layer neural network to represent the systems dynamics. 
 """
 function BayesianNODE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0, step_size = 0.05, maxiter = 500, verbose = false)
-   
+    time_column_name = check_column_names(data, time_column_name = time_column_name)[1]
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     
@@ -738,7 +741,7 @@ When a dataframe `X` is supplied the model will run with covariates. the argumen
 
 """
 function BayesianNODE(data,X;time_column_name = "time",variable_column_name = "variable",value_column_name = "value",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0 )
-    
+    time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     covariates, vars = interpolate_covariates(X,time_column_name,variable_column_name,value_column_name)
@@ -786,7 +789,7 @@ Constructs a Bayesian UDE model for the data set `data`  based on user defined d
 ...
 """
 function BayesianCustomDerivatives(data,derivs!,initial_parameters;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
-    
+    time_column_name = check_column_names(data, time_column_name = time_column_name)[1]
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     
@@ -836,6 +839,7 @@ end
 ```
 """
 function BayesianCustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,priors::Function;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+    time_column_name = check_column_names(data, time_column_name = time_column_name)[1]
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     
@@ -877,7 +881,7 @@ When a dataframe `X` is supplied the model will run with covariates. the argumen
 When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)` where `x` is a vector with the value of the covariates at time `t`. 
 """
 function BayesianCustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters;time_column_name = "time",variable_column_name = "variable",value_column_name = "value",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
-    
+    time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     covariates, vars = interpolate_covariates(X,time_column_name,variable_column_name,value_column_name)
@@ -913,6 +917,7 @@ end
 
 
 function BayesianCustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters,priors::Function;time_column_name = "time",variable_column_name = "variable",value_column_name = "value",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+    time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     covariates, vars = interpolate_covariates(X,time_column_name,variable_column_name,value_column_name)
