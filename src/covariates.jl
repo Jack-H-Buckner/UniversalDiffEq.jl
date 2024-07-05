@@ -21,6 +21,7 @@ end
 
 
 function process_long_format_data(data, time_column_name, series_column_name,  variable_column_name, value_column_name)
+
     variables = unique(data[:,variable_column_name])
     series = unique(data[:,series_column_name])
     times = []; values = []
