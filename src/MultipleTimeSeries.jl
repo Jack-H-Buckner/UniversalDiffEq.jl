@@ -136,7 +136,7 @@ end
 builds a NODE model to fit to the data. `data` is a DataFrame object with time arguments placed in a column labed `t` and a second column with a unique index for each time series. The remaining columns have observations of the state variables at each point in time and for each time series.
 """
 function MultiNODE(data;time_column_name = "time", series_column_name = "series",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,reg_type="L2",l=0.5,extrap_rho=0.0)
-    
+    time_column_name, series_column_name = check_column_names(data, time_column_name = time_column_name, series_column_name = series_column_name)
     # convert data
     N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames, labels_df = process_multi_data(data, time_column_name, series_column_name)
 
@@ -178,6 +178,7 @@ end
 When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for values of time not included in the data frame. 
 """
 function MultiNODE(data,X;time_column_name = "time", series_column_name = "series", variable_column_name = "variable", value_column_name = "value",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,reg_type="L2",l=0.5,extrap_rho=0.0)
+    time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name, series_column_name = series_column_name, value_column_name = value_column_name, variable_column_name = variable_column_name)
 
     N, T, dims, data, times,  dataframe, series, inds, starts, lengths,varnames, labels_df = process_multi_data(data, time_column_name, series_column_name)
     covariates, variables = interpolate_covariates(X, time_column_name, series_column_name,  variable_column_name, value_column_name)
@@ -217,7 +218,8 @@ end
 
 
 function MultiCustomDerivatives(data,derivs!,initial_parameters;time_column_name = "time", series_column_name = "series",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
-    
+    time_column_name, series_column_name = check_column_names(data, time_column_name = time_column_name, series_column_name = series_column_name)
+
     # convert data
     N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames, labels_df = process_multi_data(data, time_column_name, series_column_name)
     
@@ -246,7 +248,7 @@ end
 
 
 function MultiCustomDerivatives(data,X,derivs!,initial_parameters;time_column_name = "time", series_column_name = "series", variable_column_name = "variable", value_column_name = "value",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
-    
+    time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name, series_column_name = series_column_name, value_column_name = value_column_name, variable_column_name = variable_column_name)
     # convert data
     N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames, labels_df = process_multi_data(data, time_column_name, series_column_name)
     covariates, variables = interpolate_covariates(X, time_column_name, series_column_name,  variable_column_name, value_column_name)
