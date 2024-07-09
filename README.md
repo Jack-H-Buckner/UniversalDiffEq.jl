@@ -28,9 +28,9 @@ plot_predictions(model)
 plot_state_estimates(model)
 ```
 
-<img alt="Lotka-Volterra Predictions" width = "200px" src="lotkaVolterra_example_predictions.png" />
+<img alt="Lotka-Volterra Predictions" width = "500px" src="lotkaVolterra_example_predictions.png" />
 
-<img alt="Lotka-Volterra States" width = "200px" src="lotkaVolterra_example_states.png" />
+<img alt="Lotka-Volterra States" width = "500px" src="lotkaVolterra_example_states.png" />
 
 Please see the documentation for a detailed tutorial (https://jack-h-buckner.github.io/UniversalDiffEq.jl/dev/).
 
