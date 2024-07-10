@@ -42,9 +42,9 @@ function plot_state_estimates(UDE::UDE)
 
         ymax = UDE.data[dim,argmax(UDE.data[dim,:])]
         ymin = UDE.data[dim,argmin(UDE.data[dim,:])]
-        text_y = 0.9*(ymax-ymin)+ymin 
+        text_y = 0.7*(ymax-ymin)+ymin 
 
-        Plots.annotate!(text_x, text_y, text("NRMSE = $(round(NRMSE, digits=3))", :left, 12))
+        Plots.annotate!(text_x, text_y, text("NRMSE = $(round(NRMSE, digits=3))", :left, 10))
 
        
         push!(plots, plt)
@@ -259,15 +259,15 @@ function plot_predictions(UDE::UDE)
         scatter!(difs,duhat,color = "white", label = "", xlabel = "Observed change", ylabel = "Predicted change")
 
         N = length(difs)      
-        RMSE = sqrt(sum((duhat .- difs).^2/N))/std(difs)
+        NRMSE = sqrt(sum((difs .- duhat).^2)/N)/std(difs)
     
         
         
 
-        text_x = 0.75*(xmax-xmin)+xmin
+        text_x = 0.5*(xmax-xmin)+xmin
         text_y = 0.1*(xmax-xmin)+xmin 
 
-        Plots.annotate!(text_x, text_y, text("RMSE = $(round(RMSE, digits=3))", :left, 12))
+        Plots.annotate!(text_x, text_y, text("NRMSE = $(round(RMSE, digits=3))", :left, 10))
 
         
         push!(plots, plt)
