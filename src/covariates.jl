@@ -6,6 +6,7 @@ function process_long_format_data(data, time_column_name, variable_column_name, 
         inds = data[:,variable_column_name] .== var
         dat_i = data[inds,:]
         push!(times, dat_i[:,time_column_name])
+        push!(values, dat_i[:,value_column_name])
     end
     return times, values, variables
 end 
