@@ -267,7 +267,7 @@ function plot_predictions(UDE::UDE)
         text_x = 0.5*(xmax-xmin)+xmin
         text_y = 0.1*(xmax-xmin)+xmin 
 
-        Plots.annotate!(text_x, text_y, text("NRMSE = $(round(RMSE, digits=3))", :left, 10))
+        Plots.annotate!(text_x, text_y, text("NRMSE = $(round(NRMSE, digits=3))", :left, 10))
 
         
         push!(plots, plt)
@@ -286,7 +286,7 @@ function plot_predictions(UDE::BayesianUDE;ci=95)
         difs = obs[dim,:].-inits[dim,:]
         xmin = difs[argmin(difs)]
         xmax = difs[argmax(difs)]
-        plt = plot([xmin,xmax],[xmin,xmax],color = "grey", linestyle=:dash, label = "45 degree")
+        plt = plot([xmin,xmax],[xmin,xmax],color = "grey", linestyle=:dash, label = "1:1")
         scatter!(difs,reduce(hcat,preds[dim,:])[2,:][dim,:].-inits[dim,:],color = "white", label = "", xlabel = "Observed median change Delta hatu_t", 
                                 ylabel = "Predicted median change hatut - hatu_t")
         push!(plots, plt)
@@ -311,7 +311,7 @@ function plot_predictions(UDE::UDE,test_data::DataFrame)
         difs = obs[dim,:].-inits[dim,:]
         xmin = difs[argmin(difs)]
         xmax = difs[argmax(difs)]
-        plt = plot([xmin,xmax],[xmin,xmax],color = "grey", linestyle=:dash, label = "45 degree")
+        plt = plot([xmin,xmax],[xmin,xmax],color = "grey", linestyle=:dash, label = "1:1")
         scatter!(difs,preds[dim,:].-inits[dim,:],color = "white", label = "", xlabel = "Observed change", 
                                 ylabel = "Predicted change")
         push!(plots, plt)
@@ -330,7 +330,7 @@ function plot_predictions(UDE::BayesianUDE,test_data::DataFrame;ci=95)
         difs = obs[dim,:].-inits[dim,:]
         xmin = difs[argmin(difs)]
         xmax = difs[argmax(difs)]
-        plt = plot([xmin,xmax],[xmin,xmax],color = "grey", linestyle=:dash, label = "45 degree")
+        plt = plot([xmin,xmax],[xmin,xmax],color = "grey", linestyle=:dash, label = "1:1")
         scatter!(difs,reduce(hcat,preds[dim,:])[2,:][dim,:].-inits[dim,:],color = "white", label = "", xlabel = "Observed median change Delta hatu_t", 
                                 ylabel = "Predicted median change hatut - hatu_t")
         push!(plots, plt)
