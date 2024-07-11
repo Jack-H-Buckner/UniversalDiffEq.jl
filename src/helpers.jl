@@ -210,7 +210,7 @@ function check_column_names(data::DataFrame; time_column_name = nothing, series_
         catch e
             if(isa(e, ArgumentError))
                 global col_names[1] = find_time_alias(names(data))
-                @warn("Found unexpected value for time_series_name:" * col_names[1] * ", It is reccomended to set kwarg: time_series_name to match your data")
+                @warn("Found unexpected value for time_column_name:" * col_names[1] * ", It is reccomended to set kwarg: time_column_name to match your data")
             else
                 throw(e)
             end
@@ -221,7 +221,7 @@ function check_column_names(data::DataFrame; time_column_name = nothing, series_
         catch e
             if(isa(e, ArgumentError))
                 global col_names[2] = find_series_alias(names(data))
-                @warn("Found unexpected value for time_series_name:" * col_names[2] * ", It is reccomended to set kwarg: time_series_name to match your data")
+                @warn("Found unexpected value for series_column_name:" * col_names[2] * ", It is reccomended to set kwarg: series_column_name to match your data")
             else
                 throw(e)
             end
@@ -240,30 +240,48 @@ function check_column_names(data::DataFrame, covariates::DataFrame; time_column_
         catch e
             if(isa(e, ArgumentError))
                 global col_names[1] = find_time_alias(names(data))
-                @warn("Found unexpected value for time_series_name:" * col_names[1] * ", It is reccomended to set kwarg: time_series_name to match your data")
+                @warn("Found unexpected value for time_column_name:" * col_names[1] * ", It is reccomended to set kwarg: time_column_name to match your data")
             else
                 throw(e)
             end
         end
-    end
-    if(series_column_name !== nothing)
-        try data[:,series_column_name]
+
+        try covariates[:,col_names[1]]
         catch e
             if(isa(e, ArgumentError))
-                global col_names[2] = find_series_alias(names(data))
-                @warn("Found unexpected value for time_series_name:" * col_names[2] * ", It is reccomended to set kwarg: time_series_name to match your data")
+                error("time_column_name not found in covariate data. Make sure time column names are consistent across all dataframes")
             else
                 throw(e)
             end
         end
 
     end
+    if(series_column_name !== nothing)
+        try data[:,series_column_name]
+        catch e
+            if(isa(e, ArgumentError))
+                global col_names[2] = find_series_alias(names(data))
+                @warn("Found unexpected value for series_column_name:" * col_names[2] * ", It is reccomended to set kwarg: series_column_name to match your data")
+            else
+                throw(e)
+            end
+        end
+        
+        try covariates[:,col_names[2]]
+        catch e
+            if(isa(e, ArgumentError))
+                error("series_column_name not found in covariate data. Make sure time column names are consistent across all dataframes")
+            else
+                throw(e)
+            end
+        end
+    end
     if(value_column_name !== nothing)
         try covariates[:,value_column_name]
         catch e
             if(isa(e, ArgumentError))   
                 global col_names[3] = find_value_alias(names(covariates))
-                @warn("Found unexpected value for time_series_name:" * col_names[3] * ", It is reccomended to set kwarg: time_series_name to match your data")
+                @warn("Found unexpected value for value_column_name:" * col_names[3] * ", It is reccomended to set kwarg: value_column_name to match your data")
             else
                 throw(e)
             end
@@ -275,7 +293,7 @@ function check_column_names(data::DataFrame, covariates::DataFrame; time_column_
             if(isa(e, ArgumentError))
                 
                 global col_names[4] = find_variable_alias(names(covariates))
-                @warn("Found unexpected value for time_series_name:" * col_names[4] * ", It is reccomended to set kwarg: time_series_name to match your data")
+                @warn("Found unexpected value for variable_column_name:" * col_names[4] * ", It is reccomended to set kwarg: variable_column_name to match your data")
             else
                 throw(e)
             end
