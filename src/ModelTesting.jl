@@ -425,7 +425,7 @@ end
 # """
 function forecast(UDE::UDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{})
     
-    @assert all(times .> t0)
+    @assert all(times .> t0) "t0 is greater than the first time point in times"
     uhats = UDE.parameters.uhat
     
     umax = mapslices(max_, uhats, dims = 2);umax=reshape(umax,length(umax))
@@ -458,7 +458,7 @@ end
 
 function forecast(UDE::BayesianUDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{};summarize = true, ci = 95)
     
-    @assert all(times .> t0)
+    @assert all(times .> t0) "t0 is greater than the first time point in times"
     x = u0
     x = u0
     dfs = zeros(length(UDE.parameters),length(times),length(x)+1)
