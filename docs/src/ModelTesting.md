@@ -25,9 +25,10 @@ UniversalDiffEq.plot_predictions(UDE::UDE, test_data::DataFrame)
 
 ## Cross-validation
 
-Cross-validation is important for model comparison and hyper-parameter tuning. The `leave_future_out_cv` function breaks the data set into training and test data sets by leaving off the final observations in the data set. The model is then trained on the beginning of the data set and the performance is calculated by comparing a forecast to the test data. The user can specify the time horizon for the forecast ``T_{Forecast}`` and the number of tests ``K``. The first test trains the model on the full data set only omitting the final ``T_{forecast}`` years as the test set. The remaining tests each generate a new test data set by iteratively removing more of the observations from the end of the data set. The number removed between each test can be controlled by changing the spacing argument. 
+Cross-validation is important for model comparison and hyper-parameter tuning. The `leave_future_out_cv` function breaks the data set into training and test data sets by leaving off the final observations in the data set. The model is then trained on the beginning of the data set and the performance is calculated by comparing a forecast to the test data. The user can specify the time horizon for the forecast ``T_{Forecast}`` and the number of tests ``K``. The first test trains the model on the full data set only omitting the final ``T_{forecast}`` years as the test set. The remaining tests each generate a new test data set by iteratively removing more of the observations from the end of the data set. The number removed between each test can be controlled by changing the spacing argument. The `kfold_cv` function performs a k-fold version of `leave_future_out_cv`.
 
 
 ```@docs
-UniversalDiffEq.leave_future_out_cv(model; forecast_length = 10, K = 10, spacing = 1, step_size = 0.05, maxiter = 500)
+UniversalDiffEq.leave_future_out_cv(model::UDE)
+UniversalDiffEq.kfold_cv(model::UDE)
 ```
