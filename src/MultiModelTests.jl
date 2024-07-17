@@ -314,17 +314,21 @@ function phase_plane(UDE::MultiUDE;idx = [1,2],u1s=-5:0.25:5, u2s=-5:0.25:5,u3s 
     times = collect(dt:dt:(T*dt))
     
     # calcaulte u0s
-    u0s = vcat([reduce(vcat,[u1,u2,u3s]) for u1 in u1s for u2 in u2s])
-    permutation = unique([idx;collect(1:length(u0s[1]))])
-    u0s = invpermute!.(u0s,Ref(permutation))
-    plt = plot()
-    for u0 in u0s
-        data = forecast(UDE, u0, times) 
-        Plots.plot!(plt,data[:,(idx[1]+1)],data[:,(idx[2]+1)], label = "",
-                            line_z = log.(data[:,1]), c = :roma)
-    end 
+    plots = []
+    for series in UDE.series_labels.label
+        u0s = vcat([reduce(vcat,[u1,u2,u3s]) for u1 in u1s for u2 in u2s])
+        permutation = unique([idx;collect(1:length(u0s[1]))])
+        u0s = invpermute!.(u0s,Ref(permutation))
+        plt = plot()
+        for u0 in u0s
+            data = forecast(UDE, u0, 0.0, times, series) 
+            Plots.plot!(plt,data[:,(idx[1]+1)],data[:,(idx[2]+1)], label = "",
+                                line_z = log.(data[:,1]), c = :roma)
+        end 
+        push!(plots, plt)
+    end
     
-    return plt
+    return plot(plots...)
     
 end 
 
