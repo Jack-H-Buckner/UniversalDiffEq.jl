@@ -11,8 +11,12 @@ The library also has functions to evaluate model predictions. The `forecast` fun
 ```@docs
 UniversalDiffEq.forecast(UDE::UDE, u0::AbstractVector{}, times::AbstractVector{})
 ```
-
-
+The function `phase_plane` plots forecasted trajectories of state variables for a given number of timesteps `T`. All phase plane functions also work with the `MultiUDE` model type, and plot phase planes for each series in the data.
+```@docs
+UniversalDiffEq.phase_plane(UDE::UDE; idx=[1,2], u1s=-5.0,0.25,5.0, u2s=-5:0.25:5,u3s = 0,T = 100)
+UniversalDiffEq.phase_plane(UDE::UDE, u0s::AbstractArray; idx=[1,2],T = 100)
+UniversalDiffEq.phase_plane_3d(UDE::UDE; idx=[1,2,3], u1s=-5.0,0.25,5.0, u2s=-5:0.25:5,u3s=-5:0.25:5,T = 100)
+```
 
 ```@docs
 UniversalDiffEq.print_parameter_estimates(UDE::UDE)

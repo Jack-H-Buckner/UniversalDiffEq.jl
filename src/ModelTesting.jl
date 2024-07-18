@@ -652,3 +652,108 @@ function forecast_simulation_SE(simulator,model,seed;train_fraction=0.9,step_siz
     return abs.(Matrix(predicted_data[:,2:end]) .- Matrix(test_data[:,2:end]))
 end 
 
+
+"""
+    phase_plane(UDE::UDE; idx=[1,2], u1s=-5.0,0.25,5.0, u2s=-5:0.25:5,u3s = 0,T = 100)
+
+Plots the trajectory of state variables as forecasted by the model. Runs a forecast for each permutation of u1 and u2 out to T timesteps.
+Change the state variables which are plotted by changing idx such that it equals the indexes of the desired state variables as they appear in the data
+"""
+function phase_plane(UDE::UDE;idx = [1,2],u1s=-5:0.25:5, u2s=-5:0.25:5,u3s = 0,T = 100)
+    
+    # caclaute time to evaluate 
+    lengths = size(UDE.data_frame,1)
+    dts = UDE.times[2:lengths[1]] .- UDE.times[1:(lengths[1]-1)]
+    dt = sum(dts)/length(dts)
+    times = collect(dt:dt:(T*dt))
+    
+    # calcaulte u0s
+    u0s = vcat([reduce(vcat,[u1,u2,u3s]) for u1 in u1s for u2 in u2s])
+    permutation = unique([idx;collect(1:length(u0s[1]))])
+    u0s = invpermute!.(u0s,Ref(permutation))
+
+    plt = plot()
+    for u0 in u0s
+        data = forecast(UDE, u0, times) 
+        Plots.plot!(plt,data[:,(idx[1]+1)],data[:,(idx[2]+1)], label = "",
+                            line_z = log.(data[:,1]), c = :roma)
+    end 
+    
+    return plt
+    
+end 
+
+
+"""
+    phase_plane(UDE::UDE, u0s::AbstractArray; idx=[1,2],T = 100)
+
+Plots the trajectory of state variables as forecasted by the model. Runs a forecast for each provided initial condition out to T timesteps.
+Change the state variables which are plotted by changing idx such that it equals the indexes of the desired state variables as they appear in the data
+"""
+function phase_plane(UDE::UDE, u0s::AbstractArray ;idx = [1,2],T = 100)
+    
+    # caclaute time to evaluate 
+    lengths = size(UDE.data_frame,1)
+    dts = UDE.times[2:lengths[1]] .- UDE.times[1:(lengths[1]-1)]
+    dt = sum(dts)/length(dts)
+    times = collect(dt:dt:(T*dt))
+    
+    plt = plot()
+    for u0 in u0s
+        data = forecast(UDE, u0, times) 
+        Plots.plot!(plt,data[:,(idx[1]+1)],data[:,(idx[2]+1)], label = "",
+                            line_z = log.(data[:,1]), c = :roma)
+    end 
+    
+    return plt
+    
+end
+
+
+"""
+    phase_plane_3d(UDE::UDE; idx=[1,2,3], u1s=-5.0,0.25,5.0, u2s=-5:0.25:5,u3s=-5:0.25:5,T = 100)
+
+The same as phase_plane(), but displays three dimensions/state variables instead of two
+"""
+function phase_plane_3d(UDE::UDE;idx = [1,2,3],u1s=-5:0.25:5, u2s=-5:0.25:5,u3s=-5:0.25:5,T = 100)
+    
+    # caclaute time to evaluate 
+    lengths = [sum(UDE.data_frame.series .== i) for i in unique(UDE.data_frame.series)]
+    dts = UDE.times[2:lengths[1]] .- UDE.times[1:(lengths[1]-1)]
+    dt = sum(dts)/length(dts)
+    times = collect(dt:dt:(T*dt))
+    
+    # calcaulte u0s  
+    u0s = vcat([reduce(vcat,[u1,u2,u3]) for u1 in u1s for u2 in u2s for u3 in u3s])
+    permutation = unique([idx;collect(1:length(u0s[1]))])
+    u0s = invpermute!.(u0s,Ref(permutation))
+
+    plt = plot3d()
+    for u0 in u0s
+        data = UniversalDiffEq.forecast(UDE, u0, 0.0, times, series) 
+        Plots.plot3d!(plt,data[:,(idx[1]+2)],data[:,(idx[2]+2)],data[:,(idx[3]+2)], label = "",
+                            line_z = log.(data[:,2]), c = :roma)
+    end 
+
+    return plt
+    
+end
+
+function phase_plane_3d(UDE::UDE, u0s::AbstractArray;idx = [1,2,3],T = 100)
+    
+    # caclaute time to evaluate 
+    lengths = [sum(UDE.data_frame.series .== i) for i in unique(UDE.data_frame.series)]
+    dts = UDE.times[2:lengths[1]] .- UDE.times[1:(lengths[1]-1)]
+    dt = sum(dts)/length(dts)
+    times = collect(dt:dt:(T*dt))
+
+    plt = plot3d()
+    for u0 in u0s
+        data = UniversalDiffEq.forecast(UDE, u0, 0.0, times, series) 
+        Plots.plot3d!(plt,data[:,(idx[1]+2)],data[:,(idx[2]+2)],data[:,(idx[3]+2)], label = "",
+                            line_z = log.(data[:,2]), c = :roma)
+    end 
+
+    return plt
+    
+end 
