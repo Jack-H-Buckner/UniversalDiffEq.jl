@@ -301,3 +301,25 @@ function check_column_names(data::DataFrame, covariates::DataFrame; time_column_
     end
     return col_names
 end
+
+function check_test_data_names(modelData::DataFrame, test_data::DataFrame)
+
+    unfound_names = []
+    for column_name in names(modelData)
+        try test_data[:, column_name]
+        catch e
+            if(isa(e, ArgumentError))
+                push!(unfound_names, column_name)
+            else
+                throw(e)
+            end
+        end
+    end
+    if(length(unfound_names) > 0)
+        err_msg = "Error: Please ensure that all column names match provided training data. The following columns were not found in provided testing data: \n"
+        for name in unfound_names
+            err_msg = err_msg * name * " "
+        end
+        error(err_msg)
+    end
+end
