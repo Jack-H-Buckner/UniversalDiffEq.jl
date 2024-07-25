@@ -372,15 +372,15 @@ end
 
 
 
-function leave_future_out_cross_validation(model::UDE; forcast_horizon = 1, n = 10, skip = true, BFGS = false, step_size = 0.05, maxiter = 500, step_size2 = 0.05, maxiter2 = 500)
+function leave_future_out_cross_validation(model::UDE; forcast_horizon = 1, k = 10, skip = true, BFGS = false, step_size = 0.05, maxiter = 500, step_size2 = 0.05, maxiter2 = 500)
     
-    if skip
+    if typeof(skip) != Int64
         skip = forcast_horizon
     end
 
     data = model.data_frame
 
-    @assert skip*n+forcast_horizon < size(data)[1]
+    @assert skip*k+forcast_horizon < size(data)[1]
 
     training_data = []
     testing_data = []
@@ -395,7 +395,6 @@ function leave_future_out_cross_validation(model::UDE; forcast_horizon = 1, n = 
     d = size(model.data_frame)[2]-1
     mses = zeros(k,d)
 
-    estiamted_states = Array{Any}(nothing, length(training_data))
     predictions = Array{Any}(nothing, length(training_data))
     models = Array{Any}(nothing, length(training_data))
     testing_data_sets = Array{Any}(nothing, length(training_data))
@@ -425,22 +424,25 @@ function leave_future_out_cross_validation(model::UDE; forcast_horizon = 1, n = 
         end
 
         # forecast
+        # forecast
         u0 = model_i.parameters.uhat[:,end]
         t0 = model_i.times[end]
+        times = testing_data[i][:,model.time_column_name]
+        predicted_data = forecast(model_i, u0, times)
+        predicted_data = DataFrame(predicted_data,names(testing_data[i]))
+        testing = testing_data[i]
 
-        preds_,obs,df = one_step_ahead(model_i,u0,t0,testing_data[i];N=1000)
-        preds = Matrix(preds_[:,names(preds_) .!= model_i.time_column_name])
-        obs = Matrix(obs[:,names(obs) .!= model_i.time_column_name])
+        preds = Matrix(predicted_data[:,names(predicted_data) .!= model_i.time_column_name])
+        testing  = Matrix(testing[:,names(testing) .!= model_i.time_column_name])
 
-        mse = zeros(size(obs)[2])
-        for i in 1:size(obs)[2]
-            mse[i] = sum((obs[i] .- preds[i]).^2)/length(obs[i])
+        mse = zeros(size(testing)[2])
+        for i in 1:size(testing)[2]
+            mse[i] = sum((testing[i] .- preds[i]).^2)/length(testing[i])
         end
 
         mses[i,:] .= mse./k
 
-        estiamted_states[i] = df
-        predictions[i] = preds_
+        predictions[i] = predicted_data
         models[i] = model_i
         testing_data_sets[i] = testing_data[i]
         training_data_sets[i] = training_data[i]
@@ -449,7 +451,7 @@ function leave_future_out_cross_validation(model::UDE; forcast_horizon = 1, n = 
     
     total_rmse = sqrt.(mean(mses))
     variable_rmse = sqrt.(mean(eachrow(mses)))
-    diagnostics = (estiamted_states, predictions, models, testing_data_sets, training_data_sets)
+    diagnostics = (predictions, models, testing_data_sets, training_data_sets)
 
     return total_rmse, variable_rmse, diagnostics 
     
@@ -460,17 +462,19 @@ end
 
 function leave_future_out_diagnositcs_plot(diagnostics, range_45 = 0.25, time_series_plot_dims = (1000,1000), comparison_plot_dims = (500,500))
 
-
-    estiamted_states, predictions, models, testing_data_sets, training_data_sets = diagnostics
+    predictions, models, testing_data_sets, training_data_sets = diagnostics
     
     plts = []
-    d = size(estiamted_states[1])[2]-1
+    d = size(training_data_sets[1])[2]-1
     k = length(testing_data_sets)
     
     match_plts = [plot() for j in 1:d]
-    colors = ["#E4B73B", "#A56075","#9DE43B", "#3BE487", "#6067A5","#3BC5E4", 
-            "#60A1A5", "#3B80E4", "#9760A5","#753BE4", "#DA3BE4", "#E43B6F",
-            "#60A56D", "#99A560", "#A56060"]
+    colors = ["#E4B73B", "#A56075","#9DE43B", "#3BE487", "#6067A5","#3BC5E4",  "#60A1A5", "#3B80E4", "#9760A5","#753BE4", "#DA3BE4", "#E43B6F",
+            "#60A56D", "#99A560", "#A56060","#E4B73B", "#A56075","#9DE43B", "#3BE487", "#6067A5","#3BC5E4", 
+            "#60A1A5", "#3B80E4", "#9760A5","#753BE4", "#DA3BE4", "#E43B6F","#60A56D", "#99A560", "#A56060","#E4B73B", "#A56075","#9DE43B", "#3BE487", "#6067A5","#3BC5E4", 
+            "#60A1A5", "#3B80E4", "#9760A5","#753BE4", "#DA3BE4", "#E43B6F","#60A56D", "#99A560", "#A56060","#E4B73B", "#A56075","#9DE43B", "#3BE487", "#6067A5","#3BC5E4", 
+            "#60A1A5", "#3B80E4", "#9760A5","#753BE4", "#DA3BE4", "#E43B6F","#60A56D", "#99A560", "#A56060"]
+
     tbegin = training_data_sets[1][1,1]
     tend = testing_data_sets[1][end,1]
     for i in 1:k
@@ -479,23 +483,20 @@ function leave_future_out_diagnositcs_plot(diagnostics, range_45 = 0.25, time_se
         
         for j in 1:d
 
-            testing_esimates = estiamted_states[i]
             testing = testing_data_sets[i]
             training = training_data_sets[i]
             training_estiamtes = models[i].parameters.uhat
             preds = predictions[i]
-            t0 = testing_esimates[1,1]
+            t0 = training[1,1]
     
             if (i ==1) & (j ==1)
-                plt = Plots.plot(testing_esimates[:,1], testing_esimates[:,1+j],label = "states est.", markersize = 2.0, color = "#FF8A2E")
-                Plots.plot!(training[training[:,1] .< t0,1], training_estiamtes[j,training[:,1] .< t0],label = "state est", markersize = 2.0, color = "grey")
+                plt = Plots.plot(training[training[:,1] .< t0,1], training_estiamtes[j,training[:,1] .< t0],label = "state est", markersize = 2.0, color = "grey")
                 Plots.scatter!(training[:,1], training[:,1+j],label = "training data", markersize = 3.0, markerstrokewidth = 0.0, color = "#E9CB43")
                 Plots.scatter!(testing[:,1], testing[:,1+j],label = "testing data", markersize = 3.0, markerstrokewidth = 0.0, color = "#2EE5FF")
                 Plots.scatter!(preds[:,1], preds[:,1+j], label = "predictions", markersize = 3.0, markerstrokewidth = 0.0, color = "#30923B")
                 Plots.plot!(xlims = (tbegin,tend))
             else
-                plt = Plots.plot(testing_esimates[:,1], testing_esimates[:,1+j],label = "", markersize = 2.0, color = "#FF8A2E")
-                Plots.plot!(training[training[:,1] .< t0,1], training_estiamtes[j,training[:,1] .< t0],label = "", markersize = 2.0, color = "grey")
+                plt = Plots.plot(training[training[:,1] .< t0,1], training_estiamtes[j,training[:,1] .< t0],label = "", markersize = 2.0, color = "grey")
                 Plots.scatter!(training[:,1], training[:,1+j],label = "", markersize = 3.0, markerstrokewidth = 0.0, color = "#E9CB43")
                 Plots.scatter!(testing[:,1], testing[:,1+j],label = "", markersize = 3.0, markerstrokewidth = 0.0, color = "#2EE5FF")
                 Plots.scatter!(preds[:,1], preds[:,1+j], label = "", markersize = 3.0, markerstrokewidth = 0.0, color = "#30923B")
@@ -508,12 +509,9 @@ function leave_future_out_diagnositcs_plot(diagnostics, range_45 = 0.25, time_se
     
             if j ==1
                 
-                Plots.scatter!(match_plts[j], testing[2:end,1+j].-testing_esimates[1:(end-1),1+j],
-                                         preds[2:end,1+j].-testing_esimates[1:(end-1),1+j], color = colors[i], 
-                                        label = string("fold: ", i))
+                Plots.scatter!(match_plts[j], testing[2:end,1+j],preds[2:end,1+j], color = colors[i],label = string("fold: ", i))
             else
-                Plots.scatter!(match_plts[j], testing[2:end,1+j].-testing_esimates[1:(end-1),1+j], 
-                            preds[2:end,1+j].-testing_esimates[1:(end-1),1+j], color = colors[i], label = "")
+                Plots.scatter!(match_plts[j], testing[2:end,1+j],preds[2:end,1+j], color = colors[i], label = "")
             end
             push!(plts_i, plt)
         end
