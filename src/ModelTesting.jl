@@ -311,6 +311,7 @@ function plot_predictions(UDE::UDE,test_data::DataFrame)
         difs = obs[dim,:].-inits[dim,:]
         xmin = difs[argmin(difs)]
         xmax = difs[argmax(difs)]
+        duhat = preds[dim,:].-inits[dim,:]
         plt = plot([xmin,xmax],[xmin,xmax],color = "grey", linestyle=:dash, label = "1:1")
         scatter!(difs,preds[dim,:].-inits[dim,:],color = "white", label = "", xlabel = "Observed change", 
                                 ylabel = "Predicted change")
