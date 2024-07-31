@@ -314,6 +314,16 @@ function plot_predictions(UDE::UDE,test_data::DataFrame)
         plt = plot([xmin,xmax],[xmin,xmax],color = "grey", linestyle=:dash, label = "1:1")
         scatter!(difs,preds[dim,:].-inits[dim,:],color = "white", label = "", xlabel = "Observed change", 
                                 ylabel = "Predicted change")
+        N = length(difs)      
+        NRMSE = sqrt(sum((difs .- duhat).^2)/N)/std(difs)
+    
+        
+        
+
+        text_x = 0.5*(xmax-xmin)+xmin
+        text_y = 0.1*(xmax-xmin)+xmin 
+
+        Plots.annotate!(text_x, text_y, text("NRMSE = $(round(NRMSE, digits=3))", :left, 10))
         push!(plots, plt)
             
     end
