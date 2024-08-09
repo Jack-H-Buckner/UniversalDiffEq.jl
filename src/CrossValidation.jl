@@ -208,7 +208,22 @@ end
 
 
 
+"""
+cross_validation_kfold(model::UDE; kwagrs...)
 
+This funciton approximates model performance on out of sample data by leaving blocks of consequtive observaitons out of the training data. The model is trained on the remiaining observations and the and the one step ahead prediction accuracy is calcualted on the testing data set. This procedure is repeated k times.  
+...
+# Arguments
+k = 10 - the number of testing data sets
+BFGS = false - weather or not to train the models with the BFGS algorithm 
+step_size = 0.05 - the step size for the first round of gradient descent optimization 
+maxiter = 500 - the number of iterations for the first round of gradinet descent 
+step_size2 = 0.05 - the step size for the second round of gradient descent 
+maxiter2 = 500 - the number of iterations for the second round of gradient descent
+N = 1000 - the number of particle to use in the particle filter algorithm that estiamtes the states in the out of sample data 
+nugget = 10^-10 - a small number to added variance terms in the particle filter algorith to improve numerical stability
+...
+"""
 function cross_validation_kfold(model::UDE; k = 10, BFGS = false, step_size = 0.05, maxiter = 500, step_size2 = 0.05, maxiter2 = 500, N=1000, nugget = 10^-10)
     
     # get final time
@@ -279,11 +294,12 @@ function cross_validation_kfold(model::UDE; k = 10, BFGS = false, step_size = 0.
         obs = Matrix(obs[:,names(obs) .!= model_i.time_column_name])
 
         mse = zeros(size(obs)[2])
+
         for i in 1:size(obs)[2]
-            mse[i] = sum((obs[i] .- preds[i]).^2)/length(obs[i])
+            mse[i] = sum((obs[:,i] .- preds[:,i]).^2)/length(obs[:,i])
         end
 
-        mses[i,:] .= mse./k
+        mses[i,:] .= mse
 
         estiamted_states[i] = df
         predictions[i] = preds_
@@ -303,7 +319,7 @@ end
 
 
 
-function kfold_diagnositcs_plot(diagnostics, range_45 = 0.25, time_series_plot_dims = (1000,1000), comparison_plot_dims = (500,500))
+function kfold_diagnositcs_plot(diagnostics; range_45 = 0.25, time_series_plot_dims = (1000,1000), comparison_plot_dims = (500,500))
 
 
     estiamted_states, predictions, models, testing_data_sets, training_data_sets = diagnostics
@@ -314,6 +330,10 @@ function kfold_diagnositcs_plot(diagnostics, range_45 = 0.25, time_series_plot_d
     
     match_plts = [plot() for j in 1:d]
     colors = ["#E4B73B", "#A56075","#9DE43B", "#3BE487", "#6067A5","#3BC5E4", "#60A1A5", "#3B80E4", "#9760A5",
+                "#753BE4", "#DA3BE4", "#E43B6F", "#60A56D", "#99A560", "#A56060","#E4B73B", "#A56075","#9DE43B", "#3BE487", "#6067A5","#3BC5E4", "#60A1A5", "#3B80E4", "#9760A5",
+                "#753BE4", "#DA3BE4", "#E43B6F", "#60A56D", "#99A560", "#A56060","#E4B73B", "#A56075","#9DE43B", "#3BE487", "#6067A5","#3BC5E4", "#60A1A5", "#3B80E4", "#9760A5",
+                "#753BE4", "#DA3BE4", "#E43B6F", "#60A56D", "#99A560", "#A56060","#E4B73B", "#A56075","#9DE43B", "#3BE487", "#6067A5","#3BC5E4", "#60A1A5", "#3B80E4", "#9760A5",
+                "#753BE4", "#DA3BE4", "#E43B6F", "#60A56D", "#99A560", "#A56060","#E4B73B", "#A56075","#9DE43B", "#3BE487", "#6067A5","#3BC5E4", "#60A1A5", "#3B80E4", "#9760A5",
                 "#753BE4", "#DA3BE4", "#E43B6F", "#60A56D", "#99A560", "#A56060"]
     
     for i in 1:k
@@ -328,7 +348,7 @@ function kfold_diagnositcs_plot(diagnostics, range_45 = 0.25, time_series_plot_d
             preds = predictions[i]
             t0 = testing_esimates[1,1]
     
-            if (i ==1) & (j ==1)
+            if (i ==1) & (j == 1)
                 plt = Plots.plot(testing_esimates[:,1], testing_esimates[:,1+j],label = "states est.", markersize = 2.0, color = "#FF8A2E")
                 Plots.plot!(training[training[:,1] .< t0,1], training_estiamtes[j,training[:,1] .< t0],label = "state est", markersize = 2.0, color = "grey")
                 Plots.plot!(training[training[:,1] .> t0,1], training_estiamtes[j,training[:,1] .> t0],label = "", markersize = 2.0, color = "grey")
@@ -349,7 +369,6 @@ function kfold_diagnositcs_plot(diagnostics, range_45 = 0.25, time_series_plot_d
             end 
     
             if j ==1
-                
                 Plots.scatter!(match_plts[j], testing[2:end,1+j].-testing_esimates[1:(end-1),1+j],
                                          preds[2:end,1+j].-testing_esimates[1:(end-1),1+j], color = colors[i], 
                                         label = string("fold: ", i))
@@ -434,13 +453,12 @@ function leave_future_out_cross_validation(model::UDE; forcast_horizon = 1, k = 
 
         preds = Matrix(predicted_data[:,names(predicted_data) .!= model_i.time_column_name])
         testing  = Matrix(testing[:,names(testing) .!= model_i.time_column_name])
-
         mse = zeros(size(testing)[2])
-        for i in 1:size(testing)[2]
-            mse[i] = sum((testing[i] .- preds[i]).^2)/length(testing[i])
+        for j in 1:size(testing)[2]
+            mse[j] = sum((testing[:,j] .- preds[:,j]).^2)/length(testing[:,j])
         end
 
-        mses[i,:] .= mse./k
+        mses[i,:] .= mse
 
         predictions[i] = predicted_data
         models[i] = model_i
