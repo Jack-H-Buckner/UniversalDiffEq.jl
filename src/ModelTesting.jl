@@ -169,7 +169,7 @@ end
 
 
 function predictions(UDE::UDE,test_data::DataFrame)
-     
+    check_test_data_names(UDE.data_frame, test_data)
     N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
     inits = data[:,1:(end-1)]
     obs = data[:,2:end]
@@ -186,7 +186,7 @@ function predictions(UDE::UDE,test_data::DataFrame)
 end 
 
 function predictions(UDE::BayesianUDE,test_data::DataFrame;summarize = true,ci = 95)
-     
+    check_test_data_names(UDE.data_frame, test_data)
     N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
     inits = data[:,1:(end-1)]
     obs = data[:,2:end]
@@ -211,6 +211,7 @@ end
 
 
 function predict(UDE::UDE,test_data::DataFrame;df = true)
+    check_test_data_names(UDE.data_frame, test_data)
     inits, obs, preds = predictions(UDE,test_data)
     if df
         N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
@@ -223,6 +224,7 @@ function predict(UDE::UDE,test_data::DataFrame;df = true)
 end 
 
 function predict(UDE::BayesianUDE,test_data::DataFrame;summarize = true,ci = 95,df = true)
+    check_test_data_names(UDE.data_frame, test_data)
     inits, obs, preds = predictions(UDE,test_data,summarize=summarize,ci=ci)
     if df
         meanForecast = [preds[i,j][2] for i in 1:size(preds,1), j in 1:size(preds,2)]
@@ -303,7 +305,7 @@ end
 Plots the correspondence between the observed state transitons and observed transitions in the test data. 
 """
 function plot_predictions(UDE::UDE,test_data::DataFrame)
- 
+    check_test_data_names(UDE.data_frame, test_data)
     inits, obs, preds = predictions(UDE,test_data)
     
     plots = []
@@ -333,7 +335,7 @@ function plot_predictions(UDE::UDE,test_data::DataFrame)
 end
 
 function plot_predictions(UDE::BayesianUDE,test_data::DataFrame;ci=95)
- 
+    check_test_data_names(UDE.data_frame, test_data)
     inits, obs, preds = predictions(UDE,test_data,summarize = true,ci=ci)
     
     plots = []
@@ -436,7 +438,7 @@ end
 # """
 function forecast(UDE::UDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{})
     
-    @assert all(times .> t0)
+    @assert all(times .> t0) "t0 is greater than the first time point in times"
     uhats = UDE.parameters.uhat
     
     umax = mapslices(max_, uhats, dims = 2);umax=reshape(umax,length(umax))
@@ -469,7 +471,7 @@ end
 
 function forecast(UDE::BayesianUDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{};summarize = true, ci = 95)
     
-    @assert all(times .> t0)
+    @assert all(times .> t0) "t0 is greater than the first time point in times"
     x = u0
     x = u0
     dfs = zeros(length(UDE.parameters),length(times),length(x)+1)
@@ -563,6 +565,7 @@ end
 Plots the models forecast over the range of the test_data along with the value of the test data.   
 """
 function plot_forecast(UDE::UDE, test_data::DataFrame)
+    check_test_data_names(UDE.data_frame, test_data)
     u0 = UDE.parameters.uhat[:,end]
     N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
     df = forecast(UDE, u0, UDE.times[end], times)
@@ -577,6 +580,7 @@ function plot_forecast(UDE::UDE, test_data::DataFrame)
 end 
 
 function plot_forecast(UDE::BayesianUDE, test_data::DataFrame;ci = 95)
+    check_test_data_names(UDE.data_frame, test_data)
     u0 = reduce((x,y) -> cat(x,y,dims = 3),[UDE.parameters[i].uhat[:,end] for i in 1:length(UDE.parameters)])
     u0 = mean(u0,dims = 3)
     u0 = vec(u0[:,:,1])

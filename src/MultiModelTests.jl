@@ -90,7 +90,7 @@ function predictions(UDE::MultiUDE)
 end 
 
 function predictions(UDE::MultiUDE,test_data::DataFrame)
-     
+    check_test_data_names(UDE.data_frame, test_data)
     N, T, dims, data, times,  dataframe, series_ls, inds, starts, lengths, labs = process_multi_data(test_data,UDE.time_column_name,UDE.series_column_name)
     series_ls =  unique(UDE.data_frame[:,"series"])
     inits = [zeros(dims,l-1) for l in lengths]
@@ -152,7 +152,7 @@ end
 
 
 function plot_predictions(UDE::MultiUDE,test_data::DataFrame)
- 
+    check_test_data_names(UDE.data_frame, test_data)
     inits, obs, preds = predictions(UDE,test_data)
     plots = []
     for dim in 1:size(obs)[1]
@@ -252,7 +252,7 @@ end
 
 
 function plot_forecast(UDE::MultiUDE, test_data::DataFrame; show_legend = true)
-
+    check_test_data_names(UDE.data_frame, test_data)
     N, T, dims, test_data, test_times,  test_dataframe, test_series, inds, test_starts, test_lengths, labs = process_multi_data(test_data,UDE.time_column_name,UDE.series_column_name)
     N, T, dims, data, times,  dataframe, series, inds, starts, lengths, labs = process_multi_data(UDE.data_frame,UDE.time_column_name,UDE.series_column_name)
     
