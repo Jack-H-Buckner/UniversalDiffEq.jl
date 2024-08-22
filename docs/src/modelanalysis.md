@@ -17,6 +17,7 @@ UniversalDiffEq.phase_plane_3d(UDE::UDE; idx=[1,2,3], u1s=-5.0,0.25,5.0, u2s=-5:
 ```
 
 ```@docs
+UniversalDiffEq.forecast(UDE::UDE, u0::AbstractVector, times::AbstractVector)
 UniversalDiffEq.print_parameter_estimates(UDE::UDE)
 UniversalDiffEq.plot_forecast(UDE::UDE, T::Int)
 UniversalDiffEq.get_NN_parameters(UDE::UDE)
