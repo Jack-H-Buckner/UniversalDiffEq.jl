@@ -56,7 +56,7 @@ UniversalDiffEq.jl uses Optimizers.jl to find the state and parameter estimates 
 
 ## Package Contents
 ```@contents
-Pages = ["Models.md", "ModelTesting.md","MultipleTimeSeries.md","NutsAndBolts.md","modelanalysis.md","examples.md"]
+Pages = ["Models.md", "ModelTesting.md","MultipleTimeSeries.md","NutsAndBolts.md","modelanalysis.md","examples.md","API.md"]
 ```
 
 
