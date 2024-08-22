@@ -1,7 +1,7 @@
 name = "UniversalDiffEq"
 uuid = "791b002b-939e-4b08-8060-ecf413fcb155"
 authors = ["Jack Buckner <Jhbuckner@ucdavis.edu>"]
-version = "0.1.0"
+version = "1.0.0"
 
 [deps]
 AdvancedHMC = "0bf59076-c3b1-5ca4-86bd-e02cd72cde3d"
