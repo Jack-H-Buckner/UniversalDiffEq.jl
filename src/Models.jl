@@ -788,7 +788,7 @@ Constructs a Bayesian UDE model for the data set `data`  based on user defined d
 - init_parameters: A `NamedTuple` with the model parameters. Neural network parameters must be listed under the key `NN`.
 ...
 """
-function BayesianCustomDerivatives(data,derivs!,initial_parameters;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+function BayesianCustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
     time_column_name = check_column_names(data, time_column_name = time_column_name)[1]
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name)
@@ -822,55 +822,6 @@ function BayesianCustomDerivatives(data,derivs!,initial_parameters;time_column_n
    
 
 end
-
-"""
-    BayesianCustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,priors::Function;kwargs ... )
-
-When a function's priors is supplied its value will be added to the loss function as a penalty term for user specified parameters. It should take the a single NamedTuple `p` as an argument penalties for each paramter should be calculated by accessing `p` with the period operator.
-    
-The prior function can be used to nudge the fitted model toward prior expectations for a parameter value. For example, the following function increases the loss when a parameter `p.r` has a value other than 1.5, nad a second parameter `p.beta` is greater than zeros. 
-
-```julia 
-function priors(p)
-    l = 0.01*(p.r - 1.5)^2
-    l += 0.01*(p.beta)^2
-    return l
-end 
-```
-"""
-function BayesianCustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,priors::Function;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
-    time_column_name = check_column_names(data, time_column_name = time_column_name)[1]
-    # convert data
-    N, dims, T, times, data, dataframe = process_data(data,time_column_name)
-    
-    # generate submodels 
-    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),dims,l,extrap_rho)
-    process_loss = ProcessMSE(N,T, proc_weight)
-    observation_model = Identity()
-    observation_loss = ObservationMSE(N,obs_weight)
-    process_regularization = no_reg()
-    if reg_type == "L1"
-        process_regularization = no_reg()
-    elseif reg_type != "L2"
-        println("Invalid regularization type - defaulting to L2")
-    end
-    observation_regularization = no_reg()
-    
-    # paramters vector
-    parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
-    parameters_vector = Vector{typeof(parameters)}(undef,1)
-    parameters_vector[1] = parameters
-
-    # loss function 
-    loss_ = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
-    loss_function = parameters -> loss_(parameters) + priors(parameters.process_model)
-    # model constructor
-    constructor = data -> CustomDerivatives(data,derivs!,initial_parameters,priors;time_column_name=time_column_name,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
-    
-    return BayesianUDE(times,data,X,dataframe,parameters_vector,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor,time_column_name )
-   
-end 
     
 
 """
