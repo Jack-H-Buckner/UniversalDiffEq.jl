@@ -770,7 +770,7 @@ function EasyUDE(data,known_dynamics!,initial_parameters;time_column_name = "tim
         return du
     end 
     function derivs!(du,u,parameters,t)
-        NNcomp = NN(du,u,parameters.NN,t)
+        NNcomp = nn!(du,u,parameters.NN,t)
         knowncomp = known_dynamics!(du,u,parameters.known,t)
         du .= NNcomp .+ knowncomp
     end
