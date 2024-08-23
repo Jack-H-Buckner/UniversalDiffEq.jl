@@ -19,7 +19,7 @@ end
 """
     plot_state_estimates(UDE::UDE)
 
-Plots the value of the state variables estimated by the UDE model. 
+Plots the values of the state variables estimated by the UDE model. 
 """
 function plot_state_estimates(UDE::UDE)
     
@@ -58,7 +58,7 @@ end
 """
     print_parameter_estimates(UDE::UDE)
 
-prints the value of the known dynamcis parameters. 
+Prints the values of the known dynamics parameters estimated by the UDE model. 
 """
 function print_parameter_estimates(UDE::UDE)
     println("Estimated parameter values: ")
@@ -88,7 +88,7 @@ end
 """
     get_NN_parameters(UDE::UDE)
 
-Returns value weights and biases of the neural network 
+Returns the values of the weights and biases of the neural network. 
 """
 function get_NN_parameters(UDE::UDE)
     return UDE.parameters.process_model.NN
@@ -99,9 +99,9 @@ end
 """
     get_right_hand_side(UDE::UDE)
 
-Returns the right hand side of the differential equation (or difference equation) used to build the process model.
+Returns the right-hand side of the differential equation (or difference equation) used to build the process model.
 
-The fuction will take the state vector `u` and time `t` if the model does not include covariates. If covaraites are included the arguments are the state vector `u` , covariates vector `x`, and time `t`
+The function will take the state vector `u` and time `t` if the model does not include covariates. If covariates are included, then the arguments are the state vector `u` , covariates vector `x`, and time `t`.
 """
 function get_right_hand_side(UDE::UDE)
     pars = get_parameters(UDE)
@@ -147,7 +147,6 @@ function predictions(UDE::BayesianUDE;summarize = true,ci = 95)
             u0 = inits[i][:,t]
             u1 = obs[i][:,t]
             dt = UDE.times[t+1] - UDE.times[t]
-            preds[i][:,t] = UDE.process_model.predict(u0,UDE.times[t],dt,UDE.parameters[i].process_model)[1]
             preds[i][:,t] = UDE.process_model.predict(u0,UDE.times[t],dt,UDE.parameters[i].process_model)[1]
         end
     end
@@ -231,7 +230,7 @@ function predict(UDE::BayesianUDE,test_data::DataFrame;summarize = true,ci = 95,
         lowerForecast = [preds[i,j][1] for i in 1:size(preds,1), j in 1:size(preds,2)]
         upperForecast = [preds[i,j][3] for i in 1:size(preds,1), j in 1:size(preds,2)]
 
-        names = vcat(["t"],[string("x",i,"_lower",ci) for i in 1:dims],[string("x",i,"_median") for i in 1:dims],[string("x",i,"_higher",ci) for i in 1:dims])
+        names = vcat(["t"],[string("x",i,"_lower",ci) for i in 1:dims],[string("x",i,"_median") for i in 1:dims],[string("x",i,"_upper",ci) for i in 1:dims])
         return DataFrame(Array(vcat(times[1:5]',lowerForecast,meanForecast,upperForecast)'),names)
     else
         return preds
@@ -241,7 +240,7 @@ end
 """
     plot_predictions(UDE::UDE)
 
-Plots the correspondence between the observed state transitons and the predicitons for the model `UDE`. 
+Plots the correspondence between the observed state transitions and the predictions from the UDE model. 
 
 """
 function plot_predictions(UDE::UDE)
@@ -263,9 +262,6 @@ function plot_predictions(UDE::UDE)
         N = length(difs)      
         NRMSE = sqrt(sum((difs .- duhat).^2)/N)/std(difs)
     
-        
-        
-
         text_x = 0.5*(xmax-xmin)+xmin
         text_y = 0.1*(xmax-xmin)+xmin 
 
@@ -289,8 +285,8 @@ function plot_predictions(UDE::BayesianUDE;ci=95)
         xmin = difs[argmin(difs)]
         xmax = difs[argmax(difs)]
         plt = plot([xmin,xmax],[xmin,xmax],color = "grey", linestyle=:dash, label = "1:1")
-        scatter!(difs,reduce(hcat,preds[dim,:])[2,:][dim,:].-inits[dim,:],color = "white", label = "", xlabel = "Observed median change Delta hatu_t", 
-                                ylabel = "Predicted median change hatut - hatu_t")
+        scatter!(difs,reduce(hcat,preds[dim,:])[2,:][dim,:].-inits[dim,:], color = "white", label = "",
+            xlabel = "Observed median change", ylabel = "Predicted median change")
         push!(plots, plt)
             
     end
@@ -302,7 +298,7 @@ end
 """
     plot_predictions(UDE::UDE, test_data::DataFrame)
 
-Plots the correspondence between the observed state transitons and observed transitions in the test data. 
+Plots the correspondence between the observed state transitions in test data and the predictions from the UDE model. 
 """
 function plot_predictions(UDE::UDE,test_data::DataFrame)
     check_test_data_names(UDE.data_frame, test_data)
@@ -315,14 +311,11 @@ function plot_predictions(UDE::UDE,test_data::DataFrame)
         xmax = difs[argmax(difs)]
         duhat = preds[dim,:].-inits[dim,:]
         plt = plot([xmin,xmax],[xmin,xmax],color = "grey", linestyle=:dash, label = "1:1")
-        scatter!(difs,preds[dim,:].-inits[dim,:],color = "white", label = "", xlabel = "Observed change", 
-                                ylabel = "Predicted change")
+        scatter!(difs, duhat, color = "white", label = "", xlabel = "Observed change", ylabel = "Predicted change")
+       
         N = length(difs)      
         NRMSE = sqrt(sum((difs .- duhat).^2)/N)/std(difs)
     
-        
-        
-
         text_x = 0.5*(xmax-xmin)+xmin
         text_y = 0.1*(xmax-xmin)+xmin 
 
@@ -344,8 +337,8 @@ function plot_predictions(UDE::BayesianUDE,test_data::DataFrame;ci=95)
         xmin = difs[argmin(difs)]
         xmax = difs[argmax(difs)]
         plt = plot([xmin,xmax],[xmin,xmax],color = "grey", linestyle=:dash, label = "1:1")
-        scatter!(difs,reduce(hcat,preds[dim,:])[2,:][dim,:].-inits[dim,:],color = "white", label = "", xlabel = "Observed median change Delta hatu_t", 
-                                ylabel = "Predicted median change hatut - hatu_t")
+        scatter!(difs,reduce(hcat,preds[dim,:])[2,:][dim,:].-inits[dim,:],color = "white", label = "",
+            xlabel = "Observed median change", ylabel = "Predicted median change")
         push!(plots, plt)
             
     end
@@ -369,7 +362,7 @@ end
 """
     forecast(UDE::UDE, u0::AbstractVector{}, times::AbstractVector{})
 
-predicitons from the trained model `UDE` starting at `u0` saving values at `times`. Assumes `u0` is the value at time `times[1]`
+Predictions from the trained UDE model starting at `u0` and saving values at `times`. Assumes `u0` is the value at initial time `times[1]`
 """
 function forecast(UDE::UDE, u0::AbstractVector{}, times::AbstractVector{})
     
@@ -514,7 +507,7 @@ end
 """
     plot_forecast(UDE::UDE, T::Int)
 
-Plots the models forecast up to T time steps into the future from the last observation.  
+Plots the model's forecast up to T time steps into the future from the last observation.  
 """
 function plot_forecast(UDE::UDE, T::Int)
     u0 = UDE.parameters.uhat[:,end]
@@ -548,11 +541,12 @@ function plot_forecast(UDE::BayesianUDE, T::Int;ci = 95)
     upperForecast = [df[i,j][3] for i in 1:size(df,1), j in 1:size(df,2)]
     plots = []
     for dim in 2:size(df,2)
-        plt = plot(meanForecast[:,1],meanForecast[:,dim],ribbon = (meanForecast[:,dim]-lowerForecast[:,dim],upperForecast[:,dim]-meanForecast[:,dim]),
-                    color = "grey", linestyle=:dash, label = "forecast",
-                    xlabel = "Time", ylabel = string("x", dim))
+        plt = plot(meanForecast[:,1], meanForecast[:,dim], 
+            ribbon = (meanForecast[:,dim]-lowerForecast[:,dim],upperForecast[:,dim]-meanForecast[:,dim]),
+            color = "grey", linestyle=:dash, label = "forecast",
+            xlabel = "Time", ylabel = string("x", dim))
         plot!(UDE.times,UDE.data[dim-1,:],c=1, label = "data",
-                    xlabel = "Time", ylabel = string("x", dim))
+            xlabel = "Time", ylabel = string("x", dim))
         push!(plots, plt)
     end 
     return plot(plots...), plots
@@ -562,7 +556,7 @@ end
 """
     plot_forecast(UDE::UDE, test_data::DataFrame)
 
-Plots the models forecast over the range of the test_data along with the value of the test data.   
+Plots the model's forecast over the range of the test data along with the value of the test data.   
 """
 function plot_forecast(UDE::UDE, test_data::DataFrame)
     check_test_data_names(UDE.data_frame, test_data)
@@ -571,7 +565,8 @@ function plot_forecast(UDE::UDE, test_data::DataFrame)
     df = forecast(UDE, u0, UDE.times[end], times)
     plots = []
     for dim in 2:size(df)[2]
-        plt = plot(df[:,1],df[:,dim],color = "grey", linestyle=:dash, label = "forecast", xlabel = "Time", ylabel = string("x", dim))
+        plt = plot(df[:,1], df[:,dim], color = "grey", linestyle=:dash, label = "forecast",
+            xlabel = "Time", ylabel = string("x", dim))
         scatter!(UDE.times,UDE.data[dim-1,:],c=1, label = "data", xlabel = "Time", ylabel = string("x", dim))
         scatter!(times,data[dim-1,:],c=2, label = "data", xlabel = "Time", ylabel = string("x", dim))
         push!(plots, plt)
@@ -624,7 +619,7 @@ function forecast_simulation_test(simulator,model,seed;train_fraction=0.9,step_s
     data = simulator(seed)
     N_train = floor(Int, train_fraction*size(data)[1])
     train_data = data[1:N_train,:]
-    test_data = data[(N_train):end,:]
+    test_data = data[(N_train):end,:] #Shouldn't this be (N_train+1) so that the training data and test data don't share a value?
     
     # build model 
     model = model.constructor(train_data)
@@ -665,20 +660,20 @@ end
 
 
 """
-    phase_plane(UDE::UDE; idx=[1,2], u1s=-5.0,0.25,5.0, u2s=-5:0.25:5,u3s = 0,T = 100)
+    phase_plane(UDE::UDE; idx=[1,2], u1s=-5:0.25:5, u2s=-5:0.25:5, u3s = 0, T = 100)
 
 Plots the trajectory of state variables as forecasted by the model. Runs a forecast for each permutation of u1 and u2 out to T timesteps.
-Change the state variables which are plotted by changing idx such that it equals the indexes of the desired state variables as they appear in the data
+Change the state variables that are plotted by changing `idx` such that it equals the indexes of the desired state variables as they appear in the data.
 """
 function phase_plane(UDE::UDE;idx = [1,2],u1s=-5:0.25:5, u2s=-5:0.25:5,u3s = 0,T = 100)
     
-    # caclaute time to evaluate 
+    # calculate time to evaluate 
     lengths = size(UDE.data_frame,1)
     dts = UDE.times[2:lengths[1]] .- UDE.times[1:(lengths[1]-1)]
     dt = sum(dts)/length(dts)
     times = collect(dt:dt:(T*dt))
     
-    # calcaulte u0s
+    # calculate u0s
     u0s = vcat([reduce(vcat,[u1,u2,u3s]) for u1 in u1s for u2 in u2s])
     permutation = unique([idx;collect(1:length(u0s[1]))])
     u0s = invpermute!.(u0s,Ref(permutation))
@@ -698,12 +693,11 @@ end
 """
     phase_plane(UDE::UDE, u0s::AbstractArray; idx=[1,2],T = 100)
 
-Plots the trajectory of state variables as forecasted by the model. Runs a forecast for each provided initial condition out to T timesteps.
-Change the state variables which are plotted by changing idx such that it equals the indexes of the desired state variables as they appear in the data
+Plots the trajectory of state variables as forecasted by the model. Runs a forecast for each provided initial condition out to T timesteps. Change the state variables that are plotted by changing `idx` such that it equals the indexes of the desired state variables as they appear in the data.
 """
 function phase_plane(UDE::UDE, u0s::AbstractArray ;idx = [1,2],T = 100)
     
-    # caclaute time to evaluate 
+    # calculate time to evaluate 
     lengths = size(UDE.data_frame,1)
     dts = UDE.times[2:lengths[1]] .- UDE.times[1:(lengths[1]-1)]
     dt = sum(dts)/length(dts)
@@ -722,19 +716,19 @@ end
 
 
 """
-    phase_plane_3d(UDE::UDE; idx=[1,2,3], u1s=-5.0,0.25,5.0, u2s=-5:0.25:5,u3s=-5:0.25:5,T = 100)
+    phase_plane_3d(UDE::UDE; idx=[1,2,3], u1s=-5:0.25:5, u2s=-5:0.25:5, u3s=-5:0.25:5, T = 100)
 
-The same as phase_plane(), but displays three dimensions/state variables instead of two
+The same as phase_plane(), but displays three dimensions/state variables instead of two.
 """
 function phase_plane_3d(UDE::UDE;idx = [1,2,3],u1s=-5:0.25:5, u2s=-5:0.25:5,u3s=-5:0.25:5,T = 100)
     
-    # caclaute time to evaluate 
+    # calculate time to evaluate 
     lengths = [sum(UDE.data_frame.series .== i) for i in unique(UDE.data_frame.series)]
     dts = UDE.times[2:lengths[1]] .- UDE.times[1:(lengths[1]-1)]
     dt = sum(dts)/length(dts)
     times = collect(dt:dt:(T*dt))
     
-    # calcaulte u0s  
+    # calculate u0s  
     u0s = vcat([reduce(vcat,[u1,u2,u3]) for u1 in u1s for u2 in u2s for u3 in u3s])
     permutation = unique([idx;collect(1:length(u0s[1]))])
     u0s = invpermute!.(u0s,Ref(permutation))
@@ -752,7 +746,7 @@ end
 
 function phase_plane_3d(UDE::UDE, u0s::AbstractArray;idx = [1,2,3],T = 100)
     
-    # caclaute time to evaluate 
+    # calculate time to evaluate 
     lengths = [sum(UDE.data_frame.series .== i) for i in unique(UDE.data_frame.series)]
     dts = UDE.times[2:lengths[1]] .- UDE.times[1:(lengths[1]-1)]
     dt = sum(dts)/length(dts)
