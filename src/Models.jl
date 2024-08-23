@@ -774,13 +774,13 @@ function EasyUDE(data,known_dynamics!,initial_parameters;time_column_name = "tim
         knowncomp = known_dynamics!(du,u,parameters.known,t)
         du .= NNcomp .+ knowncomp
     end
-    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),dims,l,extrap_rho)
+    process_model = ContinuousProcessModel(derivs!,ComponentArray(parameters),dims,l,extrap_rho)
     process_loss = ProcessMSE(N,T, proc_weight)
     observation_model = Identity()
     observation_loss = ObservationMSE(N,obs_weight)
-    process_regularization = L2(initial_parameters,weight=reg_weight)
+    process_regularization = L2(parameters,weight=reg_weight)
     if reg_type == "L1"
-        process_regularization = L1(initial_parameters,weight=reg_weight)
+        process_regularization = L1(parameters,weight=reg_weight)
     elseif reg_type != "L2"
         println("Invalid regularization type - defaulting to L2")
     end
@@ -792,7 +792,7 @@ function EasyUDE(data,known_dynamics!,initial_parameters;time_column_name = "tim
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     
     # model constructor
-    constructor = data -> CustomDerivatives(data,derivs!,initial_parameters;time_column_name=time_column_name,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
+    constructor = data -> CustomDerivatives(data,derivs!,parameters;time_column_name=time_column_name,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
     
     untrainedUDE = UDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name)
