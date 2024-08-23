@@ -776,7 +776,7 @@ function BayesianNODE(data,X;time_column_name = "time",variable_column_name = "v
 end 
 
 """
-    BayesianCustomDerivatives(data,derivs!,initial_parameters;kwargs ... )
+    BayesianCustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters;kwargs ... )
 
 Constructs a Bayesian UDE model for the data set `data`  based on user defined derivatives `derivs`. An initial guess of model parameters are supplied with the `initial_parameters` argument. 
 
