@@ -741,8 +741,6 @@ Constructs a pretrained UDE model for the data set `data`  based on user defined
 # kwargs
 
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
-- `variable_column_name`: Name of column in `data` that corresponds to the variables. Default is `"variable"`.
-- `value_column_name`: Name of column in `data` that corresponds to the covariates. Default is `"value"`. 
 - `hidden_units`: Number of neurons in hidden layer. Default is `10`.
 - `seed`: Fixed random seed for repeatable results. Default is `1`.
 - `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
@@ -755,8 +753,9 @@ Constructs a pretrained UDE model for the data set `data`  based on user defined
 - `maxiter`: Maximum number of iterations in gradient descent algorithm. Default is `500`.
 - `verbose`: Should the training loss values be printed?. Default is `false`.
 """
-function EasyUDE(data,known_dynamics!,initial_parameters;time_column_name = "time",variable_column_name = "variable",value_column_name = "value",hidden_units = 10, seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2", step_size = 0.05, maxiter = 500, verbose = false)
-    time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
+function EasyUDE(data,known_dynamics!,initial_parameters;time_column_name = "time",hidden_units = 10, seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2", step_size = 0.05, maxiter = 500, verbose = false)
+    
+    time_column_name = check_column_names(data, time_column_name = time_column_name)[1]
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name)
     
