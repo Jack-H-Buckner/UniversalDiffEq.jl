@@ -6,8 +6,8 @@ training_data = data[1:(end-6),:]
 # test Bayesian NODEs
 model = EasyNODE(training_data)
 
-function known_dynamics!(du,u,a,t)
-    du .= a*u .+ b #some function here
+function known_dynamics!(du,u,parameters,t)
+    du .= parameters.a.*u .+ parameters.b #some function here
     return du
 end
 initial_parameters = (a = 1, b = 0.1)

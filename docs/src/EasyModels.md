@@ -35,8 +35,8 @@ Unlike `EasyNODE`, running `EasyUDE` is not equivalent to running `CustomDerivat
 where $f$ corresponds to the `known_dynamics!` argument, and `a` the `initial_parameters` argument in `EasyUDE`.
 
 ```julia
-function known_dynamics!(du,u,a,t)
-    du .= a*u .+ b #some function here
+function known_dynamics!(du,u,parameters,t)
+    du .= parameters.a.*u .+ parameters.b #some function here
     return du
 end
 initial_parameters = (a = 1, b = 0.1)
