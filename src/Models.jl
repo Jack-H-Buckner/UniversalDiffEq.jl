@@ -90,9 +90,9 @@ Constructs a UDE model for the data set `data`  based on user defined derivative
 # kwargs
 
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
-- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
-- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
-- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
+- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
+- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -150,9 +150,9 @@ end
 # kwargs
 
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
-- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
-- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
-- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
+- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
+- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -206,9 +206,9 @@ When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
 - `variable_column_name`: Name of column in `data` that corresponds to the variables. Default is `"variable"`.
 - `value_column_name`: Name of column in `data` that corresponds to the covariates. Default is `"value"`.
-- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
-- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
-- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
+- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
+- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -298,9 +298,9 @@ Constructs a UDE model for the data set `data` based on user defined difference 
 #kwargs
 
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
-- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
-- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
-- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
+- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
+- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -354,9 +354,9 @@ end
 #kwargs
 
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
-- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
-- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
-- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
+- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
+- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -405,9 +405,9 @@ When `X` is provided the step function must have the form `step(u,x,t,p)` where 
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
 - `variable_column_name`: Name of column in `data` that corresponds to the variables. Default is `"variable"`.
 - `value_column_name`: Name of column in `data` that corresponds to the covariates. Default is `"value"`.
-- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
-- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
-- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
+- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
+- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -491,9 +491,9 @@ Constructs a nonparametric discrete time model for the data set `data` using a s
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
 - `hidden_units`: Number of neurons in hidden layer. Default is `10`.
 - `seed`: Fixed random seed for repeatable results. Default is `1`.
-- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
-- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
-- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
+- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
+- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -539,9 +539,9 @@ Constructs a nonparametric continuous time model for the data set `data` using a
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.    
 - `hidden_units`: Number of neurons in hidden layer. Default is `10`.
 - `seed`: Fixed random seed for repeatable results. Default is `1`.
-- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
-- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
-- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
+- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
+- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -589,9 +589,9 @@ When a dataframe `X` is supplied the model will run with covariates. the argumen
 - `value_column_name`: Name of column in `data` that corresponds to the covariates. Default is `"value"`.  
 - `hidden_units`: Number of neurons in hidden layer. Default is `10`.
 - `seed`: Fixed random seed for repeatable results. Default is `1`.
-- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
-- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
-- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
+- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
+- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -638,9 +638,9 @@ Constructs a pretrained continuous time model for the data set `data` using a si
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.  
 - `hidden_units`: Number of neurons in hidden layer. Default is `10`.
 - `seed`: Fixed random seed for repeatable results. Default is `1`.
-- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
-- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
-- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
+- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
+- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -692,9 +692,9 @@ When a dataframe `X` is supplied the model will run with covariates. the argumen
 - `value_column_name`: Name of column in `data` that corresponds to the covariates. Default is `"value"`.  
 - `hidden_units`: Number of neurons in hidden layer. Default is `10`.
 - `seed`: Fixed random seed for repeatable results. Default is `1`.
-- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
-- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
-- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
+- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
+- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -745,9 +745,9 @@ Constructs a pretrained UDE model for the data set `data`  based on user defined
 - `value_column_name`: Name of column in `data` that corresponds to the covariates. Default is `"value"`. 
 - `hidden_units`: Number of neurons in hidden layer. Default is `10`.
 - `seed`: Fixed random seed for repeatable results. Default is `1`.
-- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
-- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
-- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
+- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
+- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -812,9 +812,9 @@ When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)
 - `value_column_name`: Name of column in `data` that corresponds to the covariates. Default is `"value"`.  
 - `hidden_units`: Number of neurons in hidden layer. Default is `10`.
 - `seed`: Fixed random seed for repeatable results. Default is `1`.
-- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
-- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
-- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
+- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
+- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -877,9 +877,9 @@ Constructs a Bayesian continuous time model for the data set `data` using a sing
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.  
 - `hidden_units`: Number of neurons in hidden layer. Default is `10`.
 - `seed`: Fixed random seed for repeatable results. Default is `1`.
-- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
-- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
-- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
+- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
+- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -923,9 +923,9 @@ When a dataframe `X` is supplied the model will run with covariates. the argumen
 - `value_column_name`: Name of column in `data` that corresponds to the covariates. Default is `"value"`.  
 - `hidden_units`: Number of neurons in hidden layer. Default is `10`.
 - `seed`: Fixed random seed for repeatable results. Default is `1`.
-- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
-- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
-- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
+- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
+- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -982,9 +982,9 @@ Constructs a Bayesian UDE model for the data set `data`  based on user defined d
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.  
 - `hidden_units`: Number of neurons in hidden layer. Default is `10`.
 - `seed`: Fixed random seed for repeatable results. Default is `1`.
-- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
-- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
-- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
+- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
+- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -1040,9 +1040,9 @@ When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)
 - `value_column_name`: Name of column in `data` that corresponds to the covariates. Default is `"value"`.  
 - `hidden_units`: Number of neurons in hidden layer. Default is `10`.
 - `seed`: Fixed random seed for repeatable results. Default is `1`.
-- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
-- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
-- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
+- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
+- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.

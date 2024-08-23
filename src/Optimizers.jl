@@ -186,7 +186,7 @@ end
  """
      SGLD!(UDE, kwargs ...)
 
- Performs Bayesian estimation on the parameters of an UDE using the SGLD sampling algorithm. At each step $t$, the stochastic update is provided by a random variable ε with mean 0 and variance:
+ Performs Bayesian estimation on the parameters of an UDE using the SGLD sampling algorithm. At each step `t`, the stochastic update is provided by a random variable ε with mean 0 and variance:
 
  ```math
 a(b + t-1)^γ
