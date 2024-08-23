@@ -86,6 +86,16 @@ Constructs a UDE model for the data set `data`  based on user defined derivative
 - data: a DataFrame object with the time of observations in a column labeled `t` and the remaining columns the value of the state variables at each time point. 
 - derivs: a Function of the form `derivs!(du,u,p,t)` where `u` is the value of the state variables, `p` are the model parameters, `t` is time, and du is updated with the value of the derivatives
 - init_parameters: A `NamedTuple` with the model parameters. Neural network parameters must be listed under the key `NN`.
+
+# kwargs
+
+- `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
+- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
+- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
+- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
+- `l`: Extrapolation parameter for forecasting. Default is `0.25`.
+- `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
 ...
 """
 function CustomDerivatives(data,derivs!,initial_parameters;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
@@ -136,6 +146,16 @@ function priors(p)
     return l
 end 
 ```
+
+# kwargs
+
+- `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
+- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
+- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
+- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
+- `l`: Extrapolation parameter for forecasting. Default is `0.25`.
+- `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
 """
 function CustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,priors::Function;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
     time_column_name = check_column_names(data, time_column_name = time_column_name)[1]
@@ -180,6 +200,18 @@ end
 When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included in the data frame. 
 
 When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)` where `x` is a vector with the value of the covariates at time `t`. 
+
+#kwargs
+
+- `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
+- `variable_column_name`: Name of column in `data` that corresponds to the variables. Default is `"variable"`.
+- `value_column_name`: Name of column in `data` that corresponds to the covariates. Default is `"value"`.
+- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
+- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
+- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
+- `l`: Extrapolation parameter for forecasting. Default is `0.25`.
+- `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
 """
 function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters;time_column_name = "time",variable_column_name = "variable",value_column_name = "value",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
     time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
@@ -262,6 +294,16 @@ Constructs a UDE model for the data set `data` based on user defined difference 
 - data: a DataFrame object with the time of observations in a column labeled `t` and the remaining columns the value of the state variables at each time point. 
 - step: a Function of the form `step(u,t,p)` where `u` is the value of the state variables, `p` are the model parameters.
 - init_parameters: A `NamedTuple` with the model parameters. Neural network parameters must be listed under the key `NN`.
+
+#kwargs
+
+- `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
+- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
+- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
+- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
+- `l`: Extrapolation parameter for forecasting. Default is `0.25`.
+- `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
 ...
 """
 function CustomDifference(data,step,initial_parameters;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type="L2")
@@ -308,6 +350,16 @@ function priors(p)
     return l
 end 
 ```
+
+#kwargs
+
+- `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
+- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
+- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
+- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
+- `l`: Extrapolation parameter for forecasting. Default is `0.25`.
+- `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
 """
 function CustomDifference(data::DataFrame,step,initial_parameters,priors::Function;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type="L2")
     time_column_name = check_column_names(data, time_column_name = time_column_name)[1]
@@ -347,6 +399,18 @@ end
 When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included in the data frame. 
 
 When `X` is provided the step function must have the form `step(u,x,t,p)` where `x` is a vector with the value of the covariates at time `t`. 
+
+    #kwargs
+
+- `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
+- `variable_column_name`: Name of column in `data` that corresponds to the variables. Default is `"variable"`.
+- `value_column_name`: Name of column in `data` that corresponds to the covariates. Default is `"value"`.
+- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
+- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
+- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
+- `l`: Extrapolation parameter for forecasting. Default is `0.25`.
+- `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
 """
 function CustomDifference(data::DataFrame,X,step,initial_parameters;time_column_name = "time",variable_column_name = "variable",value_column_name = "value",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type = "L2")
     time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
@@ -421,6 +485,18 @@ end
     NNDE(data;kwargs ...)
 
 Constructs a nonparametric discrete time model for the data set `data` using a single layer neural network to represent the systems dynamics. 
+
+    #kwargs
+
+- `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
+- `hidden_units`: Number of neurons in hidden layer. Default is `10`.
+- `seed`: Fixed random seed for repeatable results. Default is `1`.
+- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
+- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
+- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
+- `l`: Extrapolation parameter for forecasting. Default is `0.25`.
+- `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
 """
 function NNDE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
     time_column_name = check_column_names(data, time_column_name = time_column_name)[1]
@@ -457,6 +533,18 @@ end
 
 
 Constructs a nonparametric continuous time model for the data set `data` using a single layer neural network to represent the systems dynamics. 
+
+    # kwargs
+
+- `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.    
+- `hidden_units`: Number of neurons in hidden layer. Default is `10`.
+- `seed`: Fixed random seed for repeatable results. Default is `1`.
+- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
+- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
+- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
+- `l`: Extrapolation parameter for forecasting. Default is `0.25`.
+- `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
 """
 function NODE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0 )
     time_column_name = check_column_names(data, time_column_name = time_column_name)[1]
@@ -496,6 +584,17 @@ end
 
 When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for values of time not included in the data frame. 
 
+- `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.  
+- `variable_column_name`: Name of column in `data` that corresponds to the variables. Default is `"variable"`.
+- `value_column_name`: Name of column in `data` that corresponds to the covariates. Default is `"value"`.  
+- `hidden_units`: Number of neurons in hidden layer. Default is `10`.
+- `seed`: Fixed random seed for repeatable results. Default is `1`.
+- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
+- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
+- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
+- `l`: Extrapolation parameter for forecasting. Default is `0.25`.
+- `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
 """
 function NODE(data,X;time_column_name = "time",variable_column_name = "variable",value_column_name = "value",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0 )
     time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
@@ -533,6 +632,21 @@ end
 """
     EasyNODE(data;kwargs ... )
 Constructs a pretrained continuous time model for the data set `data` using a single layer neural network to represent the systems dynamics. 
+
+# kwargs
+
+- `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.  
+- `hidden_units`: Number of neurons in hidden layer. Default is `10`.
+- `seed`: Fixed random seed for repeatable results. Default is `1`.
+- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
+- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
+- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
+- `l`: Extrapolation parameter for forecasting. Default is `0.25`.
+- `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
+- `step_size`: Step size for ADAM optimizer. Default is `0.05`.
+- `maxiter`: Maximum number of iterations in gradient descent algorithm. Default is `500`.
+- `verbose`: Should the training loss values be printed?. Default is `false`.
 """
 function EasyNODE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0, step_size = 0.05, maxiter = 500, verbose = false)
     time_column_name = check_column_names(data, time_column_name = time_column_name)[1]
@@ -570,6 +684,23 @@ end
 """
     EasyNODE(data,X;kwargs ... )
 When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for values of time not included in the data frame. 
+
+#kwargs 
+
+- `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.  
+- `variable_column_name`: Name of column in `data` that corresponds to the variables. Default is `"variable"`.
+- `value_column_name`: Name of column in `data` that corresponds to the covariates. Default is `"value"`.  
+- `hidden_units`: Number of neurons in hidden layer. Default is `10`.
+- `seed`: Fixed random seed for repeatable results. Default is `1`.
+- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
+- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
+- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
+- `l`: Extrapolation parameter for forecasting. Default is `0.25`.
+- `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
+- `step_size`: Step size for ADAM optimizer. Default is `0.05`.
+- `maxiter`: Maximum number of iterations in gradient descent algorithm. Default is `500`.
+- `verbose`: Should the training loss values be printed?. Default is `false`.
 """
 function EasyNODE(data,X;time_column_name = "time",variable_column_name = "variable",value_column_name = "value",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0, step_size = 0.05, maxiter = 500, verbose = false)
     time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
@@ -606,6 +737,23 @@ end
 """
     EasyUDE(data,derivs!,initial_parameters;kwargs ... )
 Constructs a pretrained UDE model for the data set `data`  based on user defined derivatives `derivs`. An initial guess of model parameters are supplied with the `initial_parameters` argument. 
+
+# kwargs
+
+- `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
+- `variable_column_name`: Name of column in `data` that corresponds to the variables. Default is `"variable"`.
+- `value_column_name`: Name of column in `data` that corresponds to the covariates. Default is `"value"`. 
+- `hidden_units`: Number of neurons in hidden layer. Default is `10`.
+- `seed`: Fixed random seed for repeatable results. Default is `1`.
+- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
+- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
+- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
+- `l`: Extrapolation parameter for forecasting. Default is `0.25`.
+- `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
+- `step_size`: Step size for ADAM optimizer. Default is `0.05`.
+- `maxiter`: Maximum number of iterations in gradient descent algorithm. Default is `500`.
+- `verbose`: Should the training loss values be printed?. Default is `false`.
 """
 function EasyUDE(data,known_dynamics!,initial_parameters;time_column_name = "time",variable_column_name = "variable",value_column_name = "value",hidden_units = 10, seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2", step_size = 0.05, maxiter = 500, verbose = false)
     time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
@@ -656,6 +804,23 @@ end
     EasyUDE(data::DataFrame,X,derivs!::Function,initial_parameters;kwargs ... )
 When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included in the data frame. 
 When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)` where `x` is a vector with the value of the covariates at time `t`. 
+
+    #kwargs 
+
+- `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.  
+- `variable_column_name`: Name of column in `data` that corresponds to the variables. Default is `"variable"`.
+- `value_column_name`: Name of column in `data` that corresponds to the covariates. Default is `"value"`.  
+- `hidden_units`: Number of neurons in hidden layer. Default is `10`.
+- `seed`: Fixed random seed for repeatable results. Default is `1`.
+- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
+- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
+- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
+- `l`: Extrapolation parameter for forecasting. Default is `0.25`.
+- `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
+- `step_size`: Step size for ADAM optimizer. Default is `0.05`.
+- `maxiter`: Maximum number of iterations in gradient descent algorithm. Default is `500`.
+- `verbose`: Should the training loss values be printed?. Default is `false`.
 """
 function EasyUDE(data::DataFrame,X,known_dynamics!::Function,initial_parameters;time_column_name = "time",variable_column_name = "variable",value_column_name = "value",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
     time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
@@ -706,8 +871,20 @@ end
 """
     BayesianNODE(data;kwargs ... )
 Constructs a Bayesian continuous time model for the data set `data` using a single layer neural network to represent the systems dynamics. 
+
+# kwargs
+
+- `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.  
+- `hidden_units`: Number of neurons in hidden layer. Default is `10`.
+- `seed`: Fixed random seed for repeatable results. Default is `1`.
+- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
+- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
+- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
+- `l`: Extrapolation parameter for forecasting. Default is `0.25`.
+- `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
 """
-function BayesianNODE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0, step_size = 0.05, maxiter = 500, verbose = false)
+function BayesianNODE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0)
     time_column_name = check_column_names(data, time_column_name = time_column_name)[1]
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name)
@@ -739,6 +916,19 @@ end
 
 When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for values of time not included in the data frame. 
 
+#kwargs 
+
+- `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.  
+- `variable_column_name`: Name of column in `data` that corresponds to the variables. Default is `"variable"`.
+- `value_column_name`: Name of column in `data` that corresponds to the covariates. Default is `"value"`.  
+- `hidden_units`: Number of neurons in hidden layer. Default is `10`.
+- `seed`: Fixed random seed for repeatable results. Default is `1`.
+- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
+- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
+- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
+- `l`: Extrapolation parameter for forecasting. Default is `0.25`.
+- `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
 """
 function BayesianNODE(data,X;time_column_name = "time",variable_column_name = "variable",value_column_name = "value",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0 )
     time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
@@ -786,6 +976,18 @@ Constructs a Bayesian UDE model for the data set `data`  based on user defined d
 - data: a DataFrame object with the time of observations in a column labeled `t` and the remaining columns the value of the state variables at each time point. 
 - derivs: a Function of the form `derivs!(du,u,p,t)` where `u` is the value of the state variables, `p` are the model parameters, `t` is time, and du is updated with the value of the derivatives
 - init_parameters: A `NamedTuple` with the model parameters. Neural network parameters must be listed under the key `NN`.
+
+#kwargs 
+
+- `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.  
+- `hidden_units`: Number of neurons in hidden layer. Default is `10`.
+- `seed`: Fixed random seed for repeatable results. Default is `1`.
+- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
+- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
+- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
+- `l`: Extrapolation parameter for forecasting. Default is `0.25`.
+- `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
 ...
 """
 function BayesianCustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
@@ -830,6 +1032,20 @@ end
 When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included in the data frame. 
 
 When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)` where `x` is a vector with the value of the covariates at time `t`. 
+
+#kwargs 
+
+- `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.  
+- `variable_column_name`: Name of column in `data` that corresponds to the variables. Default is `"variable"`.
+- `value_column_name`: Name of column in `data` that corresponds to the covariates. Default is `"value"`.  
+- `hidden_units`: Number of neurons in hidden layer. Default is `10`.
+- `seed`: Fixed random seed for repeatable results. Default is `1`.
+- `proc_weight`: Weight of process error $\omega_{proc}$. Default is `1.0`.
+- `obs_weight`: Weight of observation error $\omega_{obs}$. Default is `1.0`.
+- `reg_weight`: Weight of regularization error $\omega_{reg}$. Default is `10^-6`.
+- `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
+- `l`: Extrapolation parameter for forecasting. Default is `0.25`.
+- `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
 """
 function BayesianCustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters;time_column_name = "time",variable_column_name = "variable",value_column_name = "value",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
     time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
