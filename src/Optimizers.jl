@@ -1,8 +1,8 @@
-# """
-#     gradient_descent!(UDE, kwargs ...)
+ """
+     gradient_descent!(UDE, kwargs ...)
 
-# Minimizes the loss function of the `UDE` model with the gradient descent algorithm with a step size of `step_size` and a maximum number of iterations of `maxiter`. Prints the value of the loss function after each iteration when `maxiter` is true.   
-# """
+ Minimizes the loss function of the `UDE` model with the gradient descent algorithm with a step size of `step_size` and a maximum number of iterations of `maxiter`. Prints the value of the loss function after each iteration when `maxiter` is true.   
+ """
 function gradient_descent!(UDE; step_size = 0.05, maxiter = 500, verbose = false, verbos = false)
     
     # set optimization problem 
@@ -72,11 +72,11 @@ function gradient_descent!(UDE,t_skip; step_size = 0.05, maxiter = 500, verbose 
   return nothing
 end
 
-# """
-#     BFGS!(UDE, kwargs ...)
+ """
+     BFGS!(UDE, kwargs ...)
 
-# minimizes the loss function of the `UDE` model using the BFGS algorithm is the inital step norm equal to `initial_step_norm`. The funciton will print the value fo the loss function after each iteration when `verbose` is true.  
-# """
+ minimizes the loss function of the `UDE` model using the BFGS algorithm is the inital step norm equal to `initial_step_norm`. The funciton will print the value fo the loss function after each iteration when `verbose` is true.  
+ """
 function BFGS!(UDE; verbos = false,verbose = false, initial_step_norm = 0.01)
     if verbos
       verbose = true
@@ -138,11 +138,11 @@ function BFGS!(UDE,t_skip; verbos = false,verbose = false, initial_step_norm = 0
   
 end 
 
-# """
-#     NUTS!(UDE, kwargs ...)
+ """
+     NUTS!(UDE, kwargs ...)
 
-# performs Bayesian estimation on the parameters of an UDE using the NUTS sampling algorithm
-# """
+ performs Bayesian estimation on the parameters of an UDE using the NUTS sampling algorithm
+ """
 function NUTS!(UDE::BayesianUDE;delta = 0.45,samples = 500, burnin = Int(samples/10), verbose = true)
   UDE.parameters = UDE.parameters[end]
 
@@ -165,11 +165,11 @@ function NUTS!(UDE::BayesianUDE;delta = 0.45,samples = 500, burnin = Int(samples
   UDE.parameters = draws
 end
 
-# """
-#     SGLD!(UDE, kwargs ...)
+ """
+     SGLD!(UDE, kwargs ...)
 
-# performs Bayesian estimation on the parameters of an UDE using the SGLD sampling algorithm
-# """
+ performs Bayesian estimation on the parameters of an UDE using the SGLD sampling algorithm
+ """
 function SGLD!(UDE::BayesianUDE;samples = 500, burnin = Int(samples/10),a = 10.0, b = 1000, γ = 0.9, verbose = true)
   UDE.parameters = UDE.parameters[end]
 

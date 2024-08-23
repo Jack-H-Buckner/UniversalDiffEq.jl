@@ -1,9 +1,9 @@
 
 
-# """
-#     EasyNODE(data;kwargs ... )
-# Constructs a pretrained continuous time model for the data set `data` using a single layer neural network to represent the systems dynamics. 
-# """
+ """
+     EasyNODE(data;kwargs ... )
+ Constructs a pretrained continuous time model for the data set `data` using a single layer neural network to represent the systems dynamics. 
+ """
 function EasyNODE(data;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0, step_size = 0.05, maxiter = 500, verbose = false)
    
     # convert data
@@ -36,10 +36,10 @@ function EasyNODE(data;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,r
     
     return gradient_descent!(untrainedNODE, step_size = step_size, maxiter = maxiter, verbose = verbose)
 end 
-# """
-#     EasyNODE(data,X;kwargs ... )
-# When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for values of time not included in the data frame. 
-# """
+ """
+     EasyNODE(data,X;kwargs ... )
+ When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for values of time not included in the data frame. 
+ """
 function EasyNODE(data,X;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0, step_size = 0.05, maxiter = 500, verbose = false)
     
     # convert data
@@ -71,10 +71,10 @@ function EasyNODE(data,X;hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0
         observation_loss,process_regularization,observation_regularization,constructor)
         return gradient_descent!(untrainedNODE, step_size = step_size, maxiter = maxiter, verbose = verbose)
 end 
-# """
-#     EasyUDE(data,derivs!,initial_parameters;kwargs ... )
-# Constructs a pretrained UDE model for the data set `data`  based on user defined derivatives `derivs`. An initial guess of model parameters are supplied with the `initial_parameters` argument. 
-# """
+ """
+     EasyUDE(data,derivs!,initial_parameters;kwargs ... )
+ Constructs a pretrained UDE model for the data set `data`  based on user defined derivatives `derivs`. An initial guess of model parameters are supplied with the `initial_parameters` argument. 
+ """
 function EasyUDE(data,known_dynamics!,initial_parameters;hidden_units = 10, seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2", step_size = 0.05, maxiter = 500, verbose = false)
     
     # convert data
