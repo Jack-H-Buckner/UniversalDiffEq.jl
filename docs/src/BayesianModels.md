@@ -6,7 +6,7 @@ UniversalDiffEq.jl provides training algorithms for uncertainty quantification i
 ```@docs
 UniversalDiffEq.BayesianNODE(data;kwargs ... )
 UniversalDiffEq.BayesianNODE(data,X;kwargs ... )
-UniversalDiffEq.BayesianCustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,priors::Function;kwargs ... )
+UniversalDiffEq.BayesianCustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters;kwargs ... )
 UniversalDiffEq.BayesianCustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters;kwargs ... )
 ```
 
@@ -53,9 +53,24 @@ The other functions for [model analysis](modelanalysis.md) have methods for the 
 
 ```@docs
 predict(UDE::BayesianUDE,test_data::DataFrame;summarize = true,ci = 95,df = true)
+```
+
+```@docs
 plot_predictions(UDE::BayesianUDE;ci=95)
+```
+
+```@docs
 forecast(UDE::BayesianUDE, u0::AbstractVector{}, times::AbstractVector{};summarize = true, ci = 95)
+```
+
+```@docs
 forecast(UDE::BayesianUDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{};summarize = true, ci = 95)
+```
+
+```@docs
 plot_forecast(UDE::BayesianUDE, T::Int;ci = 95)
+```
+
+```@docs
 plot_forecast(UDE::BayesianUDE, test_data::DataFrame;ci = 95)
 ```

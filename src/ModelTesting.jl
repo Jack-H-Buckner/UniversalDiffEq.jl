@@ -223,6 +223,15 @@ function predict(UDE::UDE,test_data::DataFrame;df = true)
 
 end 
 
+"""
+predict(UDE::BayesianUDE,test_data::DataFrame;summarize = true,ci = 95,df = true)
+
+Uses the Bayesian UDE `UDE` to predict the state of the data `test_data` for each of the sampled parameters in training. 
+
+If `summarize` is `true`, this function returns the median prediction as well as the `ci`% lower and upper confidence intervals. Othwerise, it returns all the individual predictions for each sampled parameter.
+
+If `df` is true, this function returns a `DataFrame` object. Otherwise, it returns an `Array` with the predictions.
+"""
 function predict(UDE::BayesianUDE,test_data::DataFrame;summarize = true,ci = 95,df = true)
     check_test_data_names(UDE.data_frame, test_data)
     inits, obs, preds = predictions(UDE,test_data,summarize=summarize,ci=ci)
@@ -278,6 +287,13 @@ function plot_predictions(UDE::UDE)
         
     return plot(plots...)
 end
+
+"""
+    plot_predictions(UDE::BayesianUDE;ci=95)
+
+Plots the correspondence between the observed state transitons and the predicitons for the model `UDE` with a confidence interval `ci`. 
+
+"""
 
 function plot_predictions(UDE::BayesianUDE;ci=95)
  
@@ -369,7 +385,7 @@ end
 """
     forecast(UDE::UDE, u0::AbstractVector{}, times::AbstractVector{})
 
-predicitons from the trained model `UDE` starting at `u0` saving values at `times`. Assumes `u0` is the value at time `times[1]`
+predictions from the trained model `UDE` starting at `u0` saving values at `times`. Assumes `u0` is the value at time `times[1]`
 """
 function forecast(UDE::UDE, u0::AbstractVector{}, times::AbstractVector{})
     
@@ -397,7 +413,13 @@ function forecast(UDE::UDE, u0::AbstractVector{}, times::AbstractVector{})
     return df
 end 
 
+"""
+    forecast(UDE::BayesianUDE, u0::AbstractVector{}, times::AbstractVector{};summarize = true, ci = 95)
 
+predictions from the trained model `UDE` starting at `u0` saving values at `times` at each individual sampled parameter. Assumes `u0` is the value at time `times[1]`
+
+If `summarize` is `true`, this function returns the median prediction as well as the `ci`% lower and upper confidence intervals. Othwerise, it returns all the individual predictions for each sampled parameter.
+"""
 function forecast(UDE::BayesianUDE, u0::AbstractVector{}, times::AbstractVector{};summarize = true, ci = 95)
     dfs = zeros(length(UDE.parameters),length(times),length(x)+1)
 
@@ -431,11 +453,11 @@ function forecast(UDE::BayesianUDE, u0::AbstractVector{}, times::AbstractVector{
     return dfs
 end 
 
-# """
-#     forecast(UDE::UDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{})
+ """
+     forecast(UDE::UDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{})
 
-# predicitons from the trained model `UDE` starting at `u0` saving values at `times`. Assumes `u0` occurs at time `t0` and `times` are all larger than `t0`.
-# """
+ predictions from the trained model `UDE` starting at `u0` saving values at `times`. Assumes `u0` occurs at time `t0` and `times` are all larger than `t0`.
+ """
 function forecast(UDE::UDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{})
     
     @assert all(times .> t0) "t0 is greater than the first time point in times"
@@ -468,7 +490,13 @@ function forecast(UDE::UDE, u0::AbstractVector{}, t0::Real, times::AbstractVecto
 end 
 
 
+"""
+    forecast(UDE::BayesianUDE, u0::AbstractVector{}, t0::Real;summarize = true, ci = 95)
 
+predictions from the trained model `UDE` starting at `u0` saving values at `times` at each individual sampled parameter. Assumes `u0` occurs at time `t0` and `times` are all larger than `t0`.
+
+If `summarize` is `true`, this function returns the median prediction as well as the `ci`% lower and upper confidence intervals. Othwerise, it returns all the individual predictions for each sampled parameter.
+"""
 function forecast(UDE::BayesianUDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{};summarize = true, ci = 95)
     
     @assert all(times .> t0) "t0 is greater than the first time point in times"
@@ -533,6 +561,11 @@ function plot_forecast(UDE::UDE, T::Int)
     return plot(plots...), plots
 end 
 
+"""
+    plot_forecast(UDE::BayesianUDE, T::Int)
+
+Plots the models forecast up to T time steps into the future from the last observation including the median prediction as well as the `ci`% lower and upper confidence intervals.  
+"""
 function plot_forecast(UDE::BayesianUDE, T::Int;ci = 95)
     u0 = reduce((x,y) -> cat(x,y,dims = 3),[UDE.parameters[i].uhat[:,end] for i in 1:length(UDE.parameters)])
     u0 = mean(u0,dims = 3)
@@ -579,6 +612,11 @@ function plot_forecast(UDE::UDE, test_data::DataFrame)
     return plot(plots...), plots
 end 
 
+"""
+    plot_forecast(UDE::BayesianUDE, test_data::DataFrame)
+
+Plots the models forecast over the range of the test_data along with the value of the test data including the median prediction as well as the `ci`% lower and upper confidence intervals.   
+"""
 function plot_forecast(UDE::BayesianUDE, test_data::DataFrame;ci = 95)
     check_test_data_names(UDE.data_frame, test_data)
     u0 = reduce((x,y) -> cat(x,y,dims = 3),[UDE.parameters[i].uhat[:,end] for i in 1:length(UDE.parameters)])
