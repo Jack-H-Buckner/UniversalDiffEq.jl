@@ -62,7 +62,7 @@ Covariates can be added to the model by supplying a second data frame `X`. This 
 ```
 The values of the covariates between time points included in the data frame `X` are interpolated using a linear spline.  
 
-```@docs
+```@docs; canonical=false
 UniversalDiffEq.NODE(data,X;kwargs ... )
 ```
 

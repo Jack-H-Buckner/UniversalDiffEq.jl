@@ -224,7 +224,7 @@ function predict(UDE::UDE,test_data::DataFrame;df = true)
 end 
 
 """
-predict(UDE::BayesianUDE,test_data::DataFrame;summarize = true,ci = 95,df = true)
+    predict(UDE::BayesianUDE,test_data::DataFrame;summarize = true,ci = 95,df = true)
 
 Uses the Bayesian UDE `UDE` to predict the state of the data `test_data` for each of the sampled parameters in training. 
 
@@ -294,7 +294,6 @@ end
 Plots the correspondence between the observed state transitons and the predicitons for the model `UDE` with a confidence interval `ci`. 
 
 """
-
 function plot_predictions(UDE::BayesianUDE;ci=95)
  
     inits, obs, preds = predictions(UDE,summarize = true,ci=ci)
@@ -491,7 +490,7 @@ end
 
 
 """
-    forecast(UDE::BayesianUDE, u0::AbstractVector{}, t0::Real;summarize = true, ci = 95)
+    forecast(UDE::BayesianUDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{};summarize = true, ci = 95)
 
 predictions from the trained model `UDE` starting at `u0` saving values at `times` at each individual sampled parameter. Assumes `u0` occurs at time `t0` and `times` are all larger than `t0`.
 
