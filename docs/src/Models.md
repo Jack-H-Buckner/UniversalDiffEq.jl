@@ -49,7 +49,7 @@ and NNDEs use a neural network as the right-hand side of a difference equation
 
 The `NODE` and `NNDE` functions construct each model type.
 
-```@docs
+```@docs; canonical=false
 UniversalDiffEq.NODE(data;kwargs ... )
 UniversalDiffEq.NNDE(data;kwargs ...)
 ```
@@ -62,7 +62,7 @@ Covariates can be added to the model by supplying a second data frame `X`. This 
 ```
 The values of the covariates between time points included in the data frame `X` are interpolated using a linear spline.  
 
-```@docs
+```@docs; canonical=false
 UniversalDiffEq.NODE(data,X;kwargs ... )
 ```
 
@@ -73,7 +73,7 @@ The `CustomDerivatives` and `CustomDifference` functions can be used to build mo
 
 The `CustomDerivatives` function builds UDE models based on a user-defined function `derivs!(du,u,p,t)`, which updates the vector `du` with the right-hand side of a differential equation evaluated at time `t` in state `u` given parameters `p`. The function also needs an initial guess at the model parameters, specified by a NamedTuple `initial_parameters`
 
-```@docs
+```@docs; canonical=false
 UniversalDiffEq.CustomDerivatives(data,derivs!,initial_parameters;kwargs ... )
 ```
 
@@ -125,19 +125,19 @@ model = CustomDerivatives(data,lotka_volterra_derivs!,initial_parameters)
 
 Discrete time models are constructed in a similar way to continuous time models. The user provides the right-hand side of a difference equation with the function `step` and initial parameters. The function `step(u,t,p)` takes three arguments: the value of the state variables `u`, time `t`, and model parameters `p`.
 
-```@docs
+```@docs; canonical=false
 UniversalDiffEq.CustomDifference(data,step,initial_parameters;kwrags...)
 ```
 
 ## Adding covariates
 
 Covariates can also be added to UDE models by passing a data frame `X` and adding covariates as an argument to the `derivs!` function which has the new form `derivs!(du,u,X,p,t)`, where the third argument `X` is a vector of covariates. 
-```@docs
+```@docs; canonical=false
 UniversalDiffEq.CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters;kwargs ... )
 ```
 
 Covariates can also be added to a discrete time framework in the same way. The `step` function should have four arguments `step(u,X,t,p)`.
-```@docs
+```@docs; canonical=false
 UniversalDiffEq.CustomDifference(data::DataFrame,X,step,initial_parameters;kwargs ... )
 ```
 ### Example
@@ -180,7 +180,7 @@ If you wish to build a model with covariates that are measured at different poin
 
 ## Adding prior information to custom models 
 
-```@docs
+```@docs; canonical=false
 UniversalDiffEq.CustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,priors::Function;kwargs ... )
 UniversalDiffEq.CustomDifference(data::DataFrame,step,initial_parameters,priors::Function;kwargs ... )
 ```

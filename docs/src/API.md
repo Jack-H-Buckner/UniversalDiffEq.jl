@@ -1,5 +1,5 @@
 # API
 
-```@index
-
+```@autodocs
+Modules = [UniversalDiffEq]
 ```
