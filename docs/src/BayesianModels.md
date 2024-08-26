@@ -3,7 +3,7 @@
 UniversalDiffEq.jl provides training algorithms for uncertainty quantification in NODEs and UDEs using [Bayesian NODEs and UDEs](https://arxiv.org/abs/2012.07244). UniversalDiffEq.jl currently supports the classical No-U-Turn Sampling (NUTS) and the [Stochastic Gradient Langevin Dynamics](https://www.stats.ox.ac.uk/~teh/research/compstats/WelTeh2011a.pdf) (SGLD) algorithms. These algorithms are available for the `BayesianUDE` constructor. This constructor can be created using the `BayesianNODE` and `BayesianCustomDerivatives` functions. These functions follow the same structure as their non-Bayesian versions `NODE` and `CustomDerivatives`.
 
 
-```@docs
+```@docs; canonical=false
 UniversalDiffEq.BayesianNODE(data;kwargs ... )
 UniversalDiffEq.BayesianNODE(data,X;kwargs ... )
 UniversalDiffEq.BayesianCustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters;kwargs ... )
@@ -44,33 +44,33 @@ Training is then done using `NUTS!` or `SGLD!`:
 NUTS!(model,samples = 500)
 ```
 
-```@docs
+```@docs; canonical=false
 NUTS!(UDE::BayesianUDE;kwargs ...)
 SGLD!(UDE::BayesianUDE;kwargs ...)
 ```
 
 The other functions for [model analysis](modelanalysis.md) have methods for the `BayesianUDE` constructor:
 
-```@docs
+```@docs; canonical=false
 predict(UDE::BayesianUDE,test_data::DataFrame;summarize = true,ci = 95,df = true)
 ```
 
-```@docs
+```@docs; canonical=false
 plot_predictions(UDE::BayesianUDE;ci=95)
 ```
 
-```@docs
+```@docs; canonical=false
 forecast(UDE::BayesianUDE, u0::AbstractVector{}, times::AbstractVector{};summarize = true, ci = 95)
 ```
 
-```@docs
+```@docs; canonical=false
 forecast(UDE::BayesianUDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{};summarize = true, ci = 95)
 ```
 
-```@docs
+```@docs; canonical=false
 plot_forecast(UDE::BayesianUDE, T::Int;ci = 95)
 ```
 
-```@docs
+```@docs; canonical=false
 plot_forecast(UDE::BayesianUDE, test_data::DataFrame;ci = 95)
 ```
