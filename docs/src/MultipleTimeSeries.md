@@ -13,7 +13,7 @@ UniversalDiffEq.jl provides a set of functions to fit models to multiple time se
 |3  | 2      | ``x_{2,1,t}`` | ``x_{2,2,t}``  |
 
 Covariates can be added to the models as well. The covariates data frame must have the same structure. 
-```@docs
+```@docs; canonical=false
 UniversalDiffEq.MultiNODE(data;kwargs...)
 UniversalDiffEq.MultiNODE(data,X;kwargs...)
 ```

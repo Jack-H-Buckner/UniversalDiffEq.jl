@@ -4,7 +4,7 @@
 
 # EasyNODE constructors:
 
-```@docs
+```@docs; canonical=false
 EasyNODE(data,X;kwargs ... )
 EasyNODE(data;kwargs ... )
 ```
@@ -21,7 +21,7 @@ gradient_descent!(model)
 
 # EasyUDE constructors:
 
-```@docs
+```@docs; canonical=false
 EasyUDE(data,known_dynamics!,initial_parameters;kwargs ... )
 EasyUDE(data::DataFrame,X,known_dynamics!::Function,initial_parameters;kwargs ... )
 ```

@@ -1,8 +1,9 @@
 # API
 
-```@index
-
+```@autodocs
+Modules = [UniversalDiffEq]
 ```
+
 ## Need Documentation  
 DiscreteUDE
 MultiUDE
