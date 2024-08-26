@@ -60,14 +60,6 @@ plot_predictions(UDE::BayesianUDE;ci=95)
 ```
 
 ```@docs; canonical=false
-forecast(UDE::BayesianUDE, u0::AbstractVector{}, times::AbstractVector{};summarize = true, ci = 95)
-```
-
-```@docs; canonical=false
-forecast(UDE::BayesianUDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{};summarize = true, ci = 95)
-```
-
-```@docs; canonical=false
 plot_forecast(UDE::BayesianUDE, T::Int;ci = 95)
 ```
 
