@@ -1,4 +1,23 @@
 
+"""
+    LotkaVolterra(;kwargs)
+    
+    Create a sample dataset using the Lotka-Volterra predator-prey model as its process model:
+
+    ```math
+    \frac{dN}{dt} = rN - \alpha NP \\
+    \frac{dP}{dt} = \theta\alpha NP - mP
+    ```
+
+    and an observation error following a normal distribution with mean 0 and standard deviation σ.
+
+    # kwargs
+    - `plot`: Does the function return a plot? Default is `true`.
+    - `seed`: Seed for observation error to create repeatable examples. Default is `123`.
+    - `datasize`: Number of time steps generated. Default is `60`.
+    - `T`: Maximum timespan. Default is `3.0`.
+    - `sigma`: Standard deviation of observation error. Default is 0.075.
+"""
 function LotkaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,sigma = 0.075)
     # set seed 
     Random.seed!(seed)
@@ -36,7 +55,28 @@ function LotkaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,sigma = 0.
 end 
 
 
+"""
+    LorenzLotkaVolterra(;kwargs)
+    
+    Create a sample dataset using the Lorenz Lotka-Volterra model as its process model:
 
+    ```math
+    \frac{dx}{dt} = rx(1-\frac{x}{K}) - \alpha xy + gz\\
+    \frac{dy}{dt} = \theta\alpha xy - my\\
+    \frac{dz}{dt} = l(w-z)\\
+    \frac{dw}{dt} = z(\rho-s) 0 w\\
+    \frac{ds}{dt} = zw-\beta s
+    ```
+
+    and an observation error following a normal distribution with mean 0 and standard deviation σ_{obs}.
+
+    # kwargs
+    - `plot`: Does the function return a plot? Default is `true`.
+    - `seed`: Seed for observation error to create repeatable examples. Default is `123`.
+    - `datasize`: Number of time steps generated. Default is `60`.
+    - `T`: Maximum timespan. Default is `3.0`.
+    - `sigma`: Standard deviation of observation error. Default is 0.075.
+"""
 function LorenzLotkaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,sigma = 0.025)
     # set seed 
     Random.seed!(seed)

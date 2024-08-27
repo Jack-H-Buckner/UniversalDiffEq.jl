@@ -201,7 +201,7 @@ When a dataframe `X` is supplied the model will run with covariates. the argumen
 
 When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)` where `x` is a vector with the value of the covariates at time `t`. 
 
-#kwargs
+# kwargs
 
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
 - `variable_column_name`: Name of column in `data` that corresponds to the variables. Default is `"variable"`.
@@ -295,7 +295,7 @@ Constructs a UDE model for the data set `data` based on user defined difference 
 - step: a Function of the form `step(u,t,p)` where `u` is the value of the state variables, `p` are the model parameters.
 - init_parameters: A `NamedTuple` with the model parameters. Neural network parameters must be listed under the key `NN`.
 
-#kwargs
+# kwargs
 
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
 - `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
@@ -351,7 +351,7 @@ function priors(p)
 end 
 ```
 
-#kwargs
+# kwargs
 
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
 - `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
@@ -400,7 +400,7 @@ When a dataframe `X` is supplied the model will run with covariates. the argumen
 
 When `X` is provided the step function must have the form `step(u,x,t,p)` where `x` is a vector with the value of the covariates at time `t`. 
 
-    #kwargs
+    # kwargs
 
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
 - `variable_column_name`: Name of column in `data` that corresponds to the variables. Default is `"variable"`.
@@ -486,7 +486,7 @@ end
 
 Constructs a nonparametric discrete time model for the data set `data` using a single layer neural network to represent the systems dynamics. 
 
-    #kwargs
+    # kwargs
 
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
 - `hidden_units`: Number of neurons in hidden layer. Default is `10`.
@@ -685,7 +685,7 @@ end
     EasyNODE(data,X;kwargs ... )
 When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for values of time not included in the data frame. 
 
-#kwargs 
+# kwargs 
 
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.  
 - `variable_column_name`: Name of column in `data` that corresponds to the variables. Default is `"variable"`.
@@ -804,7 +804,7 @@ end
 When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included in the data frame. 
 When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)` where `x` is a vector with the value of the covariates at time `t`. 
 
-    #kwargs 
+    # kwargs 
 
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.  
 - `variable_column_name`: Name of column in `data` that corresponds to the variables. Default is `"variable"`.
@@ -915,7 +915,7 @@ end
 
 When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for values of time not included in the data frame. 
 
-#kwargs 
+# kwargs 
 
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.  
 - `variable_column_name`: Name of column in `data` that corresponds to the variables. Default is `"variable"`.
@@ -976,7 +976,7 @@ Constructs a Bayesian UDE model for the data set `data`  based on user defined d
 - derivs: a Function of the form `derivs!(du,u,p,t)` where `u` is the value of the state variables, `p` are the model parameters, `t` is time, and du is updated with the value of the derivatives
 - init_parameters: A `NamedTuple` with the model parameters. Neural network parameters must be listed under the key `NN`.
 
-#kwargs 
+# kwargs 
 
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.  
 - `hidden_units`: Number of neurons in hidden layer. Default is `10`.
@@ -1032,7 +1032,7 @@ When a dataframe `X` is supplied the model will run with covariates. the argumen
 
 When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)` where `x` is a vector with the value of the covariates at time `t`. 
 
-#kwargs 
+# kwargs 
 
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.  
 - `variable_column_name`: Name of column in `data` that corresponds to the variables. Default is `"variable"`.
