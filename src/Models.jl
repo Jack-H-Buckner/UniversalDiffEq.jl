@@ -596,7 +596,7 @@ When a dataframe `X` is supplied the model will run with covariates. the argumen
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
 """
-function NODE(data,X;time_column_name = "time",variable_column_name = "variable",value_column_name = "value",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0 )
+function NODE(data,X;time_column_name = "time",variable_column_name = nothing ,value_column_name = nothing ,hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0 )
     time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name)
