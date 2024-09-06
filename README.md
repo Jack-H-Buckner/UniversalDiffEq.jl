@@ -1,4 +1,4 @@
-<img alt="Package logo" width = "500px" src="Package_logo.png" />
+<img alt="Package logo" width = "500px" src="README images/Package_logo.png" />
 
 [![Build Status](https://github.com/jarroyoe/UniversalDiffEq.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/jarroyoe/UniversalDiffEq.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Docs](https://img.shields.io/badge/docs-dev-blue)](https://jack-h-buckner.github.io/UniversalDiffEq.jl/dev/)
@@ -27,13 +27,13 @@ plot_predictions(model)
 plot_state_estimates(model)
 ```
 
-<img alt="Lotka-Volterra Predictions" width = "500px" src="lotkaVolterra_example_predictions.png" />
+<img alt="Lotka-Volterra Predictions" width = "500px" src="README images/lotkaVolterra_example_predictions.png" />
 
-<img alt="Lotka-Volterra States" width = "500px" src="lotkaVolterra_example_states.png" />
+<img alt="Lotka-Volterra States" width = "500px" src="README images/lotkaVolterra_example_states.png" />
 
 Please see the documentation for a detailed tutorial.
 
 # Acknowledgements
-<img alt="NSF Logo" width="200px" src="NSF_logo.png" />
+<img alt="NSF Logo" width="200px" src="README images/NSF_logo.png" />
 
 The development of this package is supported by the National Science Foundation, award \#2233982 on Model Enabled Machine Learning (MnML) for Predicting Ecosystem Regime Shifts.
