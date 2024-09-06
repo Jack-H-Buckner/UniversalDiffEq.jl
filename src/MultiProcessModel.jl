@@ -3,7 +3,7 @@ function init_Multiforecast(predict,l,extrap_rho)
     
     function forecast(u,i,t,dt,parameters,umax,umin,umeans)
         
-        # eval network
+        # evaluate network
         du = predict(u,i,t,dt,parameters)[1] .- u
         
         # max extrapolation 
@@ -31,9 +31,10 @@ end
  ...
  # Elements
  - parameters: ComponentArray
- - predict: Function the predict one time step ahead
- - forecast: Function, a modified version of rpedict to imporve performace when extrapolating
- - covariates: Function that returns the value of the covariates at each point in time. 
+ - predict: Function that predicts one time step ahead
+ - forecast: Function that is a modified version of predict to improve performace when extrapolating
+ - covariates: Function that returns the values of the covariates at each point in time
+ - right_hand_side: Function that returns the right-hand side of a differential equation (i.e., the relationships between state variables and parameters)
  ...
  """
 mutable struct MultiProcessModel
@@ -46,7 +47,7 @@ end
 
 function MultiContinuousProcessModel(derivs!,parameters, dims, l ,extrap_rho)
    
-    u0 = zeros(dims); tspan = (0.0,1000.0) # assing value for the inital conditions and time span (these dont matter)
+    u0 = zeros(dims); tspan = (0.0,1000.0) # assessing value for the initial conditions and time span (these are arbitrary)
     derivs_t! = (du,u,p,t) -> derivs!(du,u,p.series,p,t)
     IVP = ODEProblem(derivs_t!, u0, tspan, parameters)
     
@@ -72,7 +73,7 @@ end
 
 function MultiContinuousProcessModel(derivs!,parameters,covariates,dims,l,extrap_rho)
    
-    u0 = zeros(dims); tspan = (0.0,1000.0) # assing value for the inital conditions and time span (these dont matter)
+    u0 = zeros(dims); tspan = (0.0,1000.0) # assessing value for the initial conditions and time span (these are arbitrary)
     derivs_t! = (du,u,p,t) -> derivs!(du,u,p.series,covariates(t,p.series),p,t)
     IVP = ODEProblem(derivs_t!, u0, tspan, parameters)
     
@@ -103,7 +104,7 @@ mutable struct MultiNODE_process
     dims::Int # number of state variables
     IVP
     derivs!
-    parameters #::ComponentArray # nerual network paramters
+    parameters #::ComponentArray of neural network parameters
     predict::Function # neural network 
     forecast
     covariates
@@ -113,7 +114,7 @@ end
 
 function MultiNODE_process(dims,hidden,covariates,seed,l,extrap_rho)
     
-    # initial neurla Network
+    # initial neural network
     NN = Lux.Chain(Lux.Dense(dims+length(covariates(0,1)),hidden,tanh), Lux.Dense(hidden,dims))
     
     # parameters 
@@ -127,7 +128,7 @@ function MultiNODE_process(dims,hidden,covariates,seed,l,extrap_rho)
         return du
     end 
 
-    u0 = zeros(dims); tspan = (0.0,1000.0) # assing value for the inital conditions and time span (these dont matter)
+    u0 = zeros(dims); tspan = (0.0,1000.0) # assessing value for the initial conditions and time span (these are arbitrary)
     IVP = ODEProblem(derivs!, u0, tspan, parameters)
     
     function predict(u,i,t,dt,parameters) 
@@ -154,7 +155,7 @@ end
 
 function MultiNODE_process(dims,hidden,seed,l,extrap_rho)
     
-    # initial neurla Network
+    # initial neural network
     NN = Lux.Chain(Lux.Dense(dims,hidden,tanh), Lux.Dense(hidden,dims))
     
     # parameters 
@@ -167,7 +168,7 @@ function MultiNODE_process(dims,hidden,seed,l,extrap_rho)
         return du
     end 
 
-    u0 = zeros(dims); tspan = (0.0,1000.0) # assing value for the inital conditions and time span (these dont matter)
+    u0 = zeros(dims); tspan = (0.0,1000.0) # assessing value for the initial conditions and time span (these are arbitrary)
     IVP = ODEProblem(derivs!, u0, tspan, parameters)
     
     function predict(u,i,t,dt,parameters) 
