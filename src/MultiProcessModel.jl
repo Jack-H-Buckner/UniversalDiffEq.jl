@@ -30,10 +30,10 @@ end
  A Julia mutable struct that stores the functions and parameters for the process model. 
  ...
  # Elements
- - parameters: ComponentArray
- - predict: Function that predicts one time step ahead
- - forecast: Function that is a modified version of predict to improve performace when extrapolating
- - covariates: Function that returns the values of the covariates at each point in time
+ - `parameters`: ComponentArray
+ - `predict`: Function that predicts one time step ahead
+ - `forecast`: Function that is a modified version of predict to improve performace when extrapolating
+ - `covariates`: Function that returns the values of the covariates at each point in time
  - `right_hand_side`: Function that returns the right-hand side of a differential equation (i.e., the relationships between state variables and parameters)
  ...
  """
