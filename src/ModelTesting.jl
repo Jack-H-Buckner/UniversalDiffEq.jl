@@ -609,7 +609,7 @@ end
 """
     plot_forecast(UDE::BayesianUDE, test_data::DataFrame)
 
-Plots the models forecast over the range of the test_data along with the value of the test data including the median prediction as well as the `ci`% lower and upper confidence intervals.
+Plots the model's forecast over the range of the `test_data` along with the value of the test data including the median prediction as well as the `ci`% lower and upper confidence intervals.
 """
 function plot_forecast(UDE::BayesianUDE, test_data::DataFrame;ci = 95)
     check_test_data_names(UDE.data_frame, test_data)
@@ -730,7 +730,7 @@ end
 """
     phase_plane(UDE::UDE, u0s::AbstractArray; idx=[1,2],T = 100)
 
-Plots the trajectory of state variables as forecasted by the model. Runs a forecast for each provided initial condition out to T timesteps. Change the state variables that are plotted by changing `idx` such that it equals the indexes of the desired state variables as they appear in the data.
+Plots the trajectory of state variables as forecasted by the model. Runs a forecast for each provided initial condition out to `T` timesteps. Change the state variables that are plotted by changing `idx` such that it equals the indexes of the desired state variables as they appear in the data.
 """
 function phase_plane(UDE::UDE, u0s::AbstractArray ;idx = [1,2],T = 100)
 

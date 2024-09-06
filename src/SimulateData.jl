@@ -2,14 +2,14 @@
 """
     LotkaVolterra(;kwargs)
     
-    Create a sample dataset using the Lotka-Volterra predator-prey model as its process model:
+Create a sample dataset using the Lotka-Volterra predator-prey model as its process model:
 
     ```math
     \frac{dN}{dt} = rN - \alpha NP \\
     \frac{dP}{dt} = \theta\alpha NP - mP
     ```
 
-    and an observation error following a normal distribution with mean 0 and standard deviation σ.
+and an observation error following a normal distribution with mean 0 and standard deviation σ.
 
     # kwargs
     - `plot`: Does the function return a plot? Default is `true`.
@@ -57,9 +57,9 @@ end
 
 """
     LorenzLotkaVolterra(;kwargs)
-...    
-    Create a sample dataset using the Lorenz Lotka-Volterra model as its process model:
-...
+  
+Create a sample dataset using the Lorenz Lotka-Volterra model as its process model:
+
     ```math
     \frac{dx}{dt} = rx(1-\frac{x}{K}) - \alpha xy + gz\\
     \frac{dy}{dt} = \theta\alpha xy - my\\
@@ -67,9 +67,9 @@ end
     \frac{dw}{dt} = z(\rho-s) 0 w\\
     \frac{ds}{dt} = zw-\beta s
     ```
-...
-    and an observation error following a normal distribution with mean 0 and standard deviation σ_{obs}.
-...
+
+and an observation error following a normal distribution with mean 0 and standard deviation σ_{obs}.
+
     # kwargs
     - `plot`: Does the function return a plot? Default is `true`.
     - `seed`: Seed for observation error to create repeatable examples. Default is `123`.
