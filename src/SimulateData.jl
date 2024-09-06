@@ -57,7 +57,7 @@ end
 
 """
     LorenzLotkaVolterra(;kwargs)
-    
+...    
     Create a sample dataset using the Lorenz Lotka-Volterra model as its process model:
 ...
     ```math
@@ -76,7 +76,6 @@ end
     - `datasize`: Number of time steps generated. Default is `60`.
     - `T`: Maximum timespan. Default is `3.0`.
     - `sigma`: Standard deviation of observation error. Default is `0.075`.
-...
 """
 function LorenzLotkaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,sigma = 0.075)
     # set seed 
