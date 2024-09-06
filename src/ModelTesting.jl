@@ -619,7 +619,7 @@ function forecast_simulation_test(simulator,model,seed;train_fraction=0.9,step_s
     data = simulator(seed)
     N_train = floor(Int, train_fraction*size(data)[1])
     train_data = data[1:N_train,:]
-    test_data = data[(N_train):end,:] #Shouldn't this be (N_train+1) so that the training data and test data don't share a value?
+    test_data = data[(N_train+1):end,:]
     
     # build model 
     model = model.constructor(train_data)
@@ -643,7 +643,7 @@ function forecast_simulation_SE(simulator,model,seed;train_fraction=0.9,step_siz
     data = simulator(seed)
     N_train = floor(Int, train_fraction*size(data)[1])
     train_data = data[1:N_train,:]
-    test_data = data[(N_train):end,:]
+    test_data = data[(N_train+1):end,:]
     
     # build model 
     model = model.constructor(train_data)
