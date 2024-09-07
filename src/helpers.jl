@@ -232,7 +232,6 @@ function check_column_names(data::DataFrame; time_column_name = nothing, series_
 end
 
 function check_column_names(data::DataFrame, covariates::DataFrame; time_column_name = nothing, series_column_name = nothing, value_column_name = nothing, variable_column_name = nothing)
-
     global col_names = [time_column_name, series_column_name, value_column_name, variable_column_name]
 
     if(time_column_name !== nothing)

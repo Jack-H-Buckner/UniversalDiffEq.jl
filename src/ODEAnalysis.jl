@@ -404,6 +404,13 @@ function arguments(UDE)
             println("process_model.predict: f(u::Vector,t::Float,dt::Float,parameters::ComponentArray)")        
         end
     end
-    print("Not applicable the arguemnt is not aUDE model ")
+    print("Not applicable the arguemnt is not a UDE model ")
     return
 end
+
+
+
+function bifrucation_diagram(UDE)
+    @assert UDE.X != 0
+    UDE.process_model.covariates()
+end 
