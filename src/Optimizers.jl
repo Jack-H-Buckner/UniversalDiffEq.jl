@@ -9,7 +9,7 @@
 - `maxiter`: Maximum number of iterations in gradient descent algorithm. Default is `500`.
 - `verbose`: Should the training loss values be printed?. Default is `false`.
  """
-function gradient_descent!(UDE; step_size = 0.05, maxiter = 500, verbose = false, verbos = false)
+function gradient_descent!(UDE; step_size = 0.05, maxiter = 500, verbose = false)
     
     # set optimization problem 
     target = (x,p) -> UDE.loss_function(x)
@@ -18,11 +18,6 @@ function gradient_descent!(UDE; step_size = 0.05, maxiter = 500, verbose = false
     optprob = Optimization.OptimizationProblem(optf, UDE.parameters)
     
     # print value of loss function at each time step 
-    if verbos
-      verbose = true
-      @warn ("kwarg: verbos is deprecated use verbose")
-    end 
-
     if verbose
         callback = function (p, l; doplot = false)
           print(round(l,digits = 3), " ")
@@ -44,7 +39,7 @@ function gradient_descent!(UDE; step_size = 0.05, maxiter = 500, verbose = false
 end
 
 # adding time steps to skip predictiosn for to accomidate data sets with large gaps
-function gradient_descent!(UDE,t_skip; step_size = 0.05, maxiter = 500, verbose = false, verbos = false)
+function gradient_descent!(UDE,t_skip; step_size = 0.05, maxiter = 500, verbose = false)
     
   # set optimization problem 
   target = (x,p) -> UDE.loss_function(x,t_skip)
@@ -53,11 +48,6 @@ function gradient_descent!(UDE,t_skip; step_size = 0.05, maxiter = 500, verbose 
   optprob = Optimization.OptimizationProblem(optf, UDE.parameters)
   
   # print value of loss function at each time step 
-  if verbos
-    verbose = true
-    @warn ("kwarg: verbos is depricated use verbose")
-  end 
-
   if verbose
       callback = function (p, l; doplot = false)
         print(round(l,digits = 3), " ")
@@ -88,11 +78,7 @@ end
 - `initial_step_norm`: Initial step norm for BFGS algorithm. Default is `0.01`.
 - `verbose`: Should the training loss values be printed?. Default is `false`.
  """
-function BFGS!(UDE; verbos = false,verbose = false, initial_step_norm = 0.01)
-    if verbos
-      verbose = true
-      @warn ("kwarg: verbos is depricated use verbose")
-    end 
+function BFGS!(UDE; verbose = false, initial_step_norm = 0.01)
     if verbose
         callback = function (p, l; doplot = false)
           print(round(l,digits = 3), " ")
@@ -119,11 +105,7 @@ function BFGS!(UDE; verbos = false,verbose = false, initial_step_norm = 0.01)
 end 
 
 # adding time steps to skip predictiosn for to accomidate data sets with large gaps
-function BFGS!(UDE,t_skip; verbos = false,verbose = false, initial_step_norm = 0.01)
-  if verbos
-    verbose = true
-    @warn ("kwarg: verbos is depricated use verbose")
-  end 
+function BFGS!(UDE,t_skip; verbose = false, initial_step_norm = 0.01)
   if verbose
       callback = function (p, l; doplot = false)
         print(round(l,digits = 3), " ")

@@ -1,10 +1,35 @@
+"""
+    MultiUDE
 
+Data structure used to store the model structure, parameters, and data for UDE and NODE models in case multiple time series are used for fitting. Data should be stored in long format.
+...
+# Elements
+- times: a vector of times for each observation
+- data: a matrix of observations at each time point
+- X: a DataFrame with any covariates used by the model
+- data_frame: a DataFrame with columns for the time of each observation and values of the state variables, where each row is a time step
+- parameters: a ComponentArray that stores model parameters
+- loss_function: the loss function used to fit the model
+- process_model: a Julia mutable struct used to define model predictions 
+- process_loss: a Julia mutable struct used to measure the performance of model predictions
+- observation_model: a Julia mutable struct used to predict observations given state variable estimates
+- observation_loss: a Julia mutable struct used to measure the performance of the observation model
+- process_regularization: a Julia mutable struct used to store data needed for process model regularization
+- observation_regularization: a Julia mutable struct used to store data needed for observation model regularization
+- constructor: A function that initializes a UDE model with identical structure
+- time_column_name: Name of the column used to identify time steps
+- series_column_name: Name of the column used to identify different time series
+- series_labels: Labels used to identify different time series
+- varnames: Names of variables
+...
+"""
 
 mutable struct MultiUDE
     times
     data
     X
     data_frame
+    X_data_frame
     parameters
     loss_function
     process_model
@@ -16,6 +41,8 @@ mutable struct MultiUDE
     constructor
     time_column_name
     series_column_name
+    variable_column_name 
+    value_column_name
     series_labels
     varnames
 end
@@ -35,7 +62,7 @@ function init_single_loss(process_model,process_loss,observation_model,observati
             L_obs += observation_loss.loss(yt, yhat,parameters.observation_model)
         end
     
-        # dynamics loss 
+        # process loss 
         L_proc = 0
         for t in 2:(size(dat)[2])
             u0 = uhat[:,t-1]
@@ -70,7 +97,7 @@ function init_single_loss_skip(process_model,process_loss,observation_model,obse
             L_obs += observation_loss.loss(yt, yhat,parameters.observation_model)
         end
     
-        # dynamics loss 
+        # process loss 
         L_proc = 0
         for t in 2:(size(dat)[2])
             u0 = uhat[:,t-1]
@@ -133,9 +160,10 @@ end
 """
     MultiNODE(data;kwargs...)
 
-builds a NODE model to fit to the data. `data` is a DataFrame object with time arguments placed in a column labed `t` and a second column with a unique index for each time series. The remaining columns have observations of the state variables at each point in time and for each time series.
+Builds a NODE model to fit to the data with multiple time series. `data` is a DataFrame object with time arguments placed in a column labeled `t` and a second column with a unique index for each time series. The remaining columns have observations of the state variables at each point in time and for each time series.
 """
 function MultiNODE(data;time_column_name = "time", series_column_name = "series",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,reg_type="L2",l=0.5,extrap_rho=0.0)
+
     time_column_name, series_column_name = check_column_names(data, time_column_name = time_column_name, series_column_name = series_column_name)
     # convert data
     N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames, labels_df = process_multi_data(data, time_column_name, series_column_name)
@@ -148,7 +176,7 @@ function MultiNODE(data;time_column_name = "time", series_column_name = "series"
     if reg_type == "L1"
         process_regularization = L1(weight=reg_weight)
     elseif reg_type != "L2"
-        print("Warning: Invalid choice of regularization: using L2 regularization")
+        print("Warning: Invalid choice of regularization, using L2 regularization")
     end 
     observation_regularization = no_reg()
     
@@ -167,7 +195,7 @@ function MultiNODE(data;time_column_name = "time", series_column_name = "series"
     
     constructor = (data) -> MultiNODE(data;time_column_name = time_column_name , series_column_name = time_column_name ,hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type, l=l,extrap_rho=extrap_rho)
     
-    return MultiUDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name,labels_df,varnames)
+    return MultiUDE(times,data,0,dataframe,0,parameters,loss_function,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name,nothing,nothing,labels_df,varnames)
     
 end 
 
@@ -175,9 +203,10 @@ end
 """
     MultiNODE(data,X;kwargs...)
 
-When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for values of time not included in the data frame. 
+When a dataframe `X` is supplied, the model will run with covariates. The argument `X` should have a column for time, a column for series index, a column for covariate names, and a column for the covariate values at each time step. The values in `X` will be interpolated with a linear spline for values of time not included in the dataframe. 
 """
-function MultiNODE(data,X;time_column_name = "time", series_column_name = "series", variable_column_name = "variable", value_column_name = "value",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,reg_type="L2",l=0.5,extrap_rho=0.0)
+function MultiNODE(data,X;time_column_name = "time", series_column_name = "series", variable_column_name = nothing, value_column_name = nothing,hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,reg_type="L2",l=0.5,extrap_rho=0.0)
+    X_data_frame = X
     time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name, series_column_name = series_column_name, value_column_name = value_column_name, variable_column_name = variable_column_name)
 
     N, T, dims, data, times,  dataframe, series, inds, starts, lengths,varnames, labels_df = process_multi_data(data, time_column_name, series_column_name)
@@ -192,7 +221,7 @@ function MultiNODE(data,X;time_column_name = "time", series_column_name = "serie
     if reg_type == "L1"
         process_regularization = L1(weight=reg_weight)
     elseif reg_type != "L2"
-        print("Warning: Invalid choice of regularization: using L2 regularization")
+        print("Warning: Invalid choice of regularization, using L2 regularization")
     end 
     observation_regularization = no_reg()
     
@@ -212,12 +241,13 @@ function MultiNODE(data,X;time_column_name = "time", series_column_name = "serie
     constructor = (data,X) -> MultiNODE(data,X;time_column_name = time_column_name , series_column_name =  series_column_name, variable_column_name = variable_column_name, value_column_name = value_column_name,
                                         hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type, l=l,extrap_rho=extrap_rho)
     
-    return MultiUDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name,labels_df,varnames)
+    return MultiUDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name, variable_column_name, value_column_name,labels_df,varnames)
     
 end 
 
 
 function MultiCustomDerivatives(data,derivs!,initial_parameters;time_column_name = "time", series_column_name = "series",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
+    
     time_column_name, series_column_name = check_column_names(data, time_column_name = time_column_name, series_column_name = series_column_name)
 
     # convert data
@@ -231,7 +261,7 @@ function MultiCustomDerivatives(data,derivs!,initial_parameters;time_column_name
     process_regularization = L2(initial_parameters,weight=reg_weight)
     observation_regularization = no_reg()
     
-    # paramters vector
+    # parameters vector
     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
 
     # loss function 
@@ -241,13 +271,14 @@ function MultiCustomDerivatives(data,derivs!,initial_parameters;time_column_name
     constructor = (data) -> MultiCustomDerivatives(data,derivs!,initial_parameters;time_column_name = time_column_name , series_column_name =  series_column_name,
                     proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l)
     
-    return MultiUDE(times,data,0,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name,labels_df,varnames)
+    return MultiUDE(times,data,0,dataframe,0,parameters,loss_function,process_model,process_loss,observation_model,
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name,nothing,nothing,labels_df,varnames)
 
 end
 
 
-function MultiCustomDerivatives(data,X,derivs!,initial_parameters;time_column_name = "time", series_column_name = "series", variable_column_name = "variable", value_column_name = "value",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
+function MultiCustomDerivatives(data,X,derivs!,initial_parameters;time_column_name = "time", series_column_name = "series", variable_column_name = nothing, value_column_name = nothing,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
+    X_data_frame = X
     time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name, series_column_name = series_column_name, value_column_name = value_column_name, variable_column_name = variable_column_name)
     # convert data
     N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames, labels_df = process_multi_data(data, time_column_name, series_column_name)
@@ -261,7 +292,7 @@ function MultiCustomDerivatives(data,X,derivs!,initial_parameters;time_column_na
     process_regularization = L2(initial_parameters,weight=reg_weight)
     observation_regularization = no_reg()
     
-    # paramters vector
+    # parameters vector
     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
 
     # loss function 
@@ -271,8 +302,8 @@ function MultiCustomDerivatives(data,X,derivs!,initial_parameters;time_column_na
     constructor = (data,X) -> MultiCustomDerivatives(data,X,derivs!,initial_parameters;time_column_name = time_column_name , series_column_name =  series_column_name,
                         variable_column_name = variable_column_name, value_column_name = value_column_name, proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l)
     
-    return MultiUDE(times,data,X,dataframe,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name,labels_df,varnames)
+    return MultiUDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name,variable_column_name,value_column_name, labels_df,varnames)
 
 end
 

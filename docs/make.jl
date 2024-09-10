@@ -12,3 +12,4 @@ makedocs(
 deploydocs(
     repo = "github.com/Jack-H-Buckner/UniversalDiffEq.jl.git",
 )
+

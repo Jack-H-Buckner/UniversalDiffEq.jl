@@ -1,9 +1,9 @@
 # Model Constructors
 
-UniversalDiffEq.jl provides a set of functions to construct NODEs and UDEs with varying levels of customization. The model constructors all require the data to be passed using a DataFrame object from the DataFrames.jl library. The data frame should be organized with a column for time named `t`, and the remaining columns should have the values of the state variables (`X_i`) at each point in time.
+UniversalDiffEq.jl provides a set of functions to construct UDEs with varying levels of customization. The model constructors all require the data to be passed using a DataFrame object from the DataFrames.jl library. The data frame should be organized with a column for time named `t`, and the remaining columns should have the values of the state variables (`y_i`) at each point in time.
 
 
-|`t`|``X_1``| ``X_2``|
+|`t`|``y_1``| ``y_2``|
 |---|----|----|
 |0.1| 0.0| -1.1|
 |0.2| 0.01| -0.9|
@@ -14,78 +14,81 @@ Currently, missing data are not supported, but irregular intervals between time 
 
 Each constructor function will require additional inputs to specify the model structure. For example, the `CustomDerivatives` function requires the user to supply the known functional forms through the `derivs!` argument. These arguments are described in detail in the subsection for each model type.
 
-Finally, the constructor functions share a set of keyword arguments used to tune the model fitting procedure. These control the weights given to the process model, observation model, and regularization in the loss function and can be tuned to control the complexity of the estimated model and to accommodate varying levels of observational errors:
+Finally, the constructor functions share a set of keyword arguments used to tune the model fitting procedure. These control the weights given to the process model, observation model, and regularization in the loss function. Larger values of the regualrization weight limit the compexity of the relationships learned by the neural network reducing the likeihood of overfitting. The observation weight controls how closely the estimates states ``u_t`` match the data ``y_t``, smaller vlaus of the observation weight correspond to data sets with larger amount of observaiton error
 
 - proc_weight=1.0 : The weight given to the model predictions in loss function
 - obs_weight=1.0 : The weight given to the state estimates in loss function
 - reg_weight=0.0 : The weight given to regularization in the loss function.
 
-In addition to these weighting parameters, two keyword arguments, `l = 0.25` and `extrap_rho = 0.0`, control how the model extrapolates beyond the observed data. The parameter `l` defines how far away the model will extrapolate before shifting to the default behavior and `extrap_rho` defines the default when extrapolating. When forecasting, the model will modify the trained process model ``f(u_t;\theta)`` when extrapolating to a new function that combines the fitted model and the default behavior
+In addition to these weighting parameters, the key word argument `l` control how far the model will extrapolates beyond the observed data before reverting to a default value `extrap_rho` when forecasting.   
 
 
-```math
-\bar{f}(u_t|\theta,l,\rho )=   \left\{
-\begin{array}{ll}
-      f(u_t;\theta) & min(\hat{u}) < u_t < max(\hat{u}) \\
-      e^{(\frac{u_t - min(\hat{u}_t)}{l})^2}f(u_t;\theta) + (1-e^{(\frac{u_t - min(\hat{u}_t)}{l})^2}) \rho &u_t < min(\hat{u}) \\
-      e^{(\frac{u_t - max(\hat{u}_t)}{l})^2}f(u_t;\theta) - (1-e^{(\frac{u_t - min(\hat{u}_t)}{l})^2}) \rho &u_t > max(\hat{u}) \\
-\end{array} 
-\right.  
-```
+## Nonparametric UDES (Neural Ordinary differntial equation)
 
+UniversalDiffEq.jl has two funtions to build time series model that use a neural network to learn all of the relationship in the data. These models are sometimes refered to and nueral ordinary differnetial equations (NODEs). 
 
-## NODEs and NNDE
-NODEs and NNDEs use neural networks to build fully nonparametric models in continuous and discrete time, respectively. NODEs use a neural network as the right-hand side of an ordinary differential equation 
+The functon `NODE` builds a continuous time UDE with a neurla network representing the right hand side of the differntial equation 
 
 ```math
-   \frac{dx}{dt} = NN(x;w,b),
+   \frac{du}{dt} = NN(u;w,b),
 ```
 
-and NNDEs use a neural network as the right-hand side of a difference equation
+The function `NNDE` construct a differnce equation with a nerual network on the right hand side
 
 ```math
    x_{t+1} = x_t + NN(x_t).
 ```
-
-The `NODE` and `NNDE` functions construct each model type.
 
 ```@docs; canonical=false
 UniversalDiffEq.NODE(data;kwargs ... )
 UniversalDiffEq.NNDE(data;kwargs ...)
 ```
 
-Covariates can be added to the model by supplying a second data frame `X`. This data frame must have the same format as the primary data set, but the time points need not match. The `NODE` and `NNDE` functions will append the value of the covariates at each point in time to the neural network inputs
+Covariates can be added to the model by supplying a second data frame `X`. This dataframe must have the same column name for time as the primary data set, but the time point do not need to match because the values of the covariates between time points included in the data frame `X` are interpolated using a linear spline. . The `NODE` and `NNDE` functions will append the value of the covariates at each point in time to the neural network inputs
 
 ```math
    \frac{dx}{dt} = NN(x,X(t);w,b) \\
    x_{t+1} = x_t + NN(x_t, X(t)).
 ```
-The values of the covariates between time points included in the data frame `X` are interpolated using a linear spline.  
+ 
 
 ```@docs; canonical=false
 UniversalDiffEq.NODE(data,X;kwargs ... )
 ```
 
-## UDEs
+Multiple covariates with differnt observaiton frequencies can be supplied to the model with a long formate data set. If a long formate data set is provided the user must spcify which column containt the variable names and which column contains the value of the variable using the `variable_column_name` and `value_column_name` key word arguments. In the example below the variable column name is "variable" and the value column name is "value
 
-### Continuous time model 
+|`t`|``variable``| ``value``|
+|---|----|----|
+|1.0| X_1| -1.1|
+|2.0| X_1| -0.9|
+|3.0| X_1|-1.05|
+|...|...|...|
+|1.0| X_2| 3.0|
+|2.0| X_2| 0.95|
+|4.0| X_2|-1.25|
+Table: **Example covariate data in long format**
+
+## Customizing universal dynamic equaitons
+
+### Continuous time models
 The `CustomDerivatives` and `CustomDifference` functions can be used to build models that combine neural networks and known functional forms. These functions take user-defined models, construct a loss function, and provide access to the model fitting and testing functions provided by UniversalDiffEq.jl.
 
-The `CustomDerivatives` function builds UDE models based on a user-defined function `derivs!(du,u,p,t)`, which updates the vector `du` with the right-hand side of a differential equation evaluated at time `t` in state `u` given parameters `p`. The function also needs an initial guess at the model parameters, specified by a NamedTuple `initial_parameters`
+The `CustomDerivatives` function builds SS-UDE models based on a user-defined function `derivs!(du,u,p,t)`, which updates the vector `du` with the right-hand side of a differential equation evaluated at time `t` in state `u` given parameters `p`. The function also needs an initial guess at the model parameters, specified by a NamedTuple `initial_parameters`
 
 ```@docs; canonical=false
 UniversalDiffEq.CustomDerivatives(data,derivs!,initial_parameters;kwargs ... )
 ```
 
 ### Example
-The following block of code shows how to build a UDE model based on the Lotka-Volterra predator-prey model where the growth rate of the prey ``r``, mortality rate of the predator ``m``, and conversion efficiency ``\theta`` are estimated and the predation rate is described by a neural network ``NN``. The resulting ODE is defined by 
+The following block of code shows how to build a UDE model based on the Lotka-Volterra predator-prey model where the growth rate of the prey ``r``, mortality rate of the predator ``m``, and conversion efficiency ``\theta`` are estimated and the predation rate is described by a neural network ``NN``. The equatns for the ODE are
 
 ```math
 \frac{dN}{dt} = rN - NN(N,P) \\
 \frac{dP}{dt} = \theta NN(N,P) - mP.
 ```
 
-To implement the model we start by defining the neural network object using the `Lux.Chain` function, 
+To implement the model we start by defining the neural network and initializing its parameters using the `Lux.Chain` and  `Lux.setup` functions. 
 
 ```julia
 using Lux
@@ -102,7 +105,7 @@ rng = Random.default_rng()
 NNparameters, states = Lux.setup(rng,NN) 
 ```
 
-Now we can define the model derivatives using the usual Julia functions syntax. The `derivs` function first evaluates the neural network given the abundance of the predators and prey in the vector `u`. The neural network function `NN` requires three arguments: the current state, the network parameters, and the network states. In this example, the weights and biases are accessed through the parameters NamedTuple `p` with the key `NN`. The other model parameters are accessed with keys corresponding to their respective names.
+With hte neurla network in hand we can define the derivatives of the differntial equaitons model using standard Julia syntax. The `derivs` function first evaluates the neural network given the abundance of the predators and prey in the vector `u`. The neural network function `NN` requires three arguments: the current state, the network parameters, and the network states. In this example, the weights and biases are accessed through the parameters NamedTuple `p` with the key `NN`. The other model parameters are accessed with keys corresponding to their respective names.
 
 ```julia
 function lotka_volterra_derivs!(du,u,p,t)
@@ -123,7 +126,7 @@ model = CustomDerivatives(data,lotka_volterra_derivs!,initial_parameters)
 
 ### Discrete time model 
 
-Discrete time models are constructed in a similar way to continuous time models. The user provides the right-hand side of a difference equation with the function `step` and initial parameters. The function `step(u,t,p)` takes three arguments: the value of the state variables `u`, time `t`, and model parameters `p`.
+Discrete time models are constructed in a similar way to continuous time models. The user provides the right-hand side of a difference equation with the function `step` and initial parameters. The function `step(u,t,p)` takes three arguments: the value of the state variables `u`, time `t`, and model parameters `p`. 
 
 ```@docs; canonical=false
 UniversalDiffEq.CustomDifference(data,step,initial_parameters;kwrags...)
@@ -132,11 +135,13 @@ UniversalDiffEq.CustomDifference(data,step,initial_parameters;kwrags...)
 ## Adding covariates
 
 Covariates can also be added to UDE models by passing a data frame `X` and adding covariates as an argument to the `derivs!` function which has the new form `derivs!(du,u,X,p,t)`, where the third argument `X` is a vector of covariates. 
+
 ```@docs; canonical=false
 UniversalDiffEq.CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters;kwargs ... )
 ```
 
 Covariates can also be added to a discrete time framework in the same way. The `step` function should have four arguments `step(u,X,t,p)`.
+
 ```@docs; canonical=false
 UniversalDiffEq.CustomDifference(data::DataFrame,X,step,initial_parameters;kwargs ... )
 ```

@@ -21,8 +21,7 @@ function interpolate_covariates(X::DataFrame, time_column_name, variable_column_
 end 
 
 
-function process_long_format_data(data, time_column_name, series_column_name,  variable_column_name, value_column_name)
-
+function process_long_format_data(data, time_column_name, series_column_name, variable_column_name, value_column_name)
     variables = unique(data[:,variable_column_name])
     series = unique(data[:,series_column_name])
     times = []; values = []
@@ -32,6 +31,7 @@ function process_long_format_data(data, time_column_name, series_column_name,  v
             inds = (data[:,variable_column_name] .== var) .& (data[:,series_column_name] .== series_i) 
             dat_i = data[inds,:]
             push!(times_var, dat_i[:,time_column_name])
+            push!(values_var, dat_i[:,value_column_name])
         end
         push!(times, times_var)
         push!(values, values_var)

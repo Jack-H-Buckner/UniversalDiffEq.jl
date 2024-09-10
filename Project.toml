@@ -31,8 +31,8 @@ Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [compat]
 AdvancedHMC = "≥0.6.1"
-CategoricalArrays = "≥v0.10.8"
-ComponentArrays = "≥0.15.13"
+CategoricalArrays = "≥0.10.8"
+ComponentArrays = "<0.15.14"
 DataFrames = "≥1.6.1"
 DiffEqFlux = "≥2.4.0"
 Distributions = "≥v0.25.0"
