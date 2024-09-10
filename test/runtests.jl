@@ -1,7 +1,7 @@
 using UniversalDiffEq
 using Test
 
-@testset "UniversalDiffEq.jl" begin
+@testset begin #set "UniversalDiffEq.jl"
     include("UDEtests.jl")
     include("NODEtests.jl")
     include("BayesNODEtests.jl")
