@@ -322,3 +322,29 @@ function check_test_data_names(modelData::DataFrame, test_data::DataFrame)
         error(err_msg)
     end
 end
+
+function melt(data; id_vars = nothing)
+
+    vars = names(data)
+    inds = broadcast(nm -> !(nm in id_vars), vars)
+    vars = vars[inds]
+    
+    long_data = DataFrame(zeros(length(vars)*nrow(data), length(id_vars)),id_vars)
+    long_data.variable .= repeat(["variable"], length(vars)*nrow(data))
+    long_data.value .= repeat([0.0], length(vars)*nrow(data))
+    n = 0
+    for i in 1:nrow(data)
+        for j in eachindex(vars)
+            n += 1
+            id_values = Vector(data[i,id_vars])
+            variable = vars[j]
+            value = data[i,variable]
+            long_data[n,id_vars] .= id_values
+            long_data.variable[n] = variable
+            long_data.value[n] = value
+        end 
+    end 
+
+    return long_data
+end 
+
