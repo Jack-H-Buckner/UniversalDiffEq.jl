@@ -316,10 +316,11 @@ function check_test_data_names(modelData::DataFrame, test_data::DataFrame)
     end
     if(length(unfound_names) > 0)
         err_msg = "Error: Please ensure that all column names match provided training data. The following columns were not found in provided testing data: \n"
+        col_names = ""
         for name in unfound_names
-            err_msg = err_msg * name * " "
+            col_names = col_names * name * " "
         end
-        error(err_msg)
+        error(col_names * err_msg)
     end
 end
 
