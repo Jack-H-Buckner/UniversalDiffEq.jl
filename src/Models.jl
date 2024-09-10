@@ -784,7 +784,7 @@ function EasyNODE(data,X;time_column_name = "time",variable_column_name = nothin
     constructor = (data,X) -> NODE(data,X;time_column_name=time_column_name, variable_column_name=variable_column_name, value_column_name=value_column_name,hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type,l=l,extrap_rho=extrap_rho)
     
     untrainedNODE = UDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
-        observation_loss,process_regularization,observation_regularization,constructor,time_column_name )
+        observation_loss,process_regularization,observation_regularization,constructor,time_column_name,variable_column_name,value_column_name)
         return gradient_descent!(untrainedNODE, step_size = step_size, maxiter = maxiter, verbose = verbose)
 end 
 
@@ -849,7 +849,7 @@ function EasyUDE(data,known_dynamics!,initial_parameters;time_column_name = "tim
     constructor = data -> CustomDerivatives(data,derivs!,parameters;time_column_name=time_column_name,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
     
     untrainedUDE = UDE(times,data,0,dataframe,0,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor,time_column_name)
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name,nothing,nothing)
     return gradient_descent!(untrainedUDE, step_size = step_size, maxiter = maxiter, verbose = verbose)
 end
 
@@ -917,7 +917,7 @@ function EasyUDE(data::DataFrame,X,known_dynamics!::Function,initial_parameters;
     constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters;time_column_name=time_column_name, variable_column_name=variable_column_name, value_column_name=value_column_name,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type)
     
     untrainedUDE = UDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor,time_column_name)
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name,variable_column_name,value_column_name)
     return gradient_descent!(untrainedUDE, step_size = step_size, maxiter = maxiter, verbose = verbose)
 end
 
@@ -963,7 +963,7 @@ function BayesianNODE(data;time_column_name = "time",hidden_units=10,seed = 1,pr
     constructor = (data) -> BayesianNODE(data;time_column_name=time_column_name,hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type,l=l,extrap_rho=extrap_rho)
     
     return BayesianUDE(times,data,0,dataframe,0,parameters_vector,loss_function,process_model,process_loss,observation_model,observation_loss,
-            process_regularization,observation_regularization,constructor,time_column_name )
+            process_regularization,observation_regularization,constructor,time_column_name,nothing,nothing)
 end 
 """
     BayesianNODE(data,X;kwargs ... )
@@ -1076,7 +1076,7 @@ function BayesianCustomDerivatives(data::DataFrame,derivs!::Function,initial_par
     constructor = data -> BayesianCustomDerivatives(data,derivs!,initial_parameters;time_column_name=time_column_name,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type)
     
     return BayesianUDE(times,data,X,dataframe,0,parameters_vector,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor,time_column_name )
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name,nothing,nothing)
    
 
 end
@@ -1173,6 +1173,6 @@ function BayesianCustomDerivatives(data::DataFrame,X,derivs!::Function,initial_p
     constructor = (data,X) -> BayesianCustomDerivatives(data,X,derivs!,initial_parameters,priors;time_column_name=time_column_name,variable_column_name=variable_column_name,value_column_name=value_column_name,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type=reg_type)
     
     return BayesianUDE(times,data,X,dataframe,X_data_frame,parameters_vector,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor,time_column_name )
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name,variable_column_name,value_column_name)
    
 end 
