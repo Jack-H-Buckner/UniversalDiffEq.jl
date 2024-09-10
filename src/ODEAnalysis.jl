@@ -579,7 +579,7 @@ function bifructaion_data(model::MultiUDE; N=25)
 
     X = model.process_model.covariates.(model.times,1)
     dims = length(X[1])
-    series = unique(model.data_frame[:,series_column_name])
+    series = unique(model.data_frame[:,model.series_column_name])
     values = zeros(N,length(series)*dims)
     x_min = nothing
     x_max = nothing
@@ -654,7 +654,7 @@ The time sereis are treated as an additional covariate that can be visualized by
 
 The key word arguent `size` controls the dimensions of the final plot. 
 """
-function plot_bifrucation_diagram(model, xvariable; N=25, color_variable=nothing, conditional_variable=nothing, size= (600, 400))
+function plot_bifrucation_diagram(model::MultiUDE, xvariable; N=25, color_variable=nothing, conditional_variable=nothing, size= (600, 400))
     
     series = nothing
     if (conditional_variable == model.series_column_name) | (conditional_variable == "series")
@@ -679,17 +679,17 @@ function plot_bifrucation_diagram(model, xvariable; N=25, color_variable=nothing
         dat = data[data.variable .== yvariable,:]
 
         if series == "Panels"
-            series_vals = unique(model.data_frame[:,series_column_name])
+            series_vals = unique(model.data_frame[:,model.series_column_name])
             for s in series_vals
                 if typeof(color_variable) == Nothing
-                    dat_s = dat[dat[:,series_column_name] .== s,:]
+                    dat_s = dat[dat[:,model.series_column_name] .== s,:]
                     plt = Plots.scatter( dat_s[:,xvariable], dat_s.value, markersize = 3.5 .- 1.5 *(dat_s.eigen .> 0.0),
                                         label = "", ylabel = string("Eg. ", yvariable), 
                                         title = string(model.series_column_name," = ",s),titlefontsize = 9,
                                         xlabel= xvariable, labelfontsize = 9, tickfontsize = 7, color= "black")
                     push!(plts,plt)
                 else
-                    dat_s = dat[dat[:,series_column_name] .== s,:]
+                    dat_s = dat[dat[:,model.series_column_name] .== s,:]
                     plt = Plots.scatter( dat_s[:,xvariable], dat_s.value, markersize = 3.5 .- 1.5 *(dat_s.eigen .> 0.0),
                                         label = "", ylabel = string("Eg. ", yvariable), titlefontsize = 9,
                                         xlabel= xvariable, labelfontsize = 9, tickfontsize = 7, 
