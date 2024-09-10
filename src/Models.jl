@@ -204,7 +204,7 @@ end
     
 
 """
-    CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters;kwargs ... )
+    CustomDerivatives(data::DataFrame,X::DataFrame,derivs!::Function,initial_parameters;kwargs ... )
 
 When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included in the data frame. 
 
