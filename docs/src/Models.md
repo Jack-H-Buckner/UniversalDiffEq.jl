@@ -27,20 +27,19 @@ In addition to these weighting parameters, the key word argument `l` control how
 
 UniversalDiffEq.jl has two functions to build time series model that use a neural network to learn all of the relationship in the data. These models are sometimes referred to and neural ordinary differential equations (NODEs). 
 
-The function `NODE` builds a continuous time UDE with a neural network representing the right hand side of the differential equation 
+The function `NODE` builds a continuous time UDE with a neural network representing the right-hand side of the differential equation 
 
 ```math
    \frac{du}{dt} = NN(u;w,b),
 ```
 
-The function `NNDE` construct a difference equation with a neural network on the right hand side
+The function `NNDE` construct a difference equation with a neural network on the right-hand side
 
 ```math
    x_{t+1} = x_t + NN(x_t).
 ```
 
-```
-@docs; canonical=false
+```@docs; canonical=false
 UniversalDiffEq.NODE(data;kwargs ... )
 UniversalDiffEq.NNDE(data;kwargs ...)
 ```
@@ -53,8 +52,7 @@ Covariates can be added to the model by supplying a second dataframe `X`. This d
 ```
  
 
-```
-@docs; canonical=false
+```@docs; canonical=false
 UniversalDiffEq.NODE(data,X;kwargs ... )
 ```
 
@@ -108,7 +106,7 @@ rng = Random.default_rng()
 NNparameters, states = Lux.setup(rng,NN) 
 ```
 
-With hte neurla network in hand we can define the derivatives of the differntial equaitons model using standard Julia syntax. The `derivs` function first evaluates the neural network given the abundance of the predators and prey in the vector `u`. The neural network function `NN` requires three arguments: the current state, the network parameters, and the network states. In this example, the weights and biases are accessed through the parameters NamedTuple `p` with the key `NN`. The other model parameters are accessed with keys corresponding to their respective names.
+With the neural network in hand, we can define the derivatives of the differential equations model using standard Julia syntax. The `derivs` function first evaluates the neural network given the abundance of the predators and prey in the vector `u`. The neural network function `NN` requires three arguments: the current state, the network parameters, and the network states. In this example, the weights and biases are accessed through the parameters NamedTuple `p` with the key `NN`. The other model parameters are accessed with keys corresponding to their respective names.
 
 ```julia
 function lotka_volterra_derivs!(du,u,p,t)
