@@ -675,7 +675,7 @@ function plot_bifrucation_diagram(model::MultiUDE, xvariable; N=25, color_variab
     conditional_levels = [0]
     conditional_values = [0]
     plts = []
-    for yvariable in unique(data[:,model.variable_column_name])
+    for yvariable in nms
         dat = data[data.variable .== yvariable,:]
 
         if series == "Panels"
@@ -768,15 +768,15 @@ function plot_bifrucation_diagram(model::MultiUDE, xvariable; N=25, color_variab
 
     plt = 0
     if series == "Panels"
-        n = length(unique(data[:,model.variable_column_name]))
+        n = length(unique(data[:,"variable"]))
         m = length(unique(data[:,model.series_column_name]))
         plt = plot(plts...,layout =(n,m), size = size)
     elseif series == "Color"
-        n = length(unique(data[:,model.variable_column_name]))
+        n = length(unique(data[:,"variable"]))
         m = length(conditional_levels)
         plt = plot(plts...,layout =(n,m), size = size)
     else
-        n = length(unique(data[:,model.variable_column_name]))
+        n = length(unique(data[:,"variable"]))
         m = length(conditional_levels)
         print(n,m)
         plt = plot(plts...,layout =(n,m), size = size)
