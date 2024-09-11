@@ -474,6 +474,7 @@ function forecast(UDE::UDE, u0::AbstractVector{}, t0::Real, times::AbstractVecto
             dt = times[t]-times[t-1]
             tinit = times[t-1]
         end
+
         x = estimated_map(x,tinit,dt)
         df[t,:] = vcat([times[t]],x)
     end
