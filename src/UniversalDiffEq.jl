@@ -1,6 +1,6 @@
 module UniversalDiffEq
 
-using DiffEqFlux, OrdinaryDiffEq, Optimization, OptimizationOptimisers, OptimizationOptimJL, ComponentArrays, Lux, Random, StatsBase, DelimitedFiles, Plots, DataFrames, Distributions, Roots, LaTeXStrings, NLsolve, FiniteDiff, LinearAlgebra, AdvancedHMC, MCMCChains, Interpolations, Optim, LuxCUDA, DiffEqGPU, CategoricalArrays, Zygote
+using DiffEqFlux, OrdinaryDiffEq, Optimization, OptimizationOptimisers, OptimizationOptimJL, ComponentArrays, Lux, Random, StatsBase, DelimitedFiles, Plots, DataFrames, Distributions, Roots, LaTeXStrings, NLsolve, FiniteDiff, LinearAlgebra, AdvancedHMC, MCMCChains, Interpolations, Optim, CategoricalArrays, Zygote
 
 
 include("covariates.jl")
@@ -18,11 +18,9 @@ include("ODEAnalysis.jl")
 include("MultiModelTests.jl")
 include("Optimizers.jl")
 include("CrossValidation.jl")
-include("Deprecated.jl")
-include("GPUBackend.jl")
-include("GPUProcessModel.jl")
 
 
-export UDE, CustomDerivatives, CustomDiffernce, NNDE, DiscreteUDE, NODE, MultiUDE, gradient_decent!, BFGS!, plot_state_estiamtes, plot_predictions, plot_forecast, leave_future_out_cv, LokaVolterra,plot_leave_future_out_cv, func, LorenzLokaVolterra, plot_covariates, vectorfield2d, nullclines2d, vectorfield_and_nullclines, get_right_hand_side, CustomDifference, plot_state_estimates, LotkaVolterra, LorenzLotkaVolterra, kfold_cv, gradient_descent!, equilibrium_and_stability, EasyNODE, EasyUDE, BayesianNODE, BayesianUDE, NUTS!, SGLD!, CustomDerivativesGPU, predict, cross_validation_kfold
+
+export UDE, CustomDerivatives, NNDE, NODE, MultiUDE, gradient_decent!, BFGS!, plot_state_estiamtes, plot_predictions, plot_forecast, leave_future_out_cv, LokaVolterra, LorenzLokaVolterra, vectorfield_and_nullclines, get_right_hand_side, CustomDifference, plot_state_estimates, LotkaVolterra, LorenzLotkaVolterra, kfold_cv, gradient_descent!, equilibrium_and_stability, EasyNODE, EasyUDE, BayesianNODE, BayesianUDE, NUTS!, SGLD!, predict, get_parameters, plot_bifrucation_diagram, bifructaion_data  , cross_validation_kfold
 
 end

@@ -1,9 +1,15 @@
-# """
-#     gradient_descent!(UDE, kwargs ...)
+ """
+     gradient_descent!(UDE, kwargs ...)
 
-# Minimizes the loss function of the `UDE` model with the gradient descent algorithm with a step size of `step_size` and a maximum number of iterations of `maxiter`. Prints the value of the loss function after each iteration when `maxiter` is true.   
-# """
-function gradient_descent!(UDE; step_size = 0.05, maxiter = 500, verbose = false, verbos = false)
+ Minimizes the loss function of the `UDE` model with the gradient descent algorithm with a step size of `step_size` and a maximum number of iterations of `maxiter`. Prints the value of the loss function after each iteration when `maxiter` is true.   
+
+  # kwargs
+
+- `step_size`: Step size for ADAM optimizer. Default is `0.05`.
+- `maxiter`: Maximum number of iterations in gradient descent algorithm. Default is `500`.
+- `verbose`: Should the training loss values be printed?. Default is `false`.
+ """
+function gradient_descent!(UDE; step_size = 0.05, maxiter = 500, verbose = false)
     
     # set optimization problem 
     target = (x,p) -> UDE.loss_function(x)
@@ -12,11 +18,6 @@ function gradient_descent!(UDE; step_size = 0.05, maxiter = 500, verbose = false
     optprob = Optimization.OptimizationProblem(optf, UDE.parameters)
     
     # print value of loss function at each time step 
-    if verbos
-      verbose = true
-      @warn ("kwarg: verbos is deprecated use verbose")
-    end 
-
     if verbose
         callback = function (p, l; doplot = false)
           print(round(l,digits = 3), " ")
@@ -38,7 +39,7 @@ function gradient_descent!(UDE; step_size = 0.05, maxiter = 500, verbose = false
 end
 
 # adding time steps to skip predictiosn for to accomidate data sets with large gaps
-function gradient_descent!(UDE,t_skip; step_size = 0.05, maxiter = 500, verbose = false, verbos = false)
+function gradient_descent!(UDE,t_skip; step_size = 0.05, maxiter = 500, verbose = false)
     
   # set optimization problem 
   target = (x,p) -> UDE.loss_function(x,t_skip)
@@ -47,11 +48,6 @@ function gradient_descent!(UDE,t_skip; step_size = 0.05, maxiter = 500, verbose 
   optprob = Optimization.OptimizationProblem(optf, UDE.parameters)
   
   # print value of loss function at each time step 
-  if verbos
-    verbose = true
-    @warn ("kwarg: verbos is depricated use verbose")
-  end 
-
   if verbose
       callback = function (p, l; doplot = false)
         print(round(l,digits = 3), " ")
@@ -72,16 +68,17 @@ function gradient_descent!(UDE,t_skip; step_size = 0.05, maxiter = 500, verbose 
   return nothing
 end
 
-# """
-#     BFGS!(UDE, kwargs ...)
+ """
+     BFGS!(UDE, kwargs ...)
 
-# minimizes the loss function of the `UDE` model using the BFGS algorithm is the inital step norm equal to `initial_step_norm`. The funciton will print the value fo the loss function after each iteration when `verbose` is true.  
-# """
-function BFGS!(UDE; verbos = false,verbose = false, initial_step_norm = 0.01)
-    if verbos
-      verbose = true
-      @warn ("kwarg: verbos is depricated use verbose")
-    end 
+ minimizes the loss function of the `UDE` model using the BFGS algorithm is the inital step norm equal to `initial_step_norm`. The funciton will print the value fo the loss function after each iteration when `verbose` is true.  
+
+  # kwargs
+
+- `initial_step_norm`: Initial step norm for BFGS algorithm. Default is `0.01`.
+- `verbose`: Should the training loss values be printed?. Default is `false`.
+ """
+function BFGS!(UDE; verbose = false, initial_step_norm = 0.01)
     if verbose
         callback = function (p, l; doplot = false)
           print(round(l,digits = 3), " ")
@@ -108,11 +105,7 @@ function BFGS!(UDE; verbos = false,verbose = false, initial_step_norm = 0.01)
 end 
 
 # adding time steps to skip predictiosn for to accomidate data sets with large gaps
-function BFGS!(UDE,t_skip; verbos = false,verbose = false, initial_step_norm = 0.01)
-  if verbos
-    verbose = true
-    @warn ("kwarg: verbos is depricated use verbose")
-  end 
+function BFGS!(UDE,t_skip; verbose = false, initial_step_norm = 0.01)
   if verbose
       callback = function (p, l; doplot = false)
         print(round(l,digits = 3), " ")
@@ -138,11 +131,18 @@ function BFGS!(UDE,t_skip; verbos = false,verbose = false, initial_step_norm = 0
   
 end 
 
-# """
-#     NUTS!(UDE, kwargs ...)
+ """
+     NUTS!(UDE, kwargs ...)
 
-# performs Bayesian estimation on the parameters of an UDE using the NUTS sampling algorithm
-# """
+ performs Bayesian estimation on the parameters of an UDE using the NUTS sampling algorithm.
+
+ # kwargs
+
+- `delta`: Step size used in NUTS adaptor. Default is `0.45`.
+- `samples`: Number of parameters sampled. Default is `500`.
+- `burnin`: Number of samples used as burnin of Bayesian algorithm. Default is `samples/10`.
+- `verbose`: Should the training loss values be printed?. Default is `false`.
+ """
 function NUTS!(UDE::BayesianUDE;delta = 0.45,samples = 500, burnin = Int(samples/10), verbose = true)
   UDE.parameters = UDE.parameters[end]
 
@@ -165,11 +165,24 @@ function NUTS!(UDE::BayesianUDE;delta = 0.45,samples = 500, burnin = Int(samples
   UDE.parameters = draws
 end
 
-# """
-#     SGLD!(UDE, kwargs ...)
+ """
+     SGLD!(UDE, kwargs ...)
 
-# performs Bayesian estimation on the parameters of an UDE using the SGLD sampling algorithm
-# """
+ Performs Bayesian estimation on the parameters of an UDE using the SGLD sampling algorithm. At each step `t`, the stochastic update is provided by a random variable ε with mean 0 and variance:
+
+ ```math
+a(b + t-1)^γ
+ ```
+
+ # kwargs
+ 
+- `a`: Default is `10.0`.
+- `b`: Default is `1000`.
+- `γ`: Default is 0.9.
+- `samples`: Number of parameters sampled. Default is `500`.
+- `burnin`: Number of samples used as burnin of Bayesian algorithm. Default is `samples/10`.
+- `verbose`: Should the training loss values be printed?. Default is `false`.
+ """
 function SGLD!(UDE::BayesianUDE;samples = 500, burnin = Int(samples/10),a = 10.0, b = 1000, γ = 0.9, verbose = true)
   UDE.parameters = UDE.parameters[end]
 

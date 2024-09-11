@@ -90,7 +90,7 @@ function predictions(UDE::MultiUDE)
 end 
 
 function predictions(UDE::MultiUDE,test_data::DataFrame)
-     
+    check_test_data_names(UDE.data_frame, test_data)
     N, T, dims, data, times,  dataframe, series_ls, inds, starts, lengths, labs = process_multi_data(test_data,UDE.time_column_name,UDE.series_column_name)
     series_ls =  unique(UDE.data_frame[:,"series"])
     inits = [zeros(dims,l-1) for l in lengths]
@@ -152,7 +152,7 @@ end
 
 
 function plot_predictions(UDE::MultiUDE,test_data::DataFrame)
- 
+    check_test_data_names(UDE.data_frame, test_data)
     inits, obs, preds = predictions(UDE,test_data)
     plots = []
     for dim in 1:size(obs)[1]
@@ -252,7 +252,7 @@ end
 
 
 function plot_forecast(UDE::MultiUDE, test_data::DataFrame; show_legend = true)
-
+    check_test_data_names(UDE.data_frame, test_data)
     N, T, dims, test_data, test_times,  test_dataframe, test_series, inds, test_starts, test_lengths, labs = process_multi_data(test_data,UDE.time_column_name,UDE.series_column_name)
     N, T, dims, data, times,  dataframe, series, inds, starts, lengths, labs = process_multi_data(UDE.data_frame,UDE.time_column_name,UDE.series_column_name)
     
@@ -302,10 +302,7 @@ function plot_forecast(UDE::MultiUDE, test_data::DataFrame; show_legend = true)
 end 
 
 
-
-
-
-function phase_plane(UDE::MultiUDE;u1s=-5:0.25:5, u2s=-5:0.25:5,T = 100)
+function phase_plane(UDE::MultiUDE;idx = [1,2],u1s=-5:0.25:5, u2s=-5:0.25:5,u3s = 0,T = 100)
     
     # caclaute time to evaluate 
     lengths = [sum(UDE.data_frame.series .== i) for i in unique(UDE.data_frame.series)]
@@ -313,18 +310,104 @@ function phase_plane(UDE::MultiUDE;u1s=-5:0.25:5, u2s=-5:0.25:5,T = 100)
     dt = sum(dts)/length(dts)
     times = collect(dt:dt:(T*dt))
     
-    # calcaulte u0s
-    u0s = vcat([[u1,u2] for u1 in u1s for u2 in u2s])
-    plt = plot()
-    for u0 in u0s
-        data = forecast(UDE, u0, times) 
-        Plots.plot!(plt,data[:,2],data[:,3], label = "",
-                            line_z = log.(data[:,1]), c = :roma)
-    end 
+    # Generate subplot for each series
+    plots = []
+    for series in UDE.series_labels.label
+        
+        #Calculate u0s
+        u0s = vcat([reduce(vcat,[u1,u2,u3s]) for u1 in u1s for u2 in u2s])
+        permutation = unique([idx;collect(1:length(u0s[1]))])
+        u0s = invpermute!.(u0s,Ref(permutation))
+        
+        plt = plot()
+        for u0 in u0s
+            data = forecast(UDE, u0, 0.0, times, series) 
+            Plots.plot!(plt,data[:,(idx[1]+2)],data[:,(idx[2]+2)], label = "",
+                                line_z = log.(data[:,2]), c = :roma)
+        end 
+        push!(plots, plt)
+    end
     
-    return plt
+    return plot(plots...)
     
 end 
 
 
+function phase_plane(UDE::MultiUDE, u0s::AbstractArray;idx = [1,2],T = 100)
+    
+    # caclaute time to evaluate 
+    lengths = [sum(UDE.data_frame.series .== i) for i in unique(UDE.data_frame.series)]
+    dts = UDE.times[2:lengths[1]] .- UDE.times[1:(lengths[1]-1)]
+    dt = sum(dts)/length(dts)
+    times = collect(dt:dt:(T*dt))
+    
+    # Generate subplot for each series
+    plots = []
+    for series in UDE.series_labels.label
+        plt = plot()
+        for u0 in u0s
+            data = forecast(UDE, u0, 0.0, times, series) 
+            Plots.plot!(plt,data[:,(idx[1]+2)],data[:,(idx[2]+2)], label = "",
+                                line_z = log.(data[:,2]), c = :roma)
+        end 
+        push!(plots, plt)
+    end
+    
+    return plot(plots...)
+    
+end
 
+function phase_plane3d(UDE::MultiUDE;idx = [1,2,3],u1s=0:0.1:1, u2s=-0:0.1:1,u3s = 0:0.1:1.0,T = 50)
+    
+    # caclaute time to evaluate 
+    lengths = [sum(UDE.data_frame.series .== i) for i in unique(UDE.data_frame.series)]
+    dts = UDE.times[2:lengths[1]] .- UDE.times[1:(lengths[1]-1)]
+    dt = sum(dts)/length(dts)
+    times = collect(dt:dt:(T*dt))
+    
+    # Generate subplot for each series
+    plots = []
+    for series in UDE.series_labels.label
+        
+        # calcaulte u0s
+        u0s = vcat([reduce(vcat,[u1,u2,u3]) for u1 in u1s for u2 in u2s for u3 in u3s])
+        permutation = unique([idx;collect(1:length(u0s[1]))])
+        u0s = invpermute!.(u0s,Ref(permutation))
+
+        plt = plot3d()
+        for u0 in u0s
+            data = UniversalDiffEq.forecast(UDE, u0, 0.0, times, series) 
+            Plots.plot3d!(plt,data[:,(idx[1]+2)],data[:,(idx[2]+2)],data[:,(idx[3]+2)], label = "",
+                                line_z = log.(data[:,2]), c = :roma)
+        end 
+        push!(plots, plt)
+    end
+    
+    return plot3d(plots...)
+    
+end
+
+function phase_plane3d(UDE::MultiUDE, u0s::AbstractArray;idx = [1,2,3],T = 100)
+    
+    # caclaute time to evaluate 
+    lengths = [sum(UDE.data_frame.series .== i) for i in unique(UDE.data_frame.series)]
+    dts = UDE.times[2:lengths[1]] .- UDE.times[1:(lengths[1]-1)]
+    dt = sum(dts)/length(dts)
+    times = collect(dt:dt:(T*dt))
+    
+    # Generate subplot for each series
+    plots = []
+    for series in UDE.series_labels.label
+        
+        plt = plot3d()
+        for u0 in u0s
+            data = UniversalDiffEq.forecast(UDE, u0, 0.0, times, series) 
+            Plots.plot3d!(plt,data[:,(idx[1]+2)],data[:,(idx[2]+2)],data[:,(idx[3]+2)], label = "",
+                                line_z = log.(data[:,2]), c = :roma)
+        end 
+        push!(plots, plt)
+    end
+    
+    return plot3d(plots...)
+    
+end 

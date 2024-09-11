@@ -29,19 +29,19 @@ L(u,\theta_{proc},\theta_{obs};x) = \sum_{t =1}^{T} L_{obs}(x_t,h(u_t,\theta_{ob
 where the ``\sigma_i`` are parameters for the loss functions and the ``\theta_i`` are parameters for the prediction functions. 
 
 The UDE object combines the observation and process models and their respective loss and regularization models into one larger model object along with the data used to fit the model.
-```@docs
+```@docs; canonical=false
 UDE
 ```
 
-```@docs
+```@docs; canonical=false
 UniversalDiffEq.ProcessModel
 ```
 
-```@docs
+```@docs; canonical=false
 UniversalDiffEq.LossFunction
 ```
 
-```@docs
+```@docs; canonical=false
 UniversalDiffEq.Regularization  
 ```
 
