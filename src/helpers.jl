@@ -320,7 +320,7 @@ function check_test_data_names(modelData::DataFrame, test_data::DataFrame)
         for name in unfound_names
             col_names = col_names * name * " "
         end
-        error(col_names * err_msg)
+        error(err_msg * col_names)
     end
 end
 
