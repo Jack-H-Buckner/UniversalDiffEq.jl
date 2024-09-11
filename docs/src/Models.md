@@ -2,19 +2,19 @@
 
 UniversalDiffEq.jl provides a set of functions to construct UDEs with varying levels of customization. The model constructors all require the data to be passed using a DataFrame object from the DataFrames.jl library. The data frame should be organized with a column for time named `t`, and the remaining columns should have the values of the state variables (`y_i`) at each point in time.
 
-
+Table: **Example dataset with two state variables**
 |`t`|``y_1``| ``y_2``|
 |---|----|----|
 |0.1| 0.0| -1.1|
 |0.2| 0.01| -0.9|
 |0.5| 0.51|-1.05|
-Table: **Example data set with two state variables**
+
 
 Currently, missing data are not supported, but irregular intervals between time points are allowed.
 
 Each constructor function will require additional inputs to specify the model structure. For example, the `CustomDerivatives` function requires the user to supply the known functional forms through the `derivs!` argument. These arguments are described in detail in the subsection for each model type.
 
-Finally, the constructor functions share a set of keyword arguments used to tune the model fitting procedure. These control the weights given to the process model, observation model, and regularization in the loss function. Larger values of the regualrization weight limit the compexity of the relationships learned by the neural network reducing the likeihood of overfitting. The observation weight controls how closely the estimates states ``u_t`` match the data ``y_t``, smaller vlaus of the observation weight correspond to data sets with larger amount of observaiton error
+Finally, the constructor functions share a set of keyword arguments used to tune the model fitting procedure. These control the weights given to the process model, observation model, and regularization in the loss function. Larger values of the regularization weight limit the complexity of the relationships learned by the neural network reducing the likelihood of overfitting. The observation weight controls how closely the estimates states ``u_t`` match the data ``y_t``, smaller values of the observation weight correspond to data sets with larger amount of observation error
 
 - proc_weight=1.0 : The weight given to the model predictions in loss function
 - obs_weight=1.0 : The weight given to the state estimates in loss function
@@ -25,26 +25,27 @@ In addition to these weighting parameters, the key word argument `l` control how
 
 ## Nonparametric UDES (Neural Ordinary differntial equation)
 
-UniversalDiffEq.jl has two funtions to build time series model that use a neural network to learn all of the relationship in the data. These models are sometimes refered to and nueral ordinary differnetial equations (NODEs). 
+UniversalDiffEq.jl has two functions to build time series model that use a neural network to learn all of the relationship in the data. These models are sometimes referred to and neural ordinary differential equations (NODEs). 
 
-The functon `NODE` builds a continuous time UDE with a neurla network representing the right hand side of the differntial equation 
+The function `NODE` builds a continuous time UDE with a neural network representing the right hand side of the differential equation 
 
 ```math
    \frac{du}{dt} = NN(u;w,b),
 ```
 
-The function `NNDE` construct a differnce equation with a nerual network on the right hand side
+The function `NNDE` construct a difference equation with a neural network on the right hand side
 
 ```math
    x_{t+1} = x_t + NN(x_t).
 ```
 
-```@docs; canonical=false
+```
+@docs; canonical=false
 UniversalDiffEq.NODE(data;kwargs ... )
 UniversalDiffEq.NNDE(data;kwargs ...)
 ```
 
-Covariates can be added to the model by supplying a second data frame `X`. This dataframe must have the same column name for time as the primary data set, but the time point do not need to match because the values of the covariates between time points included in the data frame `X` are interpolated using a linear spline. . The `NODE` and `NNDE` functions will append the value of the covariates at each point in time to the neural network inputs
+Covariates can be added to the model by supplying a second dataframe `X`. This dataframe must have the same column name for time as the primary dataset, but the time points do not need to match because the values of the covariates between time points included in the data frame `X` are interpolated using a linear spline. The `NODE` and `NNDE` functions will append the value of the covariates at each point in time to the neural network inputs.
 
 ```math
    \frac{dx}{dt} = NN(x,X(t);w,b) \\
@@ -52,12 +53,14 @@ Covariates can be added to the model by supplying a second data frame `X`. This 
 ```
  
 
-```@docs; canonical=false
+```
+@docs; canonical=false
 UniversalDiffEq.NODE(data,X;kwargs ... )
 ```
 
-Multiple covariates with differnt observaiton frequencies can be supplied to the model with a long formate data set. If a long formate data set is provided the user must spcify which column containt the variable names and which column contains the value of the variable using the `variable_column_name` and `value_column_name` key word arguments. In the example below the variable column name is "variable" and the value column name is "value
+Multiple covariates with different observation frequencies can be supplied to the model with a long format dataset. If a long format dataset is provided, the user must specify which column contains the variable names and which column contains the value of the variable using the `variable_column_name` and `value_column_name` keyword arguments. In the example below, the variable column name is "variable" and the value column name is "value".
 
+Table: **Example covariate data in long format**
 |`t`|``variable``| ``value``|
 |---|----|----|
 |1.0| X_1| -1.1|
@@ -67,9 +70,9 @@ Multiple covariates with differnt observaiton frequencies can be supplied to the
 |1.0| X_2| 3.0|
 |2.0| X_2| 0.95|
 |4.0| X_2|-1.25|
-Table: **Example covariate data in long format**
 
-## Customizing universal dynamic equaitons
+
+## Customizing universal dynamic equations
 
 ### Continuous time models
 The `CustomDerivatives` and `CustomDifference` functions can be used to build models that combine neural networks and known functional forms. These functions take user-defined models, construct a loss function, and provide access to the model fitting and testing functions provided by UniversalDiffEq.jl.
@@ -81,14 +84,14 @@ UniversalDiffEq.CustomDerivatives(data,derivs!,initial_parameters;kwargs ... )
 ```
 
 ### Example
-The following block of code shows how to build a UDE model based on the Lotka-Volterra predator-prey model where the growth rate of the prey ``r``, mortality rate of the predator ``m``, and conversion efficiency ``\theta`` are estimated and the predation rate is described by a neural network ``NN``. The equatns for the ODE are
+The following block of code shows how to build a UDE model based on the Lotka-Volterra predator-prey model where the growth rate of the prey ``r``, mortality rate of the predator ``m``, and conversion efficiency ``\theta`` are estimated and the predation rate is described by a neural network ``NN``. The equations for the ODE are
 
 ```math
 \frac{dN}{dt} = rN - NN(N,P) \\
 \frac{dP}{dt} = \theta NN(N,P) - mP.
 ```
 
-To implement the model we start by defining the neural network and initializing its parameters using the `Lux.Chain` and  `Lux.setup` functions. 
+To implement the model, we start by defining the neural network and initializing its parameters using the `Lux.Chain` and  `Lux.setup` functions. 
 
 ```julia
 using Lux
@@ -129,7 +132,7 @@ model = CustomDerivatives(data,lotka_volterra_derivs!,initial_parameters)
 Discrete time models are constructed in a similar way to continuous time models. The user provides the right-hand side of a difference equation with the function `step` and initial parameters. The function `step(u,t,p)` takes three arguments: the value of the state variables `u`, time `t`, and model parameters `p`. 
 
 ```@docs; canonical=false
-UniversalDiffEq.CustomDifference(data,step,initial_parameters;kwrags...)
+UniversalDiffEq.CustomDifference(data,step,initial_parameters;kwargs ...)
 ```
 
 ## Adding covariates
