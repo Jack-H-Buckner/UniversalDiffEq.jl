@@ -5,7 +5,7 @@ Cross validation approximates the performance of a trained model on new data. Th
 
 ## K-fold cross validation
 
-k-fold cross validation breaks the data set up into k equally sized blocks of sequentially observations. The algorithm trains the model on all but one of the blocks which is used as the testing data set and repeates this procedure leaving each block out one at a time. 
+k-fold cross validation breaks the data set up into k equally sized blocks of sequential observations. The algorithm trains the model on all but one of the blocks which is used as the testing data set and repeates this procedure leaving each block out one at a time. 
 
 The models performance is evalauted predicting one time step ahead in the testing data set. The initial points for the preditions are estimated using a particle filter algorithm, described in detail below. The forecasts are calcualted starting from the estiamte of the state variable estiamted by the particle filter and compared to the observed data point one step into the future.  
 
