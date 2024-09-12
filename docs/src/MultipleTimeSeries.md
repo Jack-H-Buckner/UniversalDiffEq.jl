@@ -14,7 +14,6 @@ UniversalDiffEq.jl provides a set of functions to fit models to multiple time se
 
 ```@docs; canonical=false
 UniversalDiffEq.MultiNODE(data;kwargs...)
-UniversalDiffEq.MultiNODE(data,X;kwargs...)
 ```
 
 ## Multiple time series custom models
