@@ -23,7 +23,6 @@ Custom models can be trained on multiple time series using the `MultiCustomDeriv
 
 ```@docs; canonical=false
 UniversalDiffEq.MultiCustomDerivatives(data;kwargs...)
-UniversalDiffEq.MultiCustomDerivatives(data,X;kwargs...)
 ```
 ### Example 1: estimating unique growth rates for population time series
 
