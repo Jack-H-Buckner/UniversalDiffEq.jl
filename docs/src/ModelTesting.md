@@ -12,7 +12,7 @@ UniversalDiffEq.plot_state_estimates(UDE::UDE)
 
 We can make this analysis a bit more rigorous by looking for correlations in the obervation errors using the `observation_error_correlations` function. This creates a lag plot for each pair of variables in the model and calcualtes the correlation coeficent. Large correlations in the observation erros suggest the UDe model may be missing predictable variaiton in the data set. 
 
-```@docs canonical=false
+```@docs; canonical=false
 UniversalDiffEq.observation_error_correlations(UDE;fig_size = (600,500))
 ```
 

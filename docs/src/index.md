@@ -67,6 +67,6 @@ Models built with UniversalDiffEq.jl can incorperate covariates ``X_t`` that inf
 
 ## Package Contents
 ```@contents
-Pages = ["Models.md", "ModelTesting.md","MultipleTimeSeries.md","NutsAndBolts.md","modelanalysis.md","examples.md","API.md"]
+Pages = ["Models.md","MultipleTimeSeries.md", "ModelTesting.md", "CrossValidation.md", "NutsAndBolts.md","modelanalysis.md","examples.md","API.md"]
 ```
 
