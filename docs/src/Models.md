@@ -195,7 +195,7 @@ nothing
 
 ## Adding prior information 
 
-Users can add priors and custom neural network regularization functions by passing a fourth function to the model constructor that takes the parameters as an argument and returns the loss associated with those parameter values. Please note that the loss functions defined by UniversalDiffEq.jl use the mean squared errors of the model rather than a likelihood function, so priors over the model parameters will not have the usual Bayesian interpretation.   
+Users can add priors and custom neural network regularization functions by passing a function to the model constructor that takes the parameters as an argument and returns the loss associated with those parameter values. Please note that the loss functions defined by UniversalDiffEq.jl use the mean squared errors of the model rather than a likelihood function, so priors over the model parameters will not have the usual Bayesian interpretation.   
 
 ```@docs; canonical=false
 UniversalDiffEq.CustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,priors::Function;kwargs ... )
