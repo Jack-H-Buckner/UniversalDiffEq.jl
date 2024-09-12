@@ -19,13 +19,11 @@ UniversalDiffEq.MultiNODE(data,X;kwargs...)
 
 ## Multiple time series custom models
 
-Custom models can be trained on multiple time series using the `MultiCustomDerivatives` and `MultiCustomDiffernce` functions. The user-defined function that builds these models requires an additional argument, `i` added as the third argument for continuous-time and a second argument for discrete-time (e.g., `derivs!(du,u,i,X,p,t)`, `step(u,i,p,t)`). The UniversalDiffEq.jl library will use this argument to pass a unique index for each time series. These indices can then be used to estimate different parameter values for each time series as illustrated in the following examples. 
+Custom models can be trained on multiple time series using the `MultiCustomDerivatives` function. The user-defined function that builds these models requires an additional argument, `i` added as the third argument  (e.g., `derivs!(du,u,i,X,p,t)`, `derivs!(du,u,i,p,t)`). The UniversalDiffEq.jl library will use this argument to pass a unique index for each time series. These indices can then be used to estimate different parameter values for each time series as illustrated in the following examples. 
 
 ```@docs; canonical=false
 UniversalDiffEq.MultiCustomDerivatives(data;kwargs...)
 UniversalDiffEq.MultiCustomDerivatives(data,X;kwargs...)
-UniversalDiffEq.MultiCustomDifference(data;kwargs...)
-UniversalDiffEq.MultiCustomDifference(data,X;kwargs...)
 ```
 ### Example 1: estimating unique growth rates for population time series
 
