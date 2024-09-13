@@ -1,13 +1,24 @@
 # Test models
 
-UniversalDiffEq.jl provides a number of functions to test the performance of NODE and UDE models, with both in-sample and out-of-sample data. 
+UniversalDiffEq.jl provides a number of functions to test the performance of NODE and UDE models on in sample data. These test validate the model fitting procedure. Functions to estiamte the model's performance on out of sample data are discussed in the section on cross validation.  
 
 ## Evaluating model fits
 
-There are two primary functions to test model fits: `plot_state_estimates` and `plot_predictions`. The model fitting procedure estimates the value of the state variables ``\hat{u}`` at each time point in the data set as well as the parameters of the NODE or UDE model that predicts changes in the state variables. The `plot_state_estimates` function compares the estimated states to the data to check the quality of the state estimates, and `plot_predictions` compares the predictions of UDE model one step into the future to the estimated sequence of state variables. Both functions take a UDE as an input and return a plot showing the correspondence between model predictions and observations. 
+There are two primary functions to evaluate model fits: `plot_state_estimates` and `plot_predictions`. The training procedure used by UniversalDiffEq.jl simutaniously smooths the training data and trains trains the paramters of the UDE model on the smoothed data set. The funciton `plot_state_estimates` compares the smoothed time series produced by the training procedure to the observations in the data set. The smoothed time series (grey line) needs to capture the main trends in trainig data (blue dots) for the model to accurately recover the dynamics in the data set. 
 
 ```@docs; canonical=false
 UniversalDiffEq.plot_state_estimates(UDE::UDE)
+```
+
+We can make this analysis a bit more rigorous by looking for correlations in the obervation errors using the `observation_error_correlations` function. This creates a lag plot for each pair of variables in the model and calcualtes the correlation coeficent. Large correlations in the observation erros suggest the UDe model may be missing predictable variaiton in the data set. 
+
+```@docs; canonical=false
+UniversalDiffEq.observation_error_correlations(UDE;fig_size = (600,500))
+```
+
+The `plot_predictions`  functions compares the predictions of UDE model one step into the future to the estimated sequence of state variables. This function quantifies the in sample predictive accuracy of the model. 
+
+```@docs; canonical=false
 UniversalDiffEq.plot_predictions(UDE::UDE)
 ```
 
@@ -23,12 +34,4 @@ It is also possible to test the performance of the models one time step into the
 UniversalDiffEq.plot_predictions(UDE::UDE, test_data::DataFrame)
 ```
 
-## Cross-validation
 
-Cross-validation is important for model comparison and hyper-parameter tuning. The `leave_future_out_cv` function breaks the data set into training and test data sets by leaving off the final observations in the data set. The model is then trained on the beginning of the data set and the performance is calculated by comparing a forecast to the test data. The user can specify the time horizon for the forecast ``T_{Forecast}`` and the number of tests ``K``. The first test trains the model on the full data set only omitting the final ``T_{forecast}`` years as the test set. The remaining tests each generate a new test data set by iteratively removing more of the observations from the end of the data set. The number removed between each test can be controlled by changing the spacing argument. The `kfold_cv` function performs a k-fold version of `leave_future_out_cv`.
-
-
-```@docs; canonical=false
-UniversalDiffEq.leave_future_out_cv(model::UDE)
-UniversalDiffEq.kfold_cv(model::UDE)
-```

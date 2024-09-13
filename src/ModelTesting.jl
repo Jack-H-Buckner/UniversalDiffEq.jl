@@ -53,6 +53,27 @@ function plot_state_estimates(UDE::UDE)
     return plot(plots...)
 end
 
+"""
+    observation_error_correlations(UDE)
+
+The first differnce plot of the observation errors ``\epsilon_t``. This allows the user to check for autocorrelation in the observation errors.   
+"""
+function observation_error_correlations(UDE;fig_size = (600,500))
+    proc_resids, obs_resids = get_residuals(UDE)
+    plts = []
+    for i in 1:size(obs_resids)[1]
+        for j in 1:size(obs_resids)[1]
+            x = obs_resids[i,1:(end-1)]
+            y = obs_resids[j,2:end]
+            push!(plts,Plots.scatter(x,y, label = "", xlabel = string("y_",i), ylabel = string("y_",j),
+                                    title = string("cor =", round(cor(x,y), digits = 2)),
+                                    titlefontsize = 8, ticks = false, guidefontsize = 8))
+        end 
+    end
+    plt = plot(plts...)
+    plot!(plt,size = fig_size)
+    return plt
+end 
 
 
 """
@@ -474,6 +495,7 @@ function forecast(UDE::UDE, u0::AbstractVector{}, t0::Real, times::AbstractVecto
             dt = times[t]-times[t-1]
             tinit = times[t-1]
         end
+
         x = estimated_map(x,tinit,dt)
         df[t,:] = vcat([times[t]],x)
     end

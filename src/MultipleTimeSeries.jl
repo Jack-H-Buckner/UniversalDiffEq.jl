@@ -246,6 +246,11 @@ function MultiNODE(data,X;time_column_name = "time", series_column_name = "serie
 end 
 
 
+"""
+    MultiCustomDerivatives(data,derivs!,initial_parameters;kwargs...)
+
+Builds a UDE model that can be trianed on multiple time series simultaniously. The user defined derivatives functions must allow for an extra argument `i` that indexes over the time seris in the data set (e.g. `derivs!(du,u,i,)`). `data` is a DataFrame object with time arguments placed in a column labeled `t` and a second column with a unique index for each time series. The remaining columns have observations of the state variables at each point in time and for each time series.
+"""
 function MultiCustomDerivatives(data,derivs!,initial_parameters;time_column_name = "time", series_column_name = "series",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
     
     time_column_name, series_column_name = check_column_names(data, time_column_name = time_column_name, series_column_name = series_column_name)

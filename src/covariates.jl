@@ -64,6 +64,16 @@ function interpolate_covariates(X::DataFrame,time_column_name,series_column_name
     dims = size(data_sets[1])[1]
     interpolations = [[linear_interpolation(times[j], data_sets[j][i,:],extrapolation_bc = Interpolations.Flat()) for i in 1:dims] for j in eachindex(times)]
     function covariates(t,series)
+
+        try [interpolation(t) for interpolation in interpolations[round(Int,series)]]
+        catch e
+            if(isa(e, BoundsError))
+                error("Error: BoundsError when interpolating covariates across different series, please ensure that the covariate data provided has series numbers for all series present in the data")
+            else
+                throw(e)
+            end
+        end
+
         return [interpolation(t) for interpolation in interpolations[round(Int,series)]]
     end 
     return covariates, nothing
