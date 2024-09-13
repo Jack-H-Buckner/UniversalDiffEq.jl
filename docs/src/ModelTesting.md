@@ -7,6 +7,7 @@ UniversalDiffEq.jl provides a number of functions to test the performance of NOD
 There are two primary functions to evaluate model fits: `plot_state_estimates` and `plot_predictions`. The training procedure used by UniversalDiffEq.jl simultaneously smooths the training data and trains the parameters of the UDE model on the smoothed dataset. The function `plot_state_estimates` compares the smoothed time series produced by the training procedure to the observations in the dataset. The smoothed time series (grey line) needs to capture the main trends in training data (blue dots) for the model to accurately recover the dynamics in the dataset (Fig. 1).
 
 ![Model fit to simulated training data](figures/regime_changes_state_estimates.png)
+
 **Figure 1**: Model fit to simulated training data
 
 ```@docs; canonical=false
