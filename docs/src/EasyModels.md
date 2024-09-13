@@ -1,8 +1,8 @@
 # Easy NODE and UDE
 
-`EasyNODE` and `EasyUDE` provide a quick, simple alternative to the other model constructors featured by UniversalDiffEq.jl. They each return pre-trained models, in which neural networks are kept to 1 hidden layer. The models are trained using the `gradient_descent!` function.
+`EasyNODE` and `EasyUDE` provide a quick, simple alternative to the other model constructors featured by UniversalDiffEq.jl. They each return pre-trained models, in which neural networks are kept to one hidden layer. The models are trained using the `gradient_descent!` function.
 
-# EasyNODE constructors:
+## EasyNODE constructors
 
 ```@docs; canonical=false
 EasyNODE(data,X;kwargs ... )
@@ -19,7 +19,7 @@ model = NODE(data)
 gradient_descent!(model)
 ```
 
-# EasyUDE constructors:
+## EasyUDE constructors
 
 ```@docs; canonical=false
 EasyUDE(data,known_dynamics!,initial_parameters;kwargs ... )
@@ -32,7 +32,7 @@ Unlike `EasyNODE`, running `EasyUDE` is not equivalent to running `CustomDerivat
 \frac{dx}{dt} = NN(x;w,b) + f(x;a).
 ```
 
-where $f$ corresponds to the `known_dynamics!` argument, and `a` the `initial_parameters` argument in `EasyUDE`.
+where $f$ corresponds to the `known_dynamics!` argument, and $a$ is the `initial_parameters` argument in `EasyUDE`.
 
 ```julia
 function known_dynamics!(du,u,parameters,t)
@@ -51,8 +51,8 @@ dims_out = 1
 NN = Lux.Chain(Lux.Dense(dims_in,hidden_units,nonlinearity),
                 Lux.Dense(hidden_units,dims_out))
 
-rng = Random.default_rng() 
-NNparameters, states = Lux.setup(rng,NN) 
+rng = Random.default_rng()
+NNparameters, states = Lux.setup(rng,NN)
 
 function derivs!
     C, states = NN(u,p.NN,states)
