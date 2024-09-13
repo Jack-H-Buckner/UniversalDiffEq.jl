@@ -349,3 +349,14 @@ function melt(data; id_vars = nothing)
     return long_data
 end 
 
+function max_(x)
+    x[argmax(x)]
+end
+
+function min_(x)
+    x[argmin(x)]
+end
+
+function mean_(x)
+    sum(x)/length(x)
+end
