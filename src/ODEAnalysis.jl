@@ -409,7 +409,7 @@ function arguments(UDE)
 end
 
 
-# Bifrucation diagrams
+# Bifurcation diagrams
 
 function get_variable_names(model::UDE)
     # state variable names 
@@ -428,11 +428,11 @@ function get_variable_names(model::UDE)
 end 
 
 """
-    bifructaion_data(model::UDE;N=25)
+    bifurcation_data(model::UDE;N=25)
 
 Calcualtes the equilibrium values of the state variabels ``y_t`` as a function of the covariates `X_t` and return the value in a data frame. The funciton calcualtes the equilibrium values on a grid of ``N`` evenly spaced point for each covariate. 
 """
-function bifructaion_data(model::UDE;N=25)
+function bifurcation_data(model::UDE;N=25)
 
     X = model.process_model.covariates.(model.times)
     dims = length(X[1])
@@ -488,15 +488,15 @@ end
 
 
 """
-    plot_bifrucation_diagram(model::UDE, xvariable; N = 25, color_variable= nothing, conditional_variable = nothing, size= (600, 400))
+    plot_bifurcation_diagram(model::UDE, xvariable; N = 25, color_variable= nothing, conditional_variable = nothing, size= (600, 400))
     
 This function returns a plot of the equilibrium values of the state varaibles ``y_t`` as a funciton of the covariates ``X_t``. The arguemnt `xvariable` determines the covariate plotted on the x-axis. Additional variables can be visualized in sperate panel by specifying the `conditional_variable` key word argument or visualized by the color scheme using the `color_variable` argument. 
 
 The key word arguent `size` controls the dimensions of the final plot. 
 """
-function plot_bifrucation_diagram(model::UDE, xvariable; N = 25, color_variable= nothing, conditional_variable = nothing, size= (600, 400))
+function plot_bifurcation_diagram(model::UDE, xvariable; N = 25, color_variable= nothing, conditional_variable = nothing, size= (600, 400))
     # compute equilibriums
-    data = bifructaion_data(model;N=N)
+    data = bifurcation_data(model;N=N)
     
     # transform data frame
     nms,xnms = get_variable_names(model)
@@ -550,7 +550,7 @@ function plot_bifrucation_diagram(model::UDE, xvariable; N = 25, color_variable=
 end
 
 
-# Mutiple time series bifrucation diagrams 
+# Mutiple time series bifurcation diagrams 
 
 
 
@@ -571,11 +571,11 @@ function get_variable_names(model::MultiUDE)
 end 
 
 """
-    bifructaion_data(model::MultiUDE;N=25)
+    bifurcation_data(model::MultiUDE;N=25)
 
 Calcualtes the equilibrium values of the state variabels ``y_t`` as a function of the covariates `X_t` and return the value in a data frame. The funciton calcualtes the equilibrium values on a grid of ``N`` evenly spaced point for each covariate. The calcualtion are repeated for each time series ``i`` included in the training data set.  
 """
-function bifructaion_data(model::MultiUDE; N=25)
+function bifurcation_data(model::MultiUDE; N=25)
 
     X = model.process_model.covariates.(model.times,1)
     dims = length(X[1])
@@ -646,7 +646,7 @@ function bifructaion_data(model::MultiUDE; N=25)
 end
 
 """
-    plot_bifrucation_diagram(model::UDE, xvariable; N = 25, color_variable= nothing, conditional_variable = nothing, size= (600, 400))
+    plot_bifurcation_diagram(model::UDE, xvariable; N = 25, color_variable= nothing, conditional_variable = nothing, size= (600, 400))
     
 This function returns a plot of the equilibrium values of the state varaibles ``y_t`` as a funciton of the covariates ``X_t``. The arguemnt `xvariable` determines the covariate plotted on the x-axis. Additional variables can be visualized in sperate panel by specifying the `conditional_variable` key word argument or visualized by the color scheme using the `color_variable` argument. 
 
@@ -654,7 +654,7 @@ The time sereis are treated as an additional covariate that can be visualized by
 
 The key word arguent `size` controls the dimensions of the final plot. 
 """
-function plot_bifrucation_diagram(model::MultiUDE, xvariable; N=25, color_variable=nothing, conditional_variable=nothing, size= (600, 400))
+function plot_bifurcation_diagram(model::MultiUDE, xvariable; N=25, color_variable=nothing, conditional_variable=nothing, size= (600, 400))
     
     series = nothing
     if (conditional_variable == model.series_column_name) | (conditional_variable == "series")
@@ -666,7 +666,7 @@ function plot_bifrucation_diagram(model::MultiUDE, xvariable; N=25, color_variab
     end 
 
     # compute equilibriums
-    data = bifructaion_data(model;N=N)
+    data = bifurcation_data(model;N=N)
 
     # transform data frame
     nms,xnms = get_variable_names(model)
