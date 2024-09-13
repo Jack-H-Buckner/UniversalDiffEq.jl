@@ -12,7 +12,7 @@ end
 
 
 function get_residuals(UDE)
-    inits, obs, preds = UniversalDiffEq.predictions(UDE,UDE.data_frame)
+    inits, obs, preds = predictions(UDE,UDE.data_frame)
     proc_resids = preds .- obs
     link = x -> UDE.observation_model.link(x,UDE.parameters.observation_model)
     obs_resids = mapslices(link,UDE.parameters.uhat,dims=1) .- UDE.data  

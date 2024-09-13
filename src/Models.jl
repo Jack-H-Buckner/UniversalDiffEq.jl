@@ -17,6 +17,10 @@ Basic data structure used to the model structure, parameters and data for UDE an
 - process_regularization: a Julia mutable struct used to store data needed for process model regularization
 - observation_regularization: a Julia mutable struct used to store data needed for observation model regularization
 - constructor: A function that initializes a UDE model with identical structure.
+- time_column_name: A string with the name of the column used for 
+- weights 
+- variable_column_name 
+- value_column_name
 ...
 """
 mutable struct UDE
