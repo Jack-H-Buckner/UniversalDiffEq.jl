@@ -382,18 +382,6 @@ function plot_predictions(UDE::BayesianUDE,test_data::DataFrame;ci=95)
     return plot(plots...)
 end
 
-function max_(x)
-    x[argmax(x)]
-end
-
-function min_(x)
-    x[argmin(x)]
-end
-
-function mean_(x)
-    sum(x)/length(x)
-end
-
 
 """
     forecast(UDE::UDE, u0::AbstractVector{}, times::AbstractVector{})

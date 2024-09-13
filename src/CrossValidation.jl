@@ -1,16 +1,3 @@
-function max_(x)
-    x[argmax(x)]
-end
-
-function min_(x)
-    x[argmin(x)]
-end
-
-function mean_(x)
-    sum(x)/length(x)
-end
-
-
 function get_residuals(UDE)
     inits, obs, preds = predictions(UDE,UDE.data_frame)
     proc_resids = preds .- obs
