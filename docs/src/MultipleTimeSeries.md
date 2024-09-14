@@ -1,9 +1,10 @@
 # Fitting a model to multiple time series
 
-UniversalDiffEq.jl provides a set of functions to fit models to multiple time series. The functions for this mirror the functions for fitting NODEs and UDEs to single time series with the prefix `Multi`. For example, to build a NODE model for multiple time series you would use the `MultiNODE` function. The functions for model fitting, testing, and visualization have the same names. The other important difference is the data format: a column with a unique index for each time series must be included. 
+UniversalDiffEq.jl provides a set of functions to fit models to multiple time series. The functions for this mirror the functions for fitting NODEs and UDEs to single time series with the prefix `Multi`. For example, to build a NODE model for multiple time series you would use the `MultiNODE` function. The functions for model fitting, testing, and visualization have the same names. The other important difference is the data format: a column with a unique index for each time series must be included.
 
-## Dataframe
-|t  | series | x1            | x2             |
+**Table**: Example data frame with multiple time series
+
+|`time`|`series`|``x_1``|``x_2``|
 |---|--------|---------------|----------------|
 |1  | 1      | ``x_{1,1,t}`` | ``x_{1,2,t}``  |
 |2  | 1      | ``x_{1,1,t}`` | ``x_{1,2,t}``  |
@@ -19,19 +20,19 @@ UniversalDiffEq.MultiNODE(data,X;kwargs...)
 
 ## Multiple time series custom models
 
-Custom models can be trained on multiple time series using the `MultiCustomDerivatives` function. The user-defined function that builds these models requires an additional argument, `i` added as the third argument  (e.g., `derivs!(du,u,i,X,p,t)`, `derivs!(du,u,i,p,t)`). The UniversalDiffEq.jl library will use this argument to pass a unique index for each time series. These indices can then be used to estimate different parameter values for each time series as illustrated in the following examples. 
+Custom models can be trained on multiple time series using the `MultiCustomDerivatives` function. The user-defined function that builds these models requires an additional argument, `i` added as the third argument  (e.g., `derivs!(du,u,i,X,p,t)`, `derivs!(du,u,i,p,t)`). The UniversalDiffEq.jl library will use this argument to pass a unique index for each time series. These indices can then be used to estimate different parameter values for each time series as illustrated in the following examples.
 
 ```@docs; canonical=false
 UniversalDiffEq.MultiCustomDerivatives(data,derivs!,initial_parameters;kwargs...)
 ```
-### Example 1: estimating unique growth rates for population time series
+### Example 1: Estimating unique growth rates for population time series
 
 To illustrate how unique parameters can be estimated for separate time series, we build a generalized logistic model that uses a neural network to describe the density dependence of the populations and estimates unique growth rates for each time series
 ```math
 \frac{du_i}{dt} = r_i u_i NN(u_i).
 ```
 
-To build this model, we use the argument `i` of the derive function to index it into a vector of growth rate parameters. Notice that we need to transform `i` to be an integer for the indexing operation by calling `round(Int,i)` and we initialize the growth rate parameter `r` 
+To build this model, we use the argument `i` of the `derivs!` function to index it into a vector of growth rate parameters. Notice that we need to transform `i` to be an integer for the indexing operation by calling `round(Int,i)` and we initialize the growth rate parameter `r`.
 
 ```julia
 # set up neural network
@@ -49,7 +50,7 @@ NNparameters, NNstates = Lux.setup(rng,NN)
 
 function derivs!(du,u,i,X,p,t)
     index = round(Int,i)
-    du .= p.r[i].* u .* NN(u,p.NN, NNstates)[1] # NNstates are
+    du .= p.r[i].* u .* NN(u,p.NN, NNstates)[1]
 
 end
 
@@ -61,18 +62,18 @@ nothing
 
 ```
 
-### Example 2: allowing a neural network to vary between time series
+### Example 2: Allowing a neural network to vary between time series
 
-In some cases, we may want to allow the neural networks we use to estimate unknown functions to vary between time series. This can be achieved by passing an indicator variable to the neural network that encodes the time series being fit using a one-hot encoding. This method allows the model to learn unique functions for each time series if appropriate, while also sharing information about the unknown function between time series. 
+In some cases, we may want to allow the neural networks to vary between time series so that they can estimate unknown functions specific to each time series. This can be achieved by passing an indicator variable to the neural network that encodes the time series being fit using [one-hot encoding](https://www.geeksforgeeks.org/ml-one-hot-encoding/). This method allows the model to learn unique functions for each time series if appropriate, while also sharing information about the unknown function between time series.
 
-To illustrate this define a NODE model that takes the indicator variable as an additional argument. 
+To illustrate this, define a NODE model that takes the indicator variable as an additional argument.
 
 
 ```julia
 # set up neural network
-m = 10 # number of time seires
+m = 10 # number of time series
 using Lux
-dims_in = 2+m #two inputs for the state variable plus m inputs for the one-hot encoding 
+dims_in = 2+m #two inputs for the state variable plus m inputs for the one-hot encoding
 hidden_units = 10
 nonlinearity = tanh
 dims_out = 2
@@ -87,7 +88,7 @@ function derivs!(du,u,i,X,p,t)
     index = round(Int,i)
     one_hot = zeros(m)
     one_hot[index] = 1
-    du .=  NN(vcat(u,one_hot) ,p.NN, NNstates)[1] # NNstates are
+    du .=  NN(vcat(u,one_hot) ,p.NN, NNstates)[1]
 end
 
 init_parameters = (NN = NNparameters, )
