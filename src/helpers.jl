@@ -232,7 +232,6 @@ function check_column_names(data::DataFrame; time_column_name = nothing, series_
 end
 
 function check_column_names(data::DataFrame, covariates::DataFrame; time_column_name = nothing, series_column_name = nothing, value_column_name = nothing, variable_column_name = nothing)
-
     global col_names = [time_column_name, series_column_name, value_column_name, variable_column_name]
 
     if(time_column_name !== nothing)
@@ -317,9 +316,47 @@ function check_test_data_names(modelData::DataFrame, test_data::DataFrame)
     end
     if(length(unfound_names) > 0)
         err_msg = "Error: Please ensure that all column names match provided training data. The following columns were not found in provided testing data: \n"
+        col_names = ""
         for name in unfound_names
-            err_msg = err_msg * name * " "
+            col_names = col_names * name * " "
         end
-        error(err_msg)
+        error(err_msg * col_names)
     end
+end
+
+function melt(data; id_vars = nothing)
+
+    vars = names(data)
+    inds = broadcast(nm -> !(nm in id_vars), vars)
+    vars = vars[inds]
+    
+    long_data = DataFrame(zeros(length(vars)*nrow(data), length(id_vars)),id_vars)
+    long_data.variable .= repeat(["variable"], length(vars)*nrow(data))
+    long_data.value .= repeat([0.0], length(vars)*nrow(data))
+    n = 0
+    for i in 1:nrow(data)
+        for j in eachindex(vars)
+            n += 1
+            id_values = Vector(data[i,id_vars])
+            variable = vars[j]
+            value = data[i,variable]
+            long_data[n,id_vars] .= id_values
+            long_data.variable[n] = variable
+            long_data.value[n] = value
+        end 
+    end 
+
+    return long_data
+end 
+
+function max_(x)
+    x[argmax(x)]
+end
+
+function min_(x)
+    x[argmin(x)]
+end
+
+function mean_(x)
+    sum(x)/length(x)
 end

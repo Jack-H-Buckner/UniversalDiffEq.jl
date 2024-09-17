@@ -6,3 +6,9 @@ examples/
 .vscode/
 *.Rproj
 .Rhistory
+src/.ipynb_checkpoints/covariates-checkpoint.jl
+src/.ipynb_checkpoints/ModelTesting-checkpoint.jl
+src/.ipynb_checkpoints/UniversalDiffEq-checkpoint.jl
+src/.ipynb_checkpoints/SimulateData-checkpoint.jl
+src/.ipynb_checkpoints/MultiProcessModel-checkpoint.jl
+src/.ipynb_checkpoints/MultipleTimeSeries-checkpoint.jl
