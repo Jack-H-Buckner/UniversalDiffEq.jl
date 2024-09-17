@@ -160,7 +160,21 @@ end
 """
     MultiNODE(data;kwargs...)
 
-Builds a NODE model to fit to the data with multiple time series. `data` is a DataFrame object with time arguments placed in a column labeled `t` and a second column with a unique index for each time series. The remaining columns have observations of the state variables at each point in time and for each time series.
+builds a NODE model to fit to the data. `data` is a DataFrame object with time arguments placed in a column labed `t` and a second column with a unique index for each time series. The remaining columns have observations of the state variables at each point in time and for each time series.
+
+# kwargs
+
+- `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
+- `series_column_name`: Name of column in `data` that corresponds to time. Default is `"series"`.
+- `hidden_units`: Number of neurons in hidden layer. Default is `10`.
+- `seed`: Fixed random seed for repeatable results. Default is `1`.
+- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
+- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
+- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
+- `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
+- `l`: Extrapolation parameter for forecasting. Default is `0.25`.
+- `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
+
 """
 function MultiNODE(data;time_column_name = "time", series_column_name = "series",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,reg_type="L2",l=0.5,extrap_rho=0.0)
 
@@ -203,7 +217,22 @@ end
 """
     MultiNODE(data,X;kwargs...)
 
-When a dataframe `X` is supplied, the model will run with covariates. The argument `X` should have a column for time, a column for series index, a column for covariate names, and a column for the covariate values at each time step. The values in `X` will be interpolated with a linear spline for values of time not included in the dataframe. 
+When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for values of time not included in the data frame. 
+
+# kwargs
+
+- `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
+- `series_column_name`: Name of column in `data` that corresponds to time. Default is `"series"`.
+- `variable_column_name`: Name of column in `data` that corresponds to the covariates. Default is `"variable"`. 
+- `value_column_name`: Name of column in `data` that corresponds to the covariates. Default is `"value"`. 
+- `hidden_units`: Number of neurons in hidden layer. Default is `10`.
+- `seed`: Fixed random seed for repeatable results. Default is `1`.
+- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
+- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
+- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
+- `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
+- `l`: Extrapolation parameter for forecasting. Default is `0.25`.
+- `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
 """
 function MultiNODE(data,X;time_column_name = "time", series_column_name = "series", variable_column_name = nothing, value_column_name = nothing,hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,reg_type="L2",l=0.5,extrap_rho=0.0)
     X_data_frame = X
@@ -245,11 +274,23 @@ function MultiNODE(data,X;time_column_name = "time", series_column_name = "serie
     
 end 
 
-
 """
     MultiCustomDerivatives(data,derivs!,initial_parameters;kwargs...)
 
 Builds a UDE model that can be trianed on multiple time series simultaniously. The user defined derivatives functions must allow for an extra argument `i` that indexes over the time seris in the data set (e.g. `derivs!(du,u,i,)`). `data` is a DataFrame object with time arguments placed in a column labeled `t` and a second column with a unique index for each time series. The remaining columns have observations of the state variables at each point in time and for each time series.
+
+# kwargs
+
+- `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
+- `series_column_name`: Name of column in `data` that corresponds to time. Default is `"series"`.
+- `variable_column_name`: Name of column in `data` that corresponds to the variables. Default is `"variable"`.
+- `value_column_name`: Name of column in `data` that corresponds to the covariates. Default is `"value"`.
+- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
+- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
+- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
+- `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
+- `l`: Extrapolation parameter for forecasting. Default is `0.25`.
+- `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
 """
 function MultiCustomDerivatives(data,derivs!,initial_parameters;time_column_name = "time", series_column_name = "series",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
     
