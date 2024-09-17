@@ -1,6 +1,5 @@
 <img alt="Package logo" width = "500px" src="README images/Package_logo.png" />
 
-[![Build Status](https://github.com/jarroyoe/UniversalDiffEq.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/jarroyoe/UniversalDiffEq.jl/actions/workflows/CI.yml?query=branch%3Amain)
 
 | Minimum V-1.7 | V-1.10 | Nightly |
 |-----------------|---------------------|-------------------------|
