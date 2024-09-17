@@ -4,7 +4,7 @@
 
 | ** Minimum V-1.7 ** | ** V-1.10 ** | ** Nightly ** |
 |-----------------|---------------------|-------------------------|
-| [![Build Status](https://github.com/jarroyoe/UniversalDiffEq.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/jarroyoe/UniversalDiffEq.jl/actions/workflows/CI.yml) | [![Build Status](https://github.com/jarroyoe/UniversalDiffEq.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/jarroyoe/UniversalDiffEq.jl/actions/workflows/CI.yml)| [![Build Status](https://github.com/jarroyoe/UniversalDiffEq.jl/actionsworkflows/CI.yml/badge.svg)](https://github.com/jarroyoe/UniversalDiffEq.jl/actionsworkflows/CI.yml)|
+| [![Build Status](https://github.com/jarroyoe/UniversalDiffEq.jl/actions/workflows/CI-V1-7.yml/badge.svg)](https://github.com/jarroyoe/UniversalDiffEq.jl/actions/workflows/CI-V1-7.yml) | [![Build Status](https://github.com/jarroyoe/UniversalDiffEq.jl/actions/workflows/CI-V1-10.yml/badge.svg)](https://github.com/jarroyoe/UniversalDiffEq.jl/actions/workflows/CI-V1-10.yml)| [![Build Status](https://github.com/jarroyoe/UniversalDiffEq.jl/actionsworkflows/CI-Nightly.yml/badge.svg)](https://github.com/jarroyoe/UniversalDiffEq.jl/actionsworkflows/CI-Nightly.yml)|
 
 
 [![Docs](https://img.shields.io/badge/docs-dev-blue)](https://jack-h-buckner.github.io/UniversalDiffEq.jl/dev/)
