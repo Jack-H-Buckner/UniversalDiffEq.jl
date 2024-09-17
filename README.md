@@ -1,6 +1,12 @@
 <img alt="Package logo" width = "500px" src="README images/Package_logo.png" />
 
 [![Build Status](https://github.com/jarroyoe/UniversalDiffEq.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/jarroyoe/UniversalDiffEq.jl/actions/workflows/CI.yml?query=branch%3Amain)
+
+| ** Minimum V-1.7 ** | ** V-1.10 ** | ** Nightly ** |
+|-----------------|---------------------|-------------------------|
+| [![Build Status](https://github.com/jarroyoe/UniversalDiffEq.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/jarroyoe/UniversalDiffEq.jl/actions/workflows/CI.yml) | [![Build Status](https://github.com/jarroyoe/UniversalDiffEq.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/jarroyoe/UniversalDiffEq.jl/actions/workflows/CI.yml)| [![Build Status](https://github.com/jarroyoe/UniversalDiffEq.jl/actionsworkflows/CI.yml/badge.svg)](https://github.com/jarroyoe/UniversalDiffEq.jl/actionsworkflows/CI.yml)|
+
+
 [![Docs](https://img.shields.io/badge/docs-dev-blue)](https://jack-h-buckner.github.io/UniversalDiffEq.jl/dev/)
 
 UniversalDiffEq.jl builds [Universal Differential Equations](https://arxiv.org/abs/2001.04385) (UDEs) to learn nonlinear dynamics from time series data. The models and training routines are constructed to address several challenges common in ecology and environmental science. Our package uses [DiffEqFlux.jl](https://github.com/SciML/DiffEqFlux.jl) to implement UDEs. Models built with UniversalDiffEq.jl are constructed within a state-space modeling framework that simultaneously accounts for imperfect (noisy) observations and stochastic (unpredictable) dynamics. UniversalDiffEq.jl also builds training routines based on a state-space framework that can improve the performance of UDEs on datasets from open systems whose dynamics are determined by a combination of endogenous feedback mechanisms and stochastic external forcing.
