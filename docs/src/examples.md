@@ -1,16 +1,18 @@
 # Examples
-## Using time-dependent NODEs to predict regime changes
+## Using time-dependent NODEs to predict regime shifts
 
-One interesting use of NODE and UDE models in ecology is detecting and predicting regime changes, sudden shifts in the structure and function of an ecosystem caused by a small change in conditions. Regime changes are caused by the interaction of non-linear feedback mechanisms, environmental variability, and long-term environmental change. NODE and UDE models built with UniversalDiffEq.jl can capture all three of these processes, opening up the possibility of detecting and predicting regime changes from data.
-
-
-In the following example, we build a NODE model for a two-species system that undergoes a regime change. The data are simulated from the Mumby et al. (2007) model of coral-algae competition with an added term for stochastic coral mortality events and a long-term increase in the coral mortality rate from increasing temperature. The increasing temperature eventually causes the system to shift from a coral-dominated to an algae-dominated state (Fig. 1). The data from the time of the regime change are used to fit the model.
+One interesting use of NODE and UDE models in ecology is detecting and predicting regime shifts, which are sudden changes in the structure and function of an ecosystem often associated with a change in conditions. Regime shifts are caused by the interaction of nonlinear feedback mechanisms, environmental variability, and long-term environmental change. NODE and UDE models built with UniversalDiffEq.jl can capture all three of these processes, making it possible to detect and predict regime shifts from data.
 
 
-![Figure 1: simulated regime change data ](figures/regiem_changes_data.png)
+In the following example, we build a NODE model for a two-species system that undergoes a regime shift. The data are simulated from the Mumby et al. (2007) model of coral-algae competition with an added term for stochastic coral mortality events and a long-term increase in the coral mortality rate from increasing temperature. The increasing temperature eventually causes the system to shift from a coral-dominated to an algae-dominated state (Fig. 1). The data from the time of the regime shift are used to fit the model.
 
 
-The model is a function of the area covered by coral ``p_C`` and algae ``p_A``, an environmental covariate ``X`` that is related to coral mortality and time ``t`` to capture the effect of the slowly increasing coral mortality rate. The coral and macroalgae abundances are transformed to ``x_i = softmax^{-1}(p_i)`` using the inverse softmax transformation before fitting the model
+![Figure 1: simulated regime shift data ](figures/regiem_changes_data.png)
+
+**Figure 1**: Time series of simulated coral and algae abundances. The vertical dashed line indicates an increase in temperature associated with coral mortality.
+
+
+The model is a function of the area covered by coral ``p_C`` and algae ``p_A``, an environmental covariate ``X`` that is related to coral mortality, and time ``t`` to capture the effect of the slowly increasing coral mortality rate. The coral and macroalgae abundances are transformed to ``x_i = softmax^{-1}(p_i)`` using the inverse softmax transformation before fitting the model
 
 
 ```math
@@ -66,10 +68,10 @@ UniversalDiffEq.plot_predictions(model)
 Unsurprisingly, given that this is simulated data, our model was able to fit the training data very closely.
 
 
-Given that the model fits the data well, we can move on to our analysis. The goal of this model is to capture the effects of a slowly changing variable on the dynamics of the coral-algae system. In particular, we want to identify any potential regime changes, points in time where a small change in the environment leads to a large change in the state of the ecosystem. Often, regime changes are characterized by the appearance or disappearance of equilibrium points in a dynamical system. We can identify these events by tracking changes in the derivatives function of the NODE model over time. This function is the right-hand side of a system of ODEs and, therefore, can be analyzed for equilibrium points and their stability. Because the NODE model is time-dependent, new equilibria may appear or existing ones may change their stability creating a regime change.
+Given that the model fits the data well, we can move on to our analysis. The goal of this model is to capture the effects of a slowly changing variable on the dynamics of the coral-algae system. In particular, we want to identify any potential regime shifts, points in time where a small change in the environment leads to a large change in the state of the ecosystem. Often, regime shifts are characterized by the appearance or disappearance of equilibrium points in a dynamical system. We can identify these events by tracking changes in the derivatives function of the NODE model over time. This function is the right-hand side of a system of ODEs and, therefore, can be analyzed for equilibrium points and their stability. Because the NODE model is time-dependent, new equilibria may appear or existing ones may change their stability creating a regime shift.
 
 
-To identify regime changes, we can extract the right-hand side of the ODE from the fitted model using the `get_right_hand_side` function. In the following example, we use the derivatives function `RHS` to plot a vector field for the coral and macroalgae at four points in time.
+To identify regime shifts, we can extract the right-hand side of the ODE from the fitted model using the `get_right_hand_side` function. In the following example, we use the derivatives function `RHS` to plot a vector field for the coral and macroalgae at four points in time.
 
 
 ```julia
@@ -84,7 +86,7 @@ plt
 ```
 ![](figures/regiem_changes_vector plots.png)
 
-The vector plots show clear changes in the dynamics of the system over time that likely constitute a regime change from a coral-dominated state an algae-dominated state. For small values of time, the vector fields all point to the upper left, which is high coral abundance and low algae abundance. Over time, however, a second equilibrium appears in the lower right: low coral and high algae abundance. The final vector field, t = 130, predicts 50 years into the future after the end of the time series. This plot predicts that the basin of attraction around the algae-dominated state will continue to grow, which is consistent with the data, and shows a sudden switch from high coral to high algae abundance.
+The vector plots show clear changes in the dynamics of the system over time that likely constitute a regime shift from a coral-dominated state an algae-dominated state. For small values of time, the vector fields all point to the upper left, which is high coral abundance and low algae abundance. Over time, however, a second equilibrium appears in the lower right: low coral and high algae abundance. The final vector field, t = 130, predicts 50 years into the future after the end of the time series. This plot predicts that the basin of attraction around the algae-dominated state will continue to grow, which is consistent with the data, and shows a sudden switch from high coral to high algae abundance.
 
 We can also illustrate the regime shift in the system by plotting the equilibrium coral and algae abundances for different values of time using the `equilibrium_and_stability` function. The following code block uses `equilibrium_and_stability` to calculate the equilibrium point of the model at each point in time and colors stable equilibrium points black and unstable equilibrium points white. This analysis shows the coral-dominated equilibrium bifurcating into two equilibrium points after time 120. Some additional equilibrium points are also identified over time.
 ```julia
@@ -96,7 +98,7 @@ for t in 1:2:180
 
     for i in eachindex(eqs)
         col = "white"
-        if evals[i] < 0
+        if evals[i] < 0 #negative real part of the dominant eigenvalue indicates long-term stability
             col = "black"
         end
         Plots.scatter!(p1,[t],eqs[i][2:2],color=col, label = "")
@@ -109,15 +111,19 @@ plt
 ```
 ![](figures/regiem_changes_bifrucation_plot.png)
 
+### References
+Mumby, P. J., Hastings, A. & Edwards, H. J. Thresholds and the resilience of Caribbean coral reefs. Nature 450, 98–101 (2007).
+
+
 ## Using UDEs to learn the dynamics of coupled human-natural systems
 
-Natural resources like fisheries are examples of coupled human and natural systems; human activities influence the state of the natural system, and the environment influences human activities. One of the primary goals of coupled human-natural systems research is understanding how these cycles of mutual causation determine biological and social outcomes. We may also wish to understand how interventions from regulators modify interactions between people and their environment to identify if these interventions achieve their desired effects.
+Natural resources like fisheries are examples of coupled human and natural systems, where human activities influence the state of the natural system, and the environment influences human activities. One of the primary goals of coupled human-natural systems research is understanding how these cycles of mutual causation determine biological and social outcomes. We may also wish to understand how interventions from regulators modify interactions between people and their environment to identify if these interventions achieve their desired effects.
 
 
 In this example, we build a UDE model to describe how the interactions between a fishing fleet and the exploited population change before and after the government limits entry into the fishery and predict the counterfactual outcomes in the absence of regulation.
 
 
-### Data: US West Coast Cow Cod Fishery
+### Data: US West Coast Cowcod Fishery
 For this example, we use data from groundfish fisheries on the West Coast of the United States. These fisheries were managed under an open-access framework until 1992 when entry into the fishery was restricted following large declines in catch and abundance. We gathered data on the stock biomass ``B`` (proxy for abundance) and harvest ``H`` from the RAM legacy database and coded the change in regulations using binary variable ``I_{LE}`` that switched from zero to one in 1992 when limited entry regulations began. The time series of these three variables are shown below.
 
 ```julia
@@ -130,7 +136,7 @@ Plots.scatter!(data.t,data.limited_entry, label = "Limited entry", width = 2)
 ![](figures/bioeconomic_data.png)
 
 ### Model
-We use a logistic growth model to describe the changes in the population biomass and model changes in harvest as a function of the stock, the current harvest, and regulations. The factors that drive changes in harvest may be complex and non-linear so we use a neural network to model the rate of change of harvest. Combining these assumptions yields a system of differential equations that we fit into the data using the UniversalDiffEq.jl package
+We use a logistic growth model to describe the changes in the population biomass and model changes in harvest as a function of the stock, the current harvest, and regulations. The factors that drive changes in harvest may be complex and nonlinear so we use a neural network to model the rate of change of harvest. Combining these assumptions yields a system of differential equations that we fit to the data using the UniversalDiffEq.jl package
 
 ```math
 \frac{dH}{dt} = NN(H,B,I_{LE};w,b)\\
@@ -170,7 +176,7 @@ gradient_descent!(model,verbose = true)
 BFGS!(model,verbos = true)
 nothing
 ```
-We can evaluate the model fit using `plot_state_estimates` and `plot_predictions` functions to compare the estimated state variables to the data and the predicted changes in state to the observed changes between time steps. The fitted model performs well by visual inspection on both metrics.
+We can evaluate the model fit using `plot_state_estimates` and `plot_predictions` functions to compare the estimated state variables to the data and the predicted changes in state variables to the observed changes between time steps. The fitted model performs well by visual inspection on both metrics.
 
 ```julia
 p1 = plot_state_estimates(model)
