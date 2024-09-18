@@ -5,15 +5,15 @@ Basic data structure used to the model structure, parameters and data for UDE an
 ...
 # Elements
 - times: a vector of times for each observation
-- data: a matrix of observaitons at each time point
+- data: a matrix of observations at each time point
 - X: a DataFrame with any covariates used by the model
 - data_frame: a DataFrame with columns for the time of each observation and values of the state variables
 - parameters: a ComponentArray that stores model parameters
 - loss_function: the loss function used to fit the model
 - process_model: a Julia mutable struct used to define model predictions
 - process_loss: a Julia mutable struct used to measure the performance of model predictions
-- observation_model: a Julia mutable struct used to predict observaitons given state variable estimates
-- observaiton_loss: a Julia mutable struct used to measure the performance of the observation model
+- observation_model: a Julia mutable struct used to predict observations given state variable estimates
+- observation_loss: a Julia mutable struct used to measure the performance of the observation model
 - process_regularization: a Julia mutable struct used to store data needed for process model regularization
 - observation_regularization: a Julia mutable struct used to store data needed for observation model regularization
 - constructor: A function that initializes a UDE model with identical structure.
@@ -51,15 +51,15 @@ Basic data structure used to the model structure, parameters and data for Bayesi
 ...
 # Elements
 - times: a vector of times for each observation
-- data: a matrix of observaitons at each time point
+- data: a matrix of observations at each time point
 - X: a DataFrame with any covariates used by the model
 - data_frame: a DataFrame with columns for the time of each observation and values of the state variables
 - parameters: a ComponentArray that stores model parameters
 - loss_function: the loss function used to fit the model
 - process_model: a Julia mutable struct used to define model predictions
 - process_loss: a Julia mutable struct used to measure the performance of model predictions
-- observation_model: a Julia mutable struct used to predict observaitons given state variable estimates
-- observaiton_loss: a Julia mutable struct used to measure the performance of the observation model
+- observation_model: a Julia mutable struct used to predict observations given state variable estimates
+- observation_loss: a Julia mutable struct used to measure the performance of the observation model
 - process_regularization: a Julia mutable struct used to store data needed for process model regularization
 - observation_regularization: a Julia mutable struct used to store data needed for observation model regularization
 - constructor: A function that initializes a UDE model with identical structure.
@@ -89,7 +89,7 @@ end
 """
     CustomDerivatives(data,derivs!,initial_parameters;kwargs ... )
 
-Constructs a UDE model for the data set `data`  based on user defined derivatives `derivs`. An initial guess of model parameters are supplied with the `initial_parameters` argument.
+Constructs a UDE model for the data set `data`  based on user-defined derivatives `derivs`. An initial guess of model parameters are supplied with the `initial_parameters` argument.
 
 ...
 # Arguments
@@ -101,9 +101,9 @@ Constructs a UDE model for the data set `data`  based on user defined derivative
 # kwargs
 
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
-- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
-- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
-- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
+- `proc_weight`: Weight of process error ``omega_{proc}``. Default is `1.0`.
+- `obs_weight`: Weight of observation error ``omega_{obs}``. Default is `1.0`.
+- `reg_weight`: Weight of regularization error ``omega_{reg}``. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -128,7 +128,7 @@ function CustomDerivatives(data,derivs!,initial_parameters;time_column_name = "t
     end
     observation_regularization = no_reg()
 
-    # paramters vector
+    # parameters vector
     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
 
     # loss function
@@ -164,9 +164,9 @@ end
 # kwargs
 
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
-- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
-- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
-- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
+- `proc_weight`: Weight of process error ``omega_{proc}``. Default is `1.0`.
+- `obs_weight`: Weight of observation error ``omega_{obs}``. Default is `1.0`.
+- `reg_weight`: Weight of regularization error ``omega_{reg}``. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -189,7 +189,7 @@ function CustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,
     end
     observation_regularization = no_reg()
 
-    # paramters vector
+    # parameters vector
     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
 
     # loss function
@@ -216,7 +216,7 @@ end
 """
     CustomDerivatives(data::DataFrame,X::DataFrame,derivs!::Function,initial_parameters;kwargs ... )
 
-When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for values of time not included in the data frame.
+When a data frame `X` is supplied the model will run with covariates. The argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for values of time not included in the data frame.
 
 When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)` where `x` is a vector with the value of the covariates at time `t`.
 
@@ -225,9 +225,9 @@ When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)
 - `time_column_name`: Name of column in `data` and `X` that corresponds to time. Default is `"time"`.
 - `variable_column_name`: Name of column in `X` that corresponds to the variables. Default is `nothing`.
 - `value_column_name`: Name of column in `X` that corresponds to the covariates. Default is `nothing`.
-- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
-- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
-- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
+- `proc_weight`: Weight of process error ``omega_{proc}``. Default is `1.0`.
+- `obs_weight`: Weight of observation error ``omega_{obs}``. Default is `1.0`.
+- `reg_weight`: Weight of regularization error ``omega_{reg}``. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -253,7 +253,7 @@ function CustomDerivatives(data::DataFrame,X::DataFrame,derivs!::Function,initia
     end
     observation_regularization = no_reg()
 
-    # paramters vector
+    # parameters vector
     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
 
     # loss function
@@ -292,7 +292,7 @@ function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameter
     end
     observation_regularization = no_reg()
 
-    # paramters vector
+    # parameters vector
     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
 
     # loss function
@@ -327,9 +327,9 @@ Constructs a UDE model for the data set `data` based on user defined difference 
 # kwargs
 
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
-- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
-- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
-- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
+- `proc_weight`: Weight of process error ``omega_{proc}``. Default is `1.0`.
+- `obs_weight`: Weight of observation error ``omega_{obs}``. Default is `1.0`.
+- `reg_weight`: Weight of regularization error ``omega_{reg}``. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -353,7 +353,7 @@ function CustomDifference(data,step,initial_parameters;time_column_name = "time"
     end
     observation_regularization = no_reg()
 
-    # paramters vector
+    # parameters vector
     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
 
     # loss function
@@ -373,7 +373,7 @@ end
 """
     CustomDifference(data::DataFrame,step,initial_parameters,priors::Function;kwargs ... )
 
-When a function's priors is supplied its value will be added to the loss function as a penalty term for user specified paramters. It should take the a single NamedTuple `p` as an argument penalties for each parameter should be calcualted by accessing `p` with the period operator.
+When a function's priors is supplied its value will be added to the loss function as a penalty term for user-specified parameters. It should take the a single NamedTuple `p` as an argument penalties for each parameter should be calcualted by accessing `p` with the period operator.
 
 ```julia
 function priors(p)
@@ -386,9 +386,9 @@ end
 # kwargs
 
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
-- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
-- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
-- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
+- `proc_weight`: Weight of process error ``omega_{proc}``. Default is `1.0`.
+- `obs_weight`: Weight of observation error ``omega_{obs}``. Default is `1.0`.
+- `reg_weight`: Weight of regularization error ``omega_{reg}``. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -411,7 +411,7 @@ function CustomDifference(data::DataFrame,step,initial_parameters,priors::Functi
     end
     observation_regularization = no_reg()
 
-    # paramters vector
+    # parameters vector
     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
 
     # loss function
@@ -431,7 +431,7 @@ end
 """
     CustomDifference(data::DataFrame,X,step,initial_parameters;kwargs ... )
 
-When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included in the data frame.
+When a data frame `X` is supplied the model will run with covariates. The argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included in the data frame.
 
 When `X` is provided the step function must have the form `step(u,x,t,p)` where `x` is a vector with the value of the covariates at time `t`.
 
@@ -440,9 +440,9 @@ When `X` is provided the step function must have the form `step(u,x,t,p)` where 
 - `time_column_name`: Name of column in `data` and `X` that corresponds to time. Default is `"time"`.
 - `variable_column_name`: Name of column in `X` that corresponds to the variables. Default is `nothing`.
 - `value_column_name`: Name of column in `X` that corresponds to the covariates. Default is `nothing`.
-- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
-- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
-- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
+- `proc_weight`: Weight of process error ``omega_{proc}``. Default is `1.0`.
+- `obs_weight`: Weight of observation error ``omega_{obs}``. Default is `1.0`.
+- `reg_weight`: Weight of regularization error ``omega_{reg}``. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -467,7 +467,7 @@ function CustomDifference(data::DataFrame,X,step,initial_parameters;time_column_
     end
     observation_regularization = no_reg()
 
-    # paramters vector
+    # parameters vector
     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
 
     # loss function
@@ -505,7 +505,7 @@ function CustomDifference(data::DataFrame,X,step,initial_parameters,priors::Func
     end
     observation_regularization = no_reg()
 
-    # paramters vector
+    # parameters vector
     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
 
     # loss function
@@ -527,16 +527,16 @@ end
 """
     NNDE(data;kwargs ...)
 
-Constructs a nonparametric discrete time model for the data set `data` using a single layer neural network to represent the systems dynamics.
+Constructs a nonparametric discrete-time model for the data set `data` using a single layer neural network to represent the system's dynamics.
 
     # kwargs
 
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
 - `hidden_units`: Number of neurons in hidden layer. Default is `10`.
 - `seed`: Fixed random seed for repeatable results. Default is `1`.
-- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
-- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
-- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
+- `proc_weight`: Weight of process error ``omega_{proc}``. Default is `1.0`.
+- `obs_weight`: Weight of observation error ``omega_{obs}``. Default is `1.0`.
+- `reg_weight`: Weight of regularization error ``omega_{reg}``. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -555,7 +555,7 @@ function NNDE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_weigh
     observation_regularization = no_reg()
 
 
-    # paramters vector
+    # parameters vector
     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
 
     # loss function
@@ -588,7 +588,7 @@ function NNDE(data, X;time_column_name = "time",variable_column_name = nothing ,
     observation_regularization = no_reg()
 
 
-    # paramters vector
+    # parameters vector
     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
 
     # loss function
@@ -607,16 +607,16 @@ end
     NODE(data;kwargs ... )
 
 
-Constructs a nonparametric continuous time model for the data set `data` using a single layer neural network to represent the systems dynamics.
+Constructs a nonparametric continuous-time model for the data set `data` using a single layer neural network to represent the system's dynamics.
 
     # kwargs
 
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
 - `hidden_units`: Number of neurons in hidden layer. Default is `10`.
 - `seed`: Fixed random seed for repeatable results. Default is `1`.
-- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
-- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
-- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
+- `proc_weight`: Weight of process error ``omega_{proc}``. Default is `1.0`.
+- `obs_weight`: Weight of observation error ``omega_{obs}``. Default is `1.0`.
+- `reg_weight`: Weight of regularization error ``omega_{reg}``. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -640,7 +640,7 @@ function NODE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_weigh
     observation_regularization = no_reg()
 
 
-    # paramters vector
+    # parameters vector
     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
 
     # loss function
@@ -667,9 +667,9 @@ When a dataframe `X` is supplied the model will run with covariates. the argumen
 - `value_column_name`: Name of column in `X` that corresponds to the covariates. Default is `nothing`.
 - `hidden_units`: Number of neurons in hidden layer. Default is `10`.
 - `seed`: Fixed random seed for repeatable results. Default is `1`.
-- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
-- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
-- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
+- `proc_weight`: Weight of process error ``omega_{proc}``. Default is `1.0`.
+- `obs_weight`: Weight of observation error ``omega_{obs}``. Default is `1.0`.
+- `reg_weight`: Weight of regularization error ``omega_{reg}``. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -695,7 +695,7 @@ function NODE(data,X;time_column_name = "time", variable_column_name = nothing ,
     observation_regularization = no_reg()
 
 
-    # paramters vector
+    # parameters vector
     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
 
     # loss function
@@ -713,16 +713,16 @@ end
 
 """
     EasyNODE(data;kwargs ... )
-Constructs a pretrained continuous time model for the data set `data` using a single layer neural network to represent the systems dynamics.
+Constructs a pretrained continuous-time model for the data set `data` using a single layer neural network to represent the system's dynamics.
 
 # kwargs
 
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
 - `hidden_units`: Number of neurons in hidden layer. Default is `10`.
 - `seed`: Fixed random seed for repeatable results. Default is `1`.
-- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
-- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
-- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
+- `proc_weight`: Weight of process error ``omega_{proc}``. Default is `1.0`.
+- `obs_weight`: Weight of observation error ``omega_{obs}``. Default is `1.0`.
+- `reg_weight`: Weight of regularization error ``omega_{reg}``. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -749,7 +749,7 @@ function EasyNODE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_w
     observation_regularization = no_reg()
 
 
-    # paramters vector
+    # parameters vector
     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     # loss function
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
@@ -769,7 +769,7 @@ end
 
 """
     EasyNODE(data,X;kwargs ... )
-When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for values of time not included in the data frame.
+When a data frame `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for values of time not included in the data frame.
 
 # kwargs
 
@@ -778,9 +778,9 @@ When a dataframe `X` is supplied the model will run with covariates. the argumen
 - `value_column_name`: Name of column in `X` that corresponds to the covariates. Default is `nothing`.
 - `hidden_units`: Number of neurons in hidden layer. Default is `10`.
 - `seed`: Fixed random seed for repeatable results. Default is `1`.
-- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
-- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
-- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
+- `proc_weight`: Weight of process error ``omega_{proc}``. Default is `1.0`.
+- `obs_weight`: Weight of observation error ``omega_{obs}``. Default is `1.0`.
+- `reg_weight`: Weight of regularization error ``omega_{reg}``. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -808,7 +808,7 @@ function EasyNODE(data,X;time_column_name = "time",variable_column_name = nothin
     observation_regularization = no_reg()
 
 
-    # paramters vector
+    # parameters vector
     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     # loss function
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
@@ -832,9 +832,9 @@ Constructs a pretrained UDE model for the data set `data`  based on user defined
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
 - `hidden_units`: Number of neurons in hidden layer. Default is `10`.
 - `seed`: Fixed random seed for repeatable results. Default is `1`.
-- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
-- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
-- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
+- `proc_weight`: Weight of process error ``omega_{proc}``. Default is `1.0`.
+- `obs_weight`: Weight of observation error ``omega_{obs}``. Default is `1.0`.
+- `reg_weight`: Weight of regularization error ``omega_{reg}``. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -875,7 +875,7 @@ function EasyUDE(data,known_dynamics!,initial_parameters;time_column_name = "tim
     end
     observation_regularization = no_reg()
 
-    # paramters vector
+    # parameters vector
     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     # loss function
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
@@ -902,9 +902,9 @@ When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)
 - `value_column_name`: Name of column in `X` that corresponds to the covariates. Default is `"value"`.
 - `hidden_units`: Number of neurons in hidden layer. Default is `10`.
 - `seed`: Fixed random seed for repeatable results. Default is `1`.
-- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
-- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
-- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
+- `proc_weight`: Weight of process error ``omega_{proc}``. Default is `1.0`.
+- `obs_weight`: Weight of observation error ``omega_{obs}``. Default is `1.0`.
+- `reg_weight`: Weight of regularization error ``omega_{reg}``. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -945,7 +945,7 @@ function EasyUDE(data::DataFrame,X,known_dynamics!::Function,initial_parameters;
     end
     observation_regularization = no_reg()
 
-    # paramters vector
+    # parameters vector
     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     # loss function
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
@@ -963,16 +963,16 @@ end
 
 """
     BayesianNODE(data;kwargs ... )
-Constructs a Bayesian continuous time model for the data set `data` using a single layer neural network to represent the systems dynamics.
+Constructs a Bayesian continuous-time model for the data set `data` using a single layer neural network to represent the system's dynamics.
 
 # kwargs
 
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
 - `hidden_units`: Number of neurons in hidden layer. Default is `10`.
 - `seed`: Fixed random seed for repeatable results. Default is `1`.
-- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
-- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
-- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
+- `proc_weight`: Weight of process error ``omega_{proc}``. Default is `1.0`.
+- `obs_weight`: Weight of observation error ``omega_{obs}``. Default is `1.0`.
+- `reg_weight`: Weight of regularization error ``omega_{reg}``. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -991,7 +991,7 @@ function BayesianNODE(data;time_column_name = "time",hidden_units=10,seed = 1,pr
     observation_regularization = no_reg()
 
 
-    # paramters vector
+    # parameters vector
     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     parameters_vector = Vector{typeof(parameters)}(undef,1)
     parameters_vector[1] = parameters
@@ -1016,9 +1016,9 @@ When a dataframe `X` is supplied the model will run with covariates. the argumen
 - `value_column_name`: Name of column in `X` that corresponds to the covariates. Default is `nothing`.
 - `hidden_units`: Number of neurons in hidden layer. Default is `10`.
 - `seed`: Fixed random seed for repeatable results. Default is `1`.
-- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
-- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
-- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
+- `proc_weight`: Weight of process error ``omega_{proc}``. Default is `1.0`.
+- `obs_weight`: Weight of observation error ``omega_{obs}``. Default is `1.0`.
+- `reg_weight`: Weight of regularization error ``omega_{reg}``. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -1044,7 +1044,7 @@ function BayesianNODE(data,X;time_column_name = "time",variable_column_name = no
     observation_regularization = no_reg()
 
 
-    # paramters vector
+    # parameters vector
     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     parameters_vector = Vector{typeof(parameters)}(undef,1)
     parameters_vector[1] = parameters
@@ -1077,9 +1077,9 @@ Constructs a Bayesian UDE model for the data set `data`  based on user defined d
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
 - `hidden_units`: Number of neurons in hidden layer. Default is `10`.
 - `seed`: Fixed random seed for repeatable results. Default is `1`.
-- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
-- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
-- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
+- `proc_weight`: Weight of process error ``omega_{proc}``. Default is `1.0`.
+- `obs_weight`: Weight of observation error ``omega_{obs}``. Default is `1.0`.
+- `reg_weight`: Weight of regularization error ``omega_{reg}``. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -1103,7 +1103,7 @@ function BayesianCustomDerivatives(data::DataFrame,derivs!::Function,initial_par
     end
     observation_regularization = no_reg()
 
-    # paramters vector
+    # parameters vector
     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     parameters_vector = Vector{typeof(parameters)}(undef,1)
     parameters_vector[1] = parameters
@@ -1124,7 +1124,7 @@ end
 """
     BayesianCustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters;kwargs ... )
 
-When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included in the data frame.
+When a data frame `X` is supplied the model will run with covariates. The argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for value of time not included in the data frame.
 
 When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)` where `x` is a vector with the value of the covariates at time `t`.
 
@@ -1135,9 +1135,9 @@ When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)
 - `value_column_name`: Name of column in `X` that corresponds to the covariates. Default is `nothing`.
 - `hidden_units`: Number of neurons in hidden layer. Default is `10`.
 - `seed`: Fixed random seed for repeatable results. Default is `1`.
-- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
-- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
-- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
+- `proc_weight`: Weight of process error ``omega_{proc}``. Default is `1.0`.
+- `obs_weight`: Weight of observation error ``omega_{obs}``. Default is `1.0`.
+- `reg_weight`: Weight of regularization error ``omega_{reg}``. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
@@ -1162,7 +1162,7 @@ function BayesianCustomDerivatives(data::DataFrame,X,derivs!::Function,initial_p
     end
     observation_regularization = no_reg()
 
-    # paramters vector
+    # parameters vector
     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     parameters_vector = Vector{typeof(parameters)}(undef,1)
     parameters_vector[1] = parameters
@@ -1200,7 +1200,7 @@ function BayesianCustomDerivatives(data::DataFrame,X,derivs!::Function,initial_p
     end
     observation_regularization = no_reg()
 
-    # paramters vector
+    # parameters vector
     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     parameters_vector = Vector{typeof(parameters)}(undef,1)
     parameters_vector[1] = parameters
