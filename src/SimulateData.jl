@@ -181,3 +181,46 @@ function LogisticMap(;plot = true, seed=123,datasize = 100,sigma = 0.05, r = 3.7
     
 end 
 
+
+"""
+    simulate_coral_data()
+
+Generates synthetic coral reef time series data used in the time dependent UDE model example. 
+"""
+function simulate_coral_data()
+    Random.seed!(1)
+
+    function derivs(u,p,t)
+        A = u[1]; C = u[2]; XC = u[3]; XA = u[4]
+        dA = -A * p.g/(1-C) -A*exp(-p.mA + p.bA*XA)+ (p.rA*A + 0.05)*(1-C-A)
+        dC = p.rC * (1-C-A) - (exp(-p.m+ p.b*XC + p.r*t ))*C
+        dXC = -p.rhoC*XC
+        dXA = -p.rhoA*XA
+        return [dA,dC,dXC,dXA]
+    end 
+
+    p = (g = 0.1, rA = 0.5, rC = 0.3, m = 3.25, b = 7.5, r = 0.0075, rhoC = 0.50, mA = 5.5, bA= 0.2, rhoA = 0.4)
+
+    T = 250
+    dtinv = 20
+    A = zeros(T)
+    C = zeros(T)
+    X = zeros(T) 
+    u = [0.1,0.8,0.0,0.0]
+    for t in 1:T
+        A[t] = log(u[1])+log(exp(u[1]) + exp(u[2]) + exp(1-u[1]-u[2]))
+        C[t] = log(u[2])+log(exp(u[1]) + exp(u[2]) + exp(1-u[1]-u[2]))
+        X[t] = u[3]
+        for i in 1:dtinv
+            u .+= derivs(u,p,t)/dtinv .+ vcat(zeros(2), rand(Distributions.Normal(0,1.0),2))/dtinv 
+        end 
+    end 
+    data = DataFrame(time = 1:2:T, A = A[1:2:end], C = C[1:2:end])
+    X = DataFrame(time = 1:2:T, X=X[1:2:end])
+
+    return data, X
+end
+
+
+CowCodData = CSV.read("../examples/CowCodFishery.csv",DataFrame)
+

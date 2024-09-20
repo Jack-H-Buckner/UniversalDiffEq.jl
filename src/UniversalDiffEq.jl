@@ -1,6 +1,6 @@
 module UniversalDiffEq
 
-using DiffEqFlux, OrdinaryDiffEq, Optimization, OptimizationOptimisers, OptimizationOptimJL, ComponentArrays, Lux, Random, StatsBase, DelimitedFiles, Plots, DataFrames, Distributions, Roots, LaTeXStrings, NLsolve, FiniteDiff, LinearAlgebra, AdvancedHMC, MCMCChains, Interpolations, Optim, CategoricalArrays, Zygote
+using DiffEqFlux, OrdinaryDiffEq, Optimization, OptimizationOptimisers, OptimizationOptimJL, ComponentArrays, Lux, Random, StatsBase, DelimitedFiles, Plots, DataFrames, CSV, Distributions, Roots, LaTeXStrings, NLsolve, FiniteDiff, LinearAlgebra, AdvancedHMC, MCMCChains, Interpolations, Optim, CategoricalArrays, Zygote
 
 
 include("covariates.jl")
@@ -20,8 +20,6 @@ include("Optimizers.jl")
 include("CrossValidation.jl")
 
 
-
-
-export UDE, MultiUDE, CustomDerivatives, NNDE, NODE, MultiNODE, MultiCustomDerivatives ,gradient_decent!, BFGS!, plot_state_estiamtes, plot_predictions, plot_forecast, leave_future_out_cv, LokaVolterra, LorenzLokaVolterra, vectorfield_and_nullclines, get_right_hand_side, CustomDifference, plot_state_estimates, LotkaVolterra, LorenzLotkaVolterra, kfold_cv, gradient_descent!, equilibrium_and_stability, EasyNODE, EasyUDE, BayesianNODE, BayesianUDE, NUTS!, SGLD!, predict, get_parameters, plot_bifurcation_diagram, bifurcation_data  , cross_validation_kfold
+export UDE, MultiUDE, CustomDerivatives, NNDE, NODE, MultiNODE, MultiCustomDerivatives ,gradient_decent!, BFGS!, plot_state_estiamtes, plot_predictions, plot_forecast, leave_future_out_cv, LokaVolterra, LorenzLokaVolterra, vectorfield_and_nullclines, get_right_hand_side, CustomDifference, plot_state_estimates, LotkaVolterra, LorenzLotkaVolterra, kfold_cv, gradient_descent!, equilibrium_and_stability, EasyNODE, EasyUDE, BayesianNODE, BayesianUDE, NUTS!, SGLD!, predict, get_parameters, plot_bifurcation_diagram, bifurcation_data  , cross_validation_kfold, simulate_coral_data, CowCodData
 
 end
