@@ -2,7 +2,7 @@ function meshgrid(n,lower,upper)
     xs = ones(n) .* (1:n)'
     ys = xs'
     xys = permutedims(cat(xs, ys; dims = 3), [3, 1, 2])
-    scale = upper .- lower 
+    scale = upper .- lower
     return scale .* reshape(xys, 2, n^2) ./ n .+ lower .- 0.5*scale ./n
 end
 
@@ -23,7 +23,7 @@ function vectorfield2d(UDE,X; t = 0, xlabel = "u1", ylabel = "u2", title = "UDE 
 end
 
 function vectorfield2d(UDE; t = 0, xlabel = "u1", ylabel = "u2", title = "UDE vector field", n = 15, lower = [0.0,0.0], upper = [1.0,1.0], arrowlength=0.1, arrow_color = "grey")
-    
+
     points = meshgrid(n,lower,upper)
 
     RHS = get_right_hand_side(UDE)
@@ -40,105 +40,105 @@ end
 
 function nullclines2d(UDE; t = 0, upper = [0.0,0.0], lower = [1.0,1.0])
     RHS = get_right_hand_side(UDE)
-    
+
     function nullclineU21(u2;t=t,upper = upper[1], lower = lower[1])
         val = 0
         try
             val = Roots.find_zero(x -> RHS([x, u2],t)[1], (lower,upper), Roots.Bisection())
-        catch 
+        catch
             #print("No root found in interval returning lower bound")
             val =  NaN
         end
-        return val 
+        return val
 
-    end 
+    end
     function nullclineU12(u1;t = t,upper = upper[2], lower = lower[2])
         val = 0
         try
             val = Roots.find_zero(x -> RHS([u1,x],t)[2], (lower,upper), Roots.Bisection())
-        catch 
+        catch
             #print("No root found in interval returning lower bound")
             val =  NaN
         end
-        return val 
-    end 
+        return val
+    end
 
 
     function nullclineU22(u2;t=t,upper = upper[1], lower = lower[1])
         val = 0
         try
             val = Roots.find_zero(x -> RHS([x, u2],t)[2], (lower,upper), Roots.Bisection())
-        catch 
+        catch
             #print("No root found in interval returning lower bound")
             val =  NaN
         end
-        return val 
+        return val
 
-    end 
+    end
     function nullclineU11(u1;t = t,upper = upper[2], lower = lower[2])
         val = 0
         try
             val = Roots.find_zero(x -> RHS([u1,x],t)[1], (lower,upper), Roots.Bisection())
-        catch 
+        catch
             #print("No root found in interval returning lower bound")
             val =  NaN
         end
-        return val 
-    end 
+        return val
+    end
 
     return nullclineU21, nullclineU12, nullclineU22, nullclineU11
-end 
+end
 
 function nullclines2d(UDE,X; t = 0, upper = [0.0,0.0], lower = [1.0,1.0])
     RHS = get_right_hand_side(UDE)
-    
+
     function nullclineU21(u2;X = X,t=t,upper = upper[1], lower = lower[1])
         val = 0
         try
             val = Roots.find_zero(x -> RHS([x, u2],X,t)[1], (lower,upper), Roots.Bisection())
-        catch 
+        catch
             #print("No root found in interval returning lower bound")
             val =  NaN
         end
-        return val 
+        return val
 
-    end 
+    end
     function nullclineU12(u1;X=X,t = t,upper = upper[2], lower = lower[2])
         val = 0
         try
             val = Roots.find_zero(x -> RHS([u1,x],X,t)[2], (lower,upper), Roots.Bisection())
-        catch 
+        catch
             #print("No root found in interval returning lower bound")
             val =  NaN
         end
-        return val 
-    end 
+        return val
+    end
 
 
     function nullclineU22(u2;X = X,t=t,upper = upper[1], lower = lower[1])
         val = 0
         try
             val = Roots.find_zero(x -> RHS([x, u2],X,t)[2], (lower,upper), Roots.Bisection())
-        catch 
+        catch
             #print("No root found in interval returning lower bound")
             val =  NaN
         end
-        return val 
+        return val
 
-    end 
+    end
     function nullclineU11(u1;X=X,t = t,upper = upper[2], lower = lower[2])
         val = 0
         try
             val = Roots.find_zero(x -> RHS([u1,x],X,t)[1], (lower,upper), Roots.Bisection())
-        catch 
+        catch
             #print("No root found in interval returning lower bound")
             val =  NaN
         end
-        return val 
-    end 
+        return val
+    end
 
     return nullclineU21, nullclineU12, nullclineU22, nullclineU11
-end 
+end
 
 """
 vectorfield_and_nullclines(UDE; kwargs)
@@ -196,7 +196,7 @@ function root(UDE,lower,upper;t=0)
     f = x -> RHS(x,t)
     rt = nlsolve(f, (upper .- lower) .* rand(length(lower)) .+ lower)
     return rt.zero
-end 
+end
 
 
 function roots_(UDE,lower,upper,Ntrials;t=0,tol=10^-3)
@@ -208,7 +208,7 @@ function roots_(UDE,lower,upper,Ntrials;t=0,tol=10^-3)
             if sum((root .- rt).^2) < tol
                 new = false
             end
-            
+
             if any(isnan.(rt))
                 new = false
             end
@@ -235,13 +235,13 @@ end
 """
     equilibrium_and_stability(UDE,lower,upper;t=0,Ntrials=100,tol=10^-3)
 
-Attempts to find all the equilibirum points for the UDE model between the upper and lower bound and return the real component of the leading eigen value to analyze stability. 
+Attempts to find all the equilibrium points for the UDE model between the upper and lower bounds, and then returns the real component of the dominant eigenvalue to analyze stability.
 
 ...
 # kwargs
 - t = 0: The point in time where the UDE model is evaluated, only relevant for time aware UDEs.
-- Ntrials = 100: the number of initializations of the root finding algorithm. 
-- tol = 10^-3: The threshold euclidean distance between point beyond which a new equilbirum is sufficently different to be retained. 
+- Ntrials = 100: the number of initializations of the root finding algorithm.
+- tol = 10^-3: The threshold Euclidean distance between points beyond which a new equilibrium is sufficiently different to be retained.
 ...
 """
 function equilibrium_and_stability(UDE,lower,upper;t=0,Ntrials=100,tol=10^-3)
@@ -251,7 +251,7 @@ function equilibrium_and_stability(UDE,lower,upper;t=0,Ntrials=100,tol=10^-3)
         push!(srs,eigen_values(UDE,rt,t))
     end
     return rts,srs
-end 
+end
 
 
 
@@ -260,7 +260,7 @@ function root(UDE,X,lower,upper;t=0)
     f = x -> RHS(x,X,t)
     rt = nlsolve(f, (upper .- lower) .* rand(length(lower)) .+ lower)
     return rt.zero, sum(abs.(f(rt.zero)))
-end 
+end
 
 
 
@@ -299,12 +299,12 @@ end
 """
     equilibrium_and_stability(UDE,X,lower,upper;t=0,Ntrials=100,tol=10^-3)
 
-Attempts to find all the equilibrium points for the UDE model between the upper and lower bounds, and then returns the real component of the dominant eigenvalue to analyze stability. 
+Attempts to find all the equilibrium points for the UDE model between the upper and lower bounds, and then returns the real component of the dominant eigenvalue to analyze stability.
 
 ...
 # kwargs
 - t = 0: The point in time where the UDE model is evaluated, only relevant for time aware UDEs.
-- Ntrials = 100: the number of initializations of the root finding algorithm. 
+- Ntrials = 100: the number of initializations of the root finding algorithm.
 - tol = 10^-3: The threshold Euclidean distance between points beyond which a new equilibrium is sufficiently different to be retained. 
 ...
 """
@@ -315,10 +315,10 @@ function equilibrium_and_stability(UDE,X,lower,upper;t=0,Ntrials=100,tol=10^-3,t
         push!(srs,eigen_values(UDE,rt,X,t))
     end
     return rts,srs
-end 
+end
 
 
-### mutiple time series ODE analysis 
+### mutiple time series ODE analysis
 
 using NLsolve, FiniteDiff, LinearAlgebra
 function root(UDE::MultiUDE,site,X,lower,upper;t=0)
@@ -326,7 +326,7 @@ function root(UDE::MultiUDE,site,X,lower,upper;t=0)
     f = x -> RHS(x,site,X,t)
     rt = nlsolve(f, (upper .- lower) .* rand(length(lower)) .+ lower)
     return rt.zero, sum(abs.(f(rt.zero)))
-end 
+end
 
 
 
@@ -366,13 +366,14 @@ end
 """
     equilibrium_and_stability(UDE::MultiUDE,site,X,lower,upper;t=0,Ntrials=100,tol=10^-3)
 
-Attempts to find all the equilibirum points for the UDE model between the upper and lower bound and return the real component of the leading eigen value to analyze stability. 
+Attempts to find all the equilibrium points for the UDE model between the upper and lower bounds, and then returns the real component of the dominant eigenvalue to analyze stability.
 
 ...
 # kwargs
 - t = 0: The point in time where the UDE model is evaluated, only relevant for time aware UDEs.
-- Ntrials = 100: the number of initializations of the root finding algorithm. 
-- tol = 10^-3: The threshold euclidean distance between point beyond which a new equilbirum is sufficently different to be retained. 
+- Ntrials = 100: the number of initializations of the root finding algorithm.
+- tol = 10^-3: The threshold Euclidean distance between points beyond which a new equilibrium is sufficiently different to be retained.
+
 ...
 """
 function equilibrium_and_stability(UDE::MultiUDE,site,X,lower,upper;t=0,Ntrials=20,tol=10^-3,tol2 = 10^-6)
@@ -382,7 +383,7 @@ function equilibrium_and_stability(UDE::MultiUDE,site,X,lower,upper;t=0,Ntrials=
         push!(srs,eigen_values(UDE,rt,site,X,t))
     end
     return rts,srs
-end 
+end
 
 
 
@@ -393,7 +394,7 @@ function arguments(UDE)
             println("process_model.predict: f(u::Vector,i::Int,t::Float,dt::Float,parameters::ComponentArray)")
         else
             println("Right hand side: f(u::Vector,site::Int,X::Vector,t:Float)")
-            println("process_model.predict: f(u::Vector,i::Int,t::Float,dt::Float,parameters::ComponentArray)")       
+            println("process_model.predict: f(u::Vector,i::Int,t::Float,dt::Float,parameters::ComponentArray)")
         end
     elseif (string(typeof(UDE)) .== "UDE") | (string(typeof(UDE)) .== "UniversalDiffEq.UDE")
         if UDE.process_model.covariates == 0
@@ -401,7 +402,7 @@ function arguments(UDE)
             println("process_model.predict: f(u::Vector,t::Float,dt::Float,parameters::ComponentArray)")
         else
             println("Right hand side: f(u::Vector,X::Vector,t:Float)")
-            println("process_model.predict: f(u::Vector,t::Float,dt::Float,parameters::ComponentArray)")        
+            println("process_model.predict: f(u::Vector,t::Float,dt::Float,parameters::ComponentArray)")
         end
     end
     print("Not applicable the arguemnt is not a UDE model ")
@@ -412,25 +413,25 @@ end
 # Bifurcation diagrams
 
 function get_variable_names(model::UDE)
-    # state variable names 
+    # state variable names
     nms = names(model.data_frame)
     nms = nms[nms .!= model.time_column_name]
 
-    # Covariates names 
+    # Covariates names
     xnms = []
     if typeof(model.variable_column_name) == Nothing
         xnms = names(model.X_data_frame)
         xnms = xnms[xnms .!= model.time_column_name]
     else
         xnms = unique(model.X_data_frame[:,model.variable_column_name])
-    end 
+    end
     return nms, xnms
-end 
+end
 
 """
     bifurcation_data(model::UDE;N=25)
 
-Calcualtes the equilibrium values of the state variabels ``y_t`` as a function of the covariates `X_t` and return the value in a data frame. The funciton calcualtes the equilibrium values on a grid of ``N`` evenly spaced point for each covariate. 
+Calcualtes the equilibrium values of the state variabels ``y_t`` as a function of the covariates `X_t` and return the value in a data frame. The funciton calcualtes the equilibrium values on a grid of ``N`` evenly spaced point for each covariate.
 """
 function bifurcation_data(model::UDE;N=25)
 
@@ -462,7 +463,7 @@ function bifurcation_data(model::UDE;N=25)
     for d in 2:dims
         vals = vcat.(vals,values[:,d]')
         vals = reshape(vals,length(vals))
-    end 
+    end
 
     data = zeros(length(vals)*6, length(vals[1])+size(model.data)[1]+1)
     n = 0; i = 0
@@ -473,7 +474,7 @@ function bifurcation_data(model::UDE;N=25)
             n += 1; i +=1
             data[n,:] = vcat(vcat(x,rt), [stb[i]])
         end
-    end 
+    end
 
     # filter out extra zeros
     data = data[data[:,1] .!= 0.0,:]
@@ -481,7 +482,7 @@ function bifurcation_data(model::UDE;N=25)
     nms, xnms = get_variable_names(model)
     df = DataFrame(data, vcat(xnms, vcat(nms, ["eigen"])))
     df = df[df[:,"eigen"] .!== 0,:]
-    
+
     return df
 
 end
@@ -489,15 +490,15 @@ end
 
 """
     plot_bifurcation_diagram(model::UDE, xvariable; N = 25, color_variable= nothing, conditional_variable = nothing, size= (600, 400))
-    
-This function returns a plot of the equilibrium values of the state varaibles ``y_t`` as a funciton of the covariates ``X_t``. The arguemnt `xvariable` determines the covariate plotted on the x-axis. Additional variables can be visualized in sperate panel by specifying the `conditional_variable` key word argument or visualized by the color scheme using the `color_variable` argument. 
 
-The key word arguent `size` controls the dimensions of the final plot. 
+This function returns a plot of the equilibrium values of the state varaibles ``y_t`` as a funciton of the covariates ``X_t``. The arguemnt `xvariable` determines the covariate plotted on the x-axis. Additional variables can be visualized in sperate panel by specifying the `conditional_variable` key word argument or visualized by the color scheme using the `color_variable` argument.
+
+The key word arguent `size` controls the dimensions of the final plot.
 """
 function plot_bifurcation_diagram(model::UDE, xvariable; N = 25, color_variable= nothing, conditional_variable = nothing, size= (600, 400))
     # compute equilibriums
     data = bifurcation_data(model;N=N)
-    
+
     # transform data frame
     nms,xnms = get_variable_names(model)
     data = melt(data, id_vars = vcat(xnms,["eigen"]))
@@ -521,7 +522,7 @@ function plot_bifurcation_diagram(model::UDE, xvariable; N = 25, color_variable=
                                     xlabel= xvariable, labelfontsize = 9, tickfontsize = 7, zcolor = dat[:,color_variable])
                 push!(plts,plt)
             end
-        else 
+        else
             conditional_values = sort(unique(data[:,conditional_variable]))
             conditional_levels = conditional_values[[1,round(Int,length(conditional_values)/2),end]]
 
@@ -530,19 +531,19 @@ function plot_bifurcation_diagram(model::UDE, xvariable; N = 25, color_variable=
                 if typeof(color_variable) == Nothing
                     dat_i = dat[broadcast(x -> x == X, dat[:,conditional_variable]),:]
                     plt = Plots.scatter( dat_i[:,xvariable], dat_i.value, markersize = 3.5 .- 1.5 *(dat_i.eigen .> 0.0),
-                                        title = string( conditional_variable, " = ", round(X, digits = 2) ), 
+                                        title = string( conditional_variable, " = ", round(X, digits = 2) ),
                                         titlefontsize = 9, label = "", ylabel = string("Eg. ", yvariable),
                                         xlabel= xvariable, labelfontsize = 9, tickfontsize = 7, color= "black")
                     push!(plts,plt)
                 else
                     dat_i = dat[broadcast(x -> x == X, dat[:,conditional_variable]),:]
                     plt = Plots.scatter( dat_i[:,xvariable], dat_i.value, markersize = 3.5 .- 1.5 *(dat_i.eigen .> 0.0),
-                                        title = string( conditional_variable, " = ", round(X, digits = 2) ), 
+                                        title = string( conditional_variable, " = ", round(X, digits = 2) ),
                                         titlefontsize = 9, label = "", ylabel = string("Eg. ", yvariable),
                                         xlabel= xvariable, labelfontsize = 9, tickfontsize = 7, zcolor = dat_i[:,color_variable])
                     push!(plts,plt)
                 end
-            end 
+            end
         end
     end
 
@@ -550,30 +551,30 @@ function plot_bifurcation_diagram(model::UDE, xvariable; N = 25, color_variable=
 end
 
 
-# Mutiple time series bifurcation diagrams 
+# Mutiple time series bifurcation diagrams
 
 
 
 function get_variable_names(model::MultiUDE)
-    # state variable names 
+    # state variable names
     nms = names(model.data_frame)
     nms = nms[broadcast(nm -> !(nm in [model.time_column_name,model.series_column_name]),nms)]
 
-    # Covariates names 
+    # Covariates names
     xnms = []
     if typeof(model.variable_column_name) == Nothing
         xnms = names(model.X_data_frame)
         xnms = xnms[broadcast(nm -> !(nm in [model.time_column_name,model.series_column_name]),xnms)]
     else
         xnms = unique(model.X_data_frame[:,model.variable_column_name])
-    end 
+    end
     return nms, string.(xnms)
-end 
+end
 
 """
     bifurcation_data(model::MultiUDE;N=25)
 
-Calcualtes the equilibrium values of the state variabels ``y_t`` as a function of the covariates `X_t` and return the value in a data frame. The funciton calcualtes the equilibrium values on a grid of ``N`` evenly spaced point for each covariate. The calcualtion are repeated for each time series ``i`` included in the training data set.  
+Calcualtes the equilibrium values of the state variabels ``y_t`` as a function of the covariates `X_t` and return the value in a data frame. The funciton calcualtes the equilibrium values on a grid of ``N`` evenly spaced point for each covariate. The calcualtion are repeated for each time series ``i`` included in the training data set.
 """
 function bifurcation_data(model::MultiUDE; N=25)
 
@@ -594,7 +595,7 @@ function bifurcation_data(model::MultiUDE; N=25)
             elseif x_max < maximum(broadcast(t -> X[t][i], 1:length(X)))
                 x_max = maximum(broadcast(t -> X[t][i], 1:length(X)))
             end
-            
+
             range = x_max - x_min
             values[:,i] = collect(x_min:(range/N):x_max)[1:N]
         end
@@ -618,9 +619,9 @@ function bifurcation_data(model::MultiUDE; N=25)
     for d in 2:dims
         vals = vcat.(vals,values[:,d]')
         vals = reshape(vals,length(vals))
-    end 
+    end
 
-    
+
     data = zeros(length(vals)*6*length(series), length(vals[1])+size(model.data)[1]+2)
     n = 0; i = 0
 
@@ -632,7 +633,7 @@ function bifurcation_data(model::MultiUDE; N=25)
                 n += 1; i +=1
                 data[n,:] = vcat(vcat(x,rt), [s,stb[i]])
             end
-        end 
+        end
     end
     # filter out extra zeros
     data = data[data[:,1] .!= 0.0,:]
@@ -640,22 +641,22 @@ function bifurcation_data(model::MultiUDE; N=25)
     nms, xnms = get_variable_names(model)
     df = DataFrame(data, vcat(xnms, vcat(nms, [model.series_column_name, "eigen"])))
     df = df[df[:,"eigen"] .!== 0,:]
-    
+
     return df
 
 end
 
 """
     plot_bifurcation_diagram(model::UDE, xvariable; N = 25, color_variable= nothing, conditional_variable = nothing, size= (600, 400))
-    
-This function returns a plot of the equilibrium values of the state varaibles ``y_t`` as a funciton of the covariates ``X_t``. The arguemnt `xvariable` determines the covariate plotted on the x-axis. Additional variables can be visualized in sperate panel by specifying the `conditional_variable` key word argument or visualized by the color scheme using the `color_variable` argument. 
 
-The time sereis are treated as an additional covariate that can be visualized by setting the `color_variable` or `conditional_variable` equal to "series" or the series column name in the training data. 
+This function returns a plot of the equilibrium values of the state varaibles ``y_t`` as a funciton of the covariates ``X_t``. The arguemnt `xvariable` determines the covariate plotted on the x-axis. Additional variables can be visualized in sperate panel by specifying the `conditional_variable` key word argument or visualized by the color scheme using the `color_variable` argument.
 
-The key word arguent `size` controls the dimensions of the final plot. 
+The time sereis are treated as an additional covariate that can be visualized by setting the `color_variable` or `conditional_variable` equal to "series" or the series column name in the training data.
+
+The key word arguent `size` controls the dimensions of the final plot.
 """
 function plot_bifurcation_diagram(model::MultiUDE, xvariable; N=25, color_variable=nothing, conditional_variable=nothing, size= (600, 400))
-    
+
     series = nothing
     if (conditional_variable == model.series_column_name) | (conditional_variable == "series")
         series = "Panels"
@@ -663,7 +664,7 @@ function plot_bifurcation_diagram(model::MultiUDE, xvariable; N=25, color_variab
     elseif (color_variable == model.series_column_name) | (color_variable == "series")
         series = "Color"
         color_variable=nothing
-    end 
+    end
 
     # compute equilibriums
     data = bifurcation_data(model;N=N)
@@ -684,7 +685,7 @@ function plot_bifurcation_diagram(model::MultiUDE, xvariable; N=25, color_variab
                 if typeof(color_variable) == Nothing
                     dat_s = dat[dat[:,model.series_column_name] .== s,:]
                     plt = Plots.scatter( dat_s[:,xvariable], dat_s.value, markersize = 3.5 .- 1.5 *(dat_s.eigen .> 0.0),
-                                        label = "", ylabel = string("Eg. ", yvariable), 
+                                        label = "", ylabel = string("Eg. ", yvariable),
                                         title = string(model.series_column_name," = ",s),titlefontsize = 9,
                                         xlabel= xvariable, labelfontsize = 9, tickfontsize = 7, color= "black")
                     push!(plts,plt)
@@ -692,7 +693,7 @@ function plot_bifurcation_diagram(model::MultiUDE, xvariable; N=25, color_variab
                     dat_s = dat[dat[:,model.series_column_name] .== s,:]
                     plt = Plots.scatter( dat_s[:,xvariable], dat_s.value, markersize = 3.5 .- 1.5 *(dat_s.eigen .> 0.0),
                                         label = "", ylabel = string("Eg. ", yvariable), titlefontsize = 9,
-                                        xlabel= xvariable, labelfontsize = 9, tickfontsize = 7, 
+                                        xlabel= xvariable, labelfontsize = 9, tickfontsize = 7,
                                         title = string(model.series_column_name," = ",s),
                                         zcolor = dat_s[:,color_variable])
                     push!(plts,plt)
@@ -704,23 +705,23 @@ function plot_bifurcation_diagram(model::MultiUDE, xvariable; N=25, color_variab
 
                 plt = Plots.scatter( dat[:,xvariable], dat.value, markersize = 3.5 .- 1.5 *(dat.eigen .> 0.0),
                                     label = "", ylabel = string("Eg. ", yvariable),
-                                    xlabel= xvariable, labelfontsize = 9, tickfontsize = 7, 
+                                    xlabel= xvariable, labelfontsize = 9, tickfontsize = 7,
                                     zcolor = dat[:,model.series_column_name])
                 push!(plts,plt)
 
-            else 
+            else
                 conditional_values = sort(unique(data[:,conditional_variable]))
                 conditional_levels = conditional_values[[1,round(Int,length(conditional_values)/2),end]]
 
                 for X in conditional_levels
                     dat_i = dat[broadcast(x -> x == X, dat[:,conditional_variable]),:]
                     plt = Plots.scatter( dat_i[:,xvariable], dat_i.value, markersize = 3.5 .- 1.5 *(dat_i.eigen .> 0.0),
-                                        title = string( conditional_variable, " = ", round(X, digits = 2) ), 
+                                        title = string( conditional_variable, " = ", round(X, digits = 2) ),
                                         titlefontsize = 9, label = "", ylabel = string("Eg. ", yvariable),
-                                        xlabel= xvariable, labelfontsize = 9, tickfontsize = 7, 
+                                        xlabel= xvariable, labelfontsize = 9, tickfontsize = 7,
                                         zcolor = dat_i[:,model.series_column_name])
                     push!(plts,plt)
-                end 
+                end
             end
 
         else
@@ -734,11 +735,11 @@ function plot_bifurcation_diagram(model::MultiUDE, xvariable; N=25, color_variab
                 else
                     plt = Plots.scatter( dat[:,xvariable], dat.value, markersize = 3.5 .- 1.5 *(dat.eigen .> 0.0),
                                         label = "", ylabel = string("Eg. ", yvariable),
-                                        xlabel= xvariable, labelfontsize = 9, tickfontsize = 7, 
+                                        xlabel= xvariable, labelfontsize = 9, tickfontsize = 7,
                                         zcolor = dat[:,color_variable])
                     push!(plts,plt)
                 end
-            else 
+            else
                 conditional_values = sort(unique(data[:,conditional_variable]))
                 conditional_levels = conditional_values[[1,round(Int,length(conditional_values)/2),end]]
 
@@ -747,22 +748,22 @@ function plot_bifurcation_diagram(model::MultiUDE, xvariable; N=25, color_variab
                     if typeof(color_variable) == Nothing
                         dat_i = dat[broadcast(x -> x == X, dat[:,conditional_variable]),:]
                         plt = Plots.scatter( dat_i[:,xvariable], dat_i.value, markersize = 3.5 .- 1.5 *(dat_i.eigen .> 0.0),
-                                            title = string( conditional_variable, " = ", round(X, digits = 2) ), 
+                                            title = string( conditional_variable, " = ", round(X, digits = 2) ),
                                             titlefontsize = 9, label = "", ylabel = string("Eg. ", yvariable),
                                             xlabel= xvariable, labelfontsize = 9, tickfontsize = 7, color= "black")
                         push!(plts,plt)
                     else
                         dat_i = dat[broadcast(x -> x == X, dat[:,conditional_variable]),:]
                         plt = Plots.scatter( dat_i[:,xvariable], dat_i.value, markersize = 3.5 .- 1.5 *(dat_i.eigen .> 0.0),
-                                            title = string( conditional_variable, " = ", round(X, digits = 2) ), 
+                                            title = string( conditional_variable, " = ", round(X, digits = 2) ),
                                             titlefontsize = 9, label = "", ylabel = string("Eg. ", yvariable),
-                                            xlabel= xvariable, labelfontsize = 9, tickfontsize = 7, 
+                                            xlabel= xvariable, labelfontsize = 9, tickfontsize = 7,
                                             zcolor = dat_i[:,color_variable])
                         push!(plts,plt)
                     end
-                end 
+                end
             end
-        end 
+        end
 
     end
 
