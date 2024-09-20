@@ -1114,7 +1114,7 @@ function BayesianCustomDerivatives(data::DataFrame,derivs!::Function,initial_par
     # model constructor
     constructor = data -> BayesianCustomDerivatives(data,derivs!,initial_parameters;time_column_name=time_column_name,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type)
 
-    return BayesianUDE(times,data,X,dataframe,0,parameters_vector,loss_function,process_model,process_loss,observation_model,
+    return BayesianUDE(times,data,0,dataframe,0,parameters_vector,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name,nothing,nothing)
 
 
