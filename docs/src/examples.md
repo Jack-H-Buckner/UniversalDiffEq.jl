@@ -23,6 +23,10 @@ UniversalDiffEq.jl does not have built-in methods to construct time-dependent NO
 
 ```julia
 using Lux, UniversalDiffEq
+# generate synthetic data
+data,X = simulate_coral_data()
+
+
 # set neural network dimensions
 dims_in = 4
 dims_out = 2
@@ -142,7 +146,7 @@ where ``r`` is the growth rate of the population, ``K`` is the carrying capacity
 
 ```julia
 # set up neural network
-using UniversalDiffEq, Lux, Random,
+using UniversalDiffEq, Lux, Random
 dims_in = 3
 hidden = 10
 NN = Lux.Chain(Lux.Dense(dims_in,hidden,tanh),Lux.Dense(hidden,1))
