@@ -6,13 +6,13 @@ UniversalDiffEq.jl provides several functions to analyze the characteristics of 
 UniversalDiffEq.get_right_hand_side(UDE::UDE)
 ```
 
-In addition to `get_right_hand_side` UniversalDiffEq provides some predefined functions for analyzing the equilbirium points of the dynamic system. The simplest is `equilibrum_and_stability` which searches for the equilibrium points of the UDE model and analyzes thier stability using a linear stability analysis. 
+In addition to `get_right_hand_side`, UniversalDiffEq.jl provides some predefined functions for analyzing the equilibrium points of the dynamic system. The simplest is `equilibrium_and_stability` which searches for the equilibrium points of the UDE model and analyzes their stability using a linear stability analysis.
 
 ```@docs; canonical=false
 UniversalDiffEq.equilibrium_and_stability(UDE,lower,upper;t=0,Ntrials=100,tol=10^-3)
 ```
 
-The package also has built in functions to generate bifurcation diagrams for models that include covaraites, by plotting the equilibrium points of the model as function of the covariates. 
+The package also has built-in functions to generate bifurcation diagrams for models that include covariates, by plotting the equilibrium points of the model as a function of the covariates. 
 
 ```@docs; canonical=false
 UniversalDiffEq.bifurcation_data(model::UDE;N=25)
