@@ -1,9 +1,22 @@
 # Model analysis
 
-UniversalDiffEq.jl provides several functions to analyze the characteristics of the fitted models. The most basic of these is the `get_right_hand_side` function. This function takes a UDE model as an argument and returns the right-hand side of the fitted differential or difference equation. This function can then be treated like any dynamic model and analyzed for equilibria, stability, tipping points, and other phenomena of interest.
+UniversalDiffEq.jl provides several functions to analyze the characteristics of the fitted models. The most basic of these is the `get_right_hand_side` function. This function takes a UDE model as an argument and returns the right-hand side of the fitted differential or difference equation. This function can then be treated like any dynamic model and analyzed for equilibrium points, stability, tipping points, and other dynamics of interest.
 
 ```@docs; canonical=false
 UniversalDiffEq.get_right_hand_side(UDE::UDE)
+```
+
+In addition to `get_right_hand_side` UniversalDiffEq provides some predefined functions for analyzing the equilbirium points of the dynamic system. The simplest is `equilibrum_and_stability` which searches for the equilibrium points of the UDE model and analyzes thier stability using a linear stability analysis. 
+
+```@docs; canonical=false
+UniversalDiffEq.equilibrium_and_stability(UDE,lower,upper;t=0,Ntrials=100,tol=10^-3)
+```
+
+The package also has built in functions to generate bifurcation diagrams for models that include covaraites, by plotting the equilibrium points of the model as function of the covariates. 
+
+```@docs; canonical=false
+UniversalDiffEq.bifurcation_data(model::UDE;N=25)
+UniversalDiffEq.plot_bifurcation_diagram(model::UDE, xvariable; N = 25, color_variable= nothing, conditional_variable = nothing, size= (600, 400))
 ```
 
 The function `phase_plane` plots forecasted trajectories of state variables for a given number of timesteps `T`. All phase plane functions also work with the `MultiUDE` model type, and plot phase planes for each series in the data.

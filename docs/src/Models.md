@@ -195,7 +195,7 @@ end
 init_parameters = (NN = NNparameters, r = 1.0, m = 0.5, theta = 0.5, beta = [0,0])
 
 
-model = CustomDerivatives(training_data,X,derivs!;init_parameters;proc_weight=2.0,obs_weight=0.5,reg_weight=10^-4)
+model = CustomDerivatives(training_data,X,derivs!,init_parameters;proc_weight=2.0,obs_weight=0.5,reg_weight=10^-4)
 nothing
 ```
 

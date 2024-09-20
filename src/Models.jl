@@ -970,7 +970,7 @@ Constructs a Bayesian continuous-time model for the data set `data` using a sing
 - `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
 - `hidden_units`: Number of neurons in hidden layer. Default is `10`.
 - `seed`: Fixed random seed for repeatable results. Default is `1`.
-- `proc_weight`: Weight of process error ``omega_{proc}``. Default is `1.0`.
+- `proc_weight`: Weight of process error ``mega_{proc}``. Default is `1.0`.
 - `obs_weight`: Weight of observation error ``omega_{obs}``. Default is `1.0`.
 - `reg_weight`: Weight of regularization error ``omega_{reg}``. Default is `10^-6`.
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
