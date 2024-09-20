@@ -48,18 +48,16 @@ using Random
 rng = Random.default_rng()
 NNparameters, NNstates = Lux.setup(rng,NN)
 
-function derivs!(du,u,i,X,p,t)
+function derivs!(du,u,i,p,t)
     index = round(Int,i)
-    du .= p.r[i].* u .* NN(u,p.NN, NNstates)[1]
+    du .= p.r[index].* u .* NN(u,p.NN, NNstates)[1]
 
 end
 
-m = 3 # number of time series
-init_parameters = (NN = NNparameters, r = zeros(m), m = 0.5, theta = 0.5, beta = [0,0])
+m = 2 # number of time series
+init_parameters = (NN = NNparameters, r = zeros(m), )
 
-model = MultiCustomDerivatives(training_data,derivs!;init_parameters;proc_weight=2.0,obs_weight=0.5,reg_weight=10^-4)
-nothing
-
+model = MultiCustomDerivatives(training_data,derivs!,init_parameters;proc_weight=2.0,obs_weight=0.5,reg_weight=10^-4)
 ```
 
 ### Example 2: Allowing a neural network to vary between time series
@@ -93,6 +91,6 @@ end
 
 init_parameters = (NN = NNparameters, )
 
-model = MultiCustomDerivatives(training_data,derivs!;init_parameters;proc_weight=2.0,obs_weight=0.5,reg_weight=10^-4)
+model = MultiCustomDerivatives(training_data,derivs!,init_parameters;proc_weight=2.0,obs_weight=0.5,reg_weight=10^-4)
 nothing
 ```

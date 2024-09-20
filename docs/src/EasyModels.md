@@ -54,11 +54,12 @@ NN = Lux.Chain(Lux.Dense(dims_in,hidden_units,nonlinearity),
 rng = Random.default_rng()
 NNparameters, states = Lux.setup(rng,NN)
 
-function derivs!
+function derivs!(du,u,p,t)
     C, states = NN(u,p.NN,states)
     du .= C .+ a*u .+ b
     return du
 end
+
 initial_parameters = (a = 1, b = 0.1)
 model = CustomDerivatives(data,derivs!,initial_parameters)
 ```
