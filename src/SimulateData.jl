@@ -222,5 +222,5 @@ function simulate_coral_data()
 end
 
 
-CowCodData = CSV.read("../examples/CowCodFishery.csv",DataFrame)
+CowCodData = CSV.read("~/.julia/dev/UniversalDiffEq.jl/examples/CowCodFishery.csv",DataFrame)
 
