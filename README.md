@@ -12,7 +12,7 @@ UniversalDiffEq.jl builds [Universal Differential Equations](https://arxiv.org/a
 
 The package provides one specific implementation of universal differential equations designed for systems with stochastic dynamics and noisy data. If you want to explore the technical details of UDEs and develop highly customized models, please use DiffEqFlux.jl instead.
 
-UniversalDiffEq.jl is currently under development and not on the Julia registry. To install and load it, open Julia and type the following code:
+To install and load UniversalDiffEq, open Julia and type the following code:
 
 ```
 ]add UniversalDiffEq
