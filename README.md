@@ -15,7 +15,7 @@ The package provides one specific implementation of universal differential equat
 UniversalDiffEq.jl is currently under development and not on the Julia registry. To install and load it, open Julia and type the following code:
 
 ```
-]add https://github.com/Jack-H-Buckner/UniversalDiffEq.jl
+]add UniversalDiffEq
 using UniversalDiffEq
 ```
 
