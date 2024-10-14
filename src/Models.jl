@@ -713,7 +713,7 @@ function NODE(data,X;time_column_name = "time", variable_column_name = nothing ,
 end
 
 
-function NODE_wth_ARD(data,X,Σ,λ;time_column_name = "time", variable_column_name = nothing ,value_column_name = nothing, hidden_units=10,nonlinearity = soft_plus, seed = 1,σ_r = 1.0, reg_type = "L2", l = 0.25,extrap_rho = 0.0 )
+function NODE_wth_ARD(data,X,Σ,λ,α,β;time_column_name = "time", variable_column_name = nothing ,value_column_name = nothing, hidden_units=10,nonlinearity = soft_plus, seed = 1,σ_r = 1.0, reg_type = "L2")
     
     X_data_frame = X
     time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
@@ -722,7 +722,7 @@ function NODE_wth_ARD(data,X,Σ,λ;time_column_name = "time", variable_column_na
     covariates, vars = interpolate_covariates(X,time_column_name,variable_column_name,value_column_name)
 
     # submodels
-    process_model = NODEWithARD(dims,covariates,l,extrap_rho; hidden = hidden_units, nonlinearity = nonlinearity)
+    process_model = NODEWithARD(dims,covariates; hidden = hidden_units, nonlinearity = nonlinearity)
     process_loss = DiagonalNoraml(dims;σ0 = 1.0)
     observation_model = Identity()
     observation_loss = FixedMvNoraml(Σ)
@@ -734,12 +734,48 @@ function NODE_wth_ARD(data,X,Σ,λ;time_column_name = "time", variable_column_na
     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
 
     # loss function
-    loss_function = init_loss_ARD(data,times,observation_model,observation_loss,process_model,process_loss,dims,σ_r,λ)
+    loss_function = init_loss_ARD(data,times,observation_model,observation_loss,process_model,process_loss,dims,σ_r,λ,α,β)
 
 
-    constructor = (data,X) -> NODE_wth_ARD(data,X,Σ,λ;time_column_name=time_column_name,variable_column_name=variable_column_name,value_column_name=value_column_name,hidden_units=hidden_units,nonlinearity=nonlinearity,seed=seed,σ_r=σ_r,reg_type=reg_type,l=l,extrap_rho=extrap_rho)
+    constructor = (data,X) -> NODE_wth_ARD(data,X,Σ,λ,α,β;time_column_name=time_column_name,variable_column_name=variable_column_name,value_column_name=value_column_name,hidden_units=hidden_units,nonlinearity=nonlinearity,seed=seed,σ_r=σ_r,reg_type=reg_type)
     
     weights = "ARD regularization"
+
+    return UDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name,weights,
+                variable_column_name, value_column_name)
+end
+
+
+
+
+function GP(data,X,Σ,α,β;time_column_name = "time", variable_column_name = nothing ,value_column_name = nothing)
+    
+    X_data_frame = X
+    time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
+    # convert data
+    N, dims, T, times, data, dataframe = process_data(data,time_column_name)
+    covariates, vars = interpolate_covariates(X,time_column_name,variable_column_name,value_column_name)
+    inducing_points = hcat(data',reduce(hcat,covariates.(times))')
+
+    # submodels
+    process_model = GP_process_model(dims,inducing_points,covariates)
+    process_loss = DiagonalNoraml(dims;σ0 = 1.0)
+    observation_model = Identity()
+    observation_loss = FixedMvNoraml(Σ)
+    process_regularization = no_reg()
+    observation_regularization = no_reg()
+
+
+    # parameters vector
+    parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+
+    # loss function
+    loss_function = init_loss_GP(data,times,observation_model,observation_loss,process_model,process_loss,α,β)
+
+    constructor = (data,X) -> GP(data,X,Σ,α,β;time_column_name = time_column_name, variable_column_name = variable_column_name ,value_column_name = value_column_name)
+
+    weights = "Gausian Process with Automatic Relevance Determination"
 
     return UDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name,weights,

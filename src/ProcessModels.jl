@@ -137,7 +137,7 @@ end
 
 
 
-function NODEWithARD(dims,covariates,l,extrap_rho; hidden = 20, nonlinearity = soft_plus)
+function NODEWithARD(dims,covariates; hidden = 20, nonlinearity = soft_plus)
    
     u0 = zeros(dims); tspan = (0.0,1000.0) # assing value for the inital conditions and time span (these dont matter)
     X0 = covariates(0)
@@ -148,25 +148,25 @@ function NODEWithARD(dims,covariates,l,extrap_rho; hidden = 20, nonlinearity = s
     function derivs!(du,u,p,t)
         dudt = NN(vcat(u[1:dims],covariates(t)),p)
         du[1:dims] .= dudt 
-        du[(dims+1):end] .= 0.5*(dudt ./ p.α).^2
+        du[(dims+1):end] .= 0.5*(dudt ./ abs.(p.α)).^2
     end
 
     IVP = ODEProblem(derivs!, vcat(u0,zeros(dims)), tspan, parameters)
     
     function predict(u,t,dt,parameters) 
-        tspan =  (t,t+dt) 
+        tspan = (t,t+dt) 
         sol = solve(IVP, Tsit5(), u0 = vcat(u,zeros(dims)), p=parameters,tspan = tspan, 
                     saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
         X = Array(sol)
         return (X[1:dims,end], X[(dims+1):end,end])
     end 
     
-    function forecast(u,t,dt,parameters) 
+    function forecast(u,t,dt,parameters,u1,u2,u3) 
         tspan =  (t,t+dt) 
-        sol = solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
+        sol = solve(IVP, Tsit5(), u0 = vcat(u,zeros(dims)), p=parameters,tspan = tspan, 
                     saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
         X = Array(sol)
-        return (X[1:dims,end], 0)
+        return X[1:dims,end]
     end 
 
     function right_hand_side(u,X,p,t)
@@ -176,6 +176,54 @@ function NODEWithARD(dims,covariates,l,extrap_rho; hidden = 20, nonlinearity = s
     return ProcessModel(parameters,predict, forecast,covariates, right_hand_side)
 end 
 
+
+
+
+
+mutable struct GPProcessModel
+    parameters
+    predict
+    forecast
+    covariates
+    right_hand_side
+    GP
+end
+
+
+function GP_process_model(dims,inducing_points,covariates)
+   
+    u0 = zeros(dims); tspan = (0.0,1000.0) # assing value for the inital conditions and time span (these dont matter)
+
+    GP, parameters = initMvGaussianProcess(dims, inducing_points)
+
+    function derivs!(du,u,p,t)
+        GP(vcat(u,covariates(t)),p)
+    end
+
+    IVP = ODEProblem(derivs!, vcat(u0,zeros(dims)), tspan, parameters)
+    
+    function predict(u,t,dt,parameters) 
+        tspan = (t,t+dt) 
+        sol = solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
+                    saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
+        X = Array(sol)
+        return (X[:,end], 0)
+    end 
+    
+    function forecast(u,t,dt,parameters,u1,u2,u3) 
+        tspan =  (t,t+dt) 
+        sol = solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
+                    saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
+        X = Array(sol)
+        return X[:,end]
+    end 
+
+    function right_hand_side(u,X,p,t)
+        GP(vcat(u,X),p)
+    end 
+    
+    return GPProcessModel(parameters,predict, forecast,covariates, right_hand_side,GP)
+end 
 
 
 

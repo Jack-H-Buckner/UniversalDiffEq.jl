@@ -1,7 +1,7 @@
 
 
 
-function init_loss_ARD(data,times,observation_model,observation_loss,process_model,process_loss,outputs,σ_r,λ)
+function init_loss_ARD(data,times,observation_model,observation_loss,process_model,process_loss,outputs,σ_r,λ,alpha,beta)
     # loss function 
     function loss_function(parameters)
 
@@ -27,6 +27,7 @@ function init_loss_ARD(data,times,observation_model,observation_loss,process_mod
         
         # regularization
         L_reg += ARD_regularization(parameters.process_model,outputs,σ_r,λ)
+        L_reg += sum( -(alpha-1)*2*parameters.process_loss.log_σ.+beta.*exp.(2*parameters.process_loss.log_σ) )
 
         return L_obs + L_proc + L_reg
     end
@@ -57,7 +58,8 @@ function init_loss_ARD(data,times,observation_model,observation_loss,process_mod
         
         # regularization
         L_reg += ARD_regularization(parameters.process_model,outputs,σ_r,λ)
-        
+        L_reg += sum( -(alpha-1)*2*parameters.process_loss.log_σ.+beta.*exp.(2*parameters.process_loss.log_σ) )
+
         return L_obs + L_proc + L_reg
     end
 
