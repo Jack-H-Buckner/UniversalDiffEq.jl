@@ -22,6 +22,12 @@ add UniversalDiffEq
 using UniversalDiffEq
 ```
 
+To access the latest version under development with the newest features use:
+
+```
+add https://github.com/Jack-H-Buckner/UniversalDiffEq.jl.git
+```
+
 # Tutorial
 As a simple example to get started on `UniversalDiffEq.jl`, we fit a NODE model to a synthetic data set generated with the classical [Lotka-Volterra model](https://en.wikipedia.org/wiki/Lotka%E2%80%93Volterra_equations). Model fit is given by the normalized root mean square error (NRMSE) for prey ($x1$) and predator ($x2$).
 
