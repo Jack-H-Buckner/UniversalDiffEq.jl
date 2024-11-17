@@ -117,6 +117,60 @@ function LorenzLotkaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,sigm
     return data, X
 end 
 
+
+
+function StochasticLotkaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,σ = 0.075, τ = 1.0)
+    # set seed 
+    Random.seed!(seed)
+
+    # set parameters for data set 
+    tspan = (0.0f0, T)
+    tsteps = range(tspan[1], tspan[2], length = datasize)
+
+    # model parameters
+    u0 = Float32[1.0, 0.5, 0.0, 0.0, 0.0,]
+    p=(r = 4.0, K = 10, alpha = 5.0, theta = 0.75, m = 5.0, sigma = 10, rho = 28, beta = 8/3)
+    X = rand(3,length(tsteps))
+
+    # define derivatives 
+    function lotka_volterra_derivs( u, p, t)
+        du1 = p.r*u[1]*(1-u[1]/p.K) - p.alpha*u[1]*u[2] + u[3]*u[1]
+        du2 = p.theta*p.alpha *u[1]*u[2] - p.m*u[2] + u[4]*u[2]
+        du3 = -2.0*u[3]
+        du4 = -2.0*u[4]
+        du5 = -2.0*u[5]
+        return [du1,du2,du3,du4,du5]
+    end
+
+    function lotka_volterra_var( u, p, t)
+        dW1 = 0
+        dW2 = 0
+        dW3 = τ
+        dW4 = τ
+        dW5 = τ
+        return [dW1,dW2,dW3,dW4,dW5]
+    end
+
+    # generate time series with DifferentialEquations.jl
+    prob_trueode = SDEProblem(lotka_volterra_derivs,lotka_volterra_var, u0, tspan, p)
+    ode_data = Array(solve(prob_trueode, SRIW1(), saveat = tsteps))
+
+    # add observation noise 
+    ode_data .+= ode_data .* rand(Normal(0.0,σ), size(ode_data))
+        
+    if plot
+        plt = Plots.scatter(tsteps,transpose(ode_data[1:2,:]), xlabel = "Time", ylabel = "Abundance", label = "")
+        data = DataFrame(time = tsteps, y1 = ode_data[1,:], y2 = ode_data[2,:])
+        X = DataFrame(time = tsteps, X1 = ode_data[3,:], X2 = ode_data[4,:], X3 = ode_data[5,:])
+        return data, X, plt
+    end
+    
+    data = DataFrame(time = tsteps, x1 = ode_data[1,:], x2 = ode_data[2,:])
+    X = DataFrame(time = tsteps, X = ode_data[3,:])
+    return data, X
+end 
+
+
 function LogisticLorenz(;plot = true, seed = 123, datasize = 100,T = 30.0,sigma = 0.0125,p = (r=0.5,sigma = 10, rho = 28, beta = 8/3))
     
     # set seed 
