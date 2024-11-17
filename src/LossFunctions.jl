@@ -80,3 +80,15 @@ function DiagonalNoraml(dims;σ0 = 1.0)
 
     return LossFunction(parameters,loss)
 end
+
+
+function dirichlet(dims;σ0 = 1.0)
+
+    parameters = NamedTuple()
+
+    function loss(u,uhat,dt,parameters)
+        -pdf(Distributions.Dirichlet((w/dt).*u),uhat)
+    end 
+
+    return LossFunction(parameters,loss)
+end
