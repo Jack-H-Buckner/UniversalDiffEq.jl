@@ -38,6 +38,36 @@ function gradient_descent!(UDE; step_size = 0.05, maxiter = 500, verbose = false
     return nothing
 end
 
+
+function gradient_descent_permuted!(UDE,B,ϵ; step_size = 0.05, maxiter = 500, verbose = false)
+    
+  # set optimization problem 
+  target = (x,p) -> UDE.permuted_loss_function(x,B,ϵ)
+  adtype = Optimization.AutoZygote()
+  optf = Optimization.OptimizationFunction(target, adtype)
+  optprob = Optimization.OptimizationProblem(optf, UDE.initial_parameters)
+  
+  # print value of loss function at each time step 
+  if verbose
+      callback = function (p, l; doplot = false)
+        print(round(l,digits = 3), " ")
+        return false
+      end
+  else
+      callback = function (p, l; doplot = false)
+        return false
+      end 
+  end
+
+  # run optimizer
+  sol = Optimization.solve(optprob, OptimizationOptimisers.Adam(step_size), callback = callback, maxiters = maxiter )
+  
+  # assign parameters to model 
+
+  return sol.u
+end
+
+
 # adding time steps to skip predictiosn for to accomidate data sets with large gaps
 function gradient_descent!(UDE,t_skip; step_size = 0.05, maxiter = 500, verbose = false)
     

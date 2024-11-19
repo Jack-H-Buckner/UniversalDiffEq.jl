@@ -52,3 +52,43 @@ function MSE_and_errors_sd(dims;N = 1, MSE_weight = 1.0, errors_weight = 1.0)
     return LossFunction(parameters,loss)
 end
 
+function FixedMvNoraml(Σ)
+
+    parameters = NamedTuple()
+    invΣ = inv(Σ)
+    function loss(u,uhat,parameter)
+        devs = uhat .- u
+        L = 0.5*devs'*invΣ*devs 
+        return L
+    end 
+
+    return LossFunction(parameters,loss)
+end
+
+
+function DiagonalNoraml(dims;σ0 = 1.0)
+
+    parameters = (log_σ = repeat([log(σ0)],dims),)
+
+    function loss(u,uhat,dt,parameter)
+        L = 0
+        for d in 1:dims
+            L += parameter.log_σ[d] + 0.5 * ((u[d]-uhat[d])/(dt*exp(parameter.log_σ[d])))^2
+        end 
+        return L
+    end 
+
+    return LossFunction(parameters,loss)
+end
+
+
+function dirichlet(dims;σ0 = 1.0)
+
+    parameters = NamedTuple()
+
+    function loss(u,uhat,dt,parameters)
+        -pdf(Distributions.Dirichlet((w/dt).*u),uhat)
+    end 
+
+    return LossFunction(parameters,loss)
+end

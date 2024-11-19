@@ -273,6 +273,7 @@ end
 
 
 function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters,priors::Function;time_column_name = "time",variable_column_name = nothing ,value_column_name = nothing, proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+    
     X_data_frame = X
     time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
     # convert data
@@ -285,6 +286,99 @@ function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameter
     observation_model = Identity()
     observation_loss = ObservationMSE(N,obs_weight)
     process_regularization = L2(initial_parameters,weight=reg_weight)
+    if reg_type == "L1"
+        process_regularization = L1(initial_parameters,weight=reg_weight)
+    elseif reg_type != "L2"
+        println("Invalid regularization type - defaulting to L2")
+    end
+    observation_regularization = no_reg()
+
+    # parameters vector
+    parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+
+    # loss function
+    loss_ = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+    function loss_function(parameters)
+        loss_(parameters) + priors(parameters.process_model)
+    end
+    function loss_function(parameters,tskip)
+        loss_(parameters,tskip) + priors(parameters.process_model)
+    end
+    # model constructor
+    constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters,priors;time_column_name=time_column_name, variable_column_name=variable_column_name, value_column_name=value_column_name, proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type)
+
+    weights = (regularization =  reg_weight, process = proc_weight, observation = obs_weight)
+
+    return UDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name, weights,
+                variable_column_name,value_column_name)
+
+end
+
+
+function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters,observation_loss::Function, observation_parameters::NamedTuple,priors::Function;time_column_name = "time",variable_column_name = nothing ,value_column_name = nothing, proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+    
+    X_data_frame = X
+    time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
+    
+    # convert data
+    N, dims, T, times, data, dataframe = process_data(data,time_column_name)
+    covariates, vars = interpolate_covariates(X,time_column_name,variable_column_name,value_column_name)
+
+    # generate submodels
+    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),covariates,dims,l,extrap_rho)
+    process_loss = ProcessMSE(N,T, proc_weight)
+    observation_model = Identity()
+    observation_loss = LossFunction(observation_loss, observation_parameters)
+    process_regularization = L2(initial_parameters,weight=reg_weight)
+
+    if reg_type == "L1"
+        process_regularization = L1(initial_parameters,weight=reg_weight)
+    elseif reg_type != "L2"
+        println("Invalid regularization type - defaulting to L2")
+    end
+    observation_regularization = no_reg()
+
+    # parameters vector
+    parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+
+    # loss function
+    loss_ = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+    function loss_function(parameters)
+        loss_(parameters) + priors(parameters.process_model)
+    end
+    function loss_function(parameters,tskip)
+        loss_(parameters,tskip) + priors(parameters.process_model)
+    end
+    # model constructor
+    constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters,priors;time_column_name=time_column_name, variable_column_name=variable_column_name, value_column_name=value_column_name, proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type)
+
+    weights = (regularization =  reg_weight, process = proc_weight, observation = obs_weight)
+
+    return UDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name, weights,
+                variable_column_name,value_column_name)
+
+end
+
+
+
+function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters,observation_loss::Function, observation_parameters::NamedTuple; time_column_name = "time",variable_column_name = nothing ,value_column_name = nothing, proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+    
+    X_data_frame = X
+    time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
+    
+    # convert data
+    N, dims, T, times, data, dataframe = process_data(data,time_column_name)
+    covariates, vars = interpolate_covariates(X,time_column_name,variable_column_name,value_column_name)
+
+    # generate submodels
+    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),covariates,dims,l,extrap_rho)
+    process_loss = ProcessMSE(N,T, proc_weight)
+    observation_model = Identity()
+    observation_loss = LossFunction(observation_loss, observation_parameters)
+    process_regularization = L2(initial_parameters,weight=reg_weight)
+
     if reg_type == "L1"
         process_regularization = L1(initial_parameters,weight=reg_weight)
     elseif reg_type != "L2"
@@ -710,6 +804,77 @@ function NODE(data,X;time_column_name = "time", variable_column_name = nothing ,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name,weights,
                 variable_column_name, value_column_name)
 end
+
+
+function NODE_wth_ARD(data,X,Σ,λ,α,β;time_column_name = "time", variable_column_name = nothing ,value_column_name = nothing, hidden_units=10,nonlinearity = soft_plus, seed = 1,σ_r = 1.0, reg_type = "L2")
+    
+    X_data_frame = X
+    time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
+    # convert data
+    N, dims, T, times, data, dataframe = process_data(data,time_column_name)
+    covariates, vars = interpolate_covariates(X,time_column_name,variable_column_name,value_column_name)
+
+    # submodels
+    process_model = NODEWithARD(dims,covariates; hidden = hidden_units, nonlinearity = nonlinearity)
+    process_loss = DiagonalNoraml(dims;σ0 = 1.0)
+    observation_model = Identity()
+    observation_loss = FixedMvNoraml(Σ)
+    process_regularization = no_reg()
+    observation_regularization = no_reg()
+
+
+    # parameters vector
+    parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+
+    # loss function
+    loss_function = init_loss_ARD(data,times,observation_model,observation_loss,process_model,process_loss,dims,σ_r,λ,α,β)
+
+
+    constructor = (data,X) -> NODE_wth_ARD(data,X,Σ,λ,α,β;time_column_name=time_column_name,variable_column_name=variable_column_name,value_column_name=value_column_name,hidden_units=hidden_units,nonlinearity=nonlinearity,seed=seed,σ_r=σ_r,reg_type=reg_type)
+    
+    weights = "ARD regularization"
+
+    return UDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name,weights,
+                variable_column_name, value_column_name)
+end
+
+
+
+
+function GP(data,X,Σ,α,β;time_column_name = "time", variable_column_name = nothing ,value_column_name = nothing)
+    
+    X_data_frame = X
+    time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
+    # convert data
+    N, dims, T, times, data, dataframe = process_data(data,time_column_name)
+    covariates, vars = interpolate_covariates(X,time_column_name,variable_column_name,value_column_name)
+    inducing_points = hcat(data',reduce(hcat,covariates.(times))')
+
+    # submodels
+    process_model = GP_process_model(dims,inducing_points,covariates)
+    process_loss = DiagonalNoraml(dims;σ0 = 1.0)
+    observation_model = Identity()
+    observation_loss = FixedMvNoraml(Σ)
+    process_regularization = no_reg()
+    observation_regularization = no_reg()
+
+
+    # parameters vector
+    parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+
+    # loss function
+    loss_function = init_loss_GP(data,times,observation_model,observation_loss,process_model,process_loss,α,β)
+
+    constructor = (data,X) -> GP(data,X,Σ,α,β;time_column_name = time_column_name, variable_column_name = variable_column_name ,value_column_name = value_column_name)
+
+    weights = "Gausian Process with Automatic Relevance Determination"
+
+    return UDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name,weights,
+                variable_column_name, value_column_name)
+end
+
 
 """
     EasyNODE(data;kwargs ... )
