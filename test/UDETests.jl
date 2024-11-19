@@ -12,21 +12,20 @@ dims_in = 2
 hidden_units = 10
 nonlinearity = tanh
 dims_out = 1
-NN = Lux.Chain(Lux.Dense(dims_in,hidden_units,nonlinearity),Lux.Dense(hidden_units,dims_out))
+
+NN, init_params = SimpleNeuralNetwork(dims_in,dims_out; hidden = hidden_units, nonlinearity = nonlinearity, seed = 123)
+
 
 # model derivitives
 function derivs!(du,u,p,t)
-    C, states = NN(u,p.NN, NNstates) # NNstates are
+    C  = NN(u,p.NN) # NNstates are
     du[1] = p.r*u[1] - C[1]
     du[2] = p.theta*C[1] -p.m*u[2]
 end
 
 # parameters
+init_parameters = (NN = init_params ,r = 1.0,m=0.5,theta=0.5)
 
-rng = Random.default_rng() 
-NNparameters, NNstates = Lux.setup(rng,NN) 
-
-init_parameters = (NN = NNparameters,r = 1.0,m=0.5,theta=0.5)
 
 # priors 
 function priors(p)
