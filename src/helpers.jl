@@ -75,6 +75,72 @@ function init_loss(data,times,observation_model,observation_loss,process_model,p
     return loss_function
 end 
 
+
+function init_loss(data,times, state_variable_transform,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+    # loss function 
+    function loss_function(parameters)
+
+        # observation loss
+        L_obs = 0.0 
+        
+        for t in 1:(size(data)[2])
+            yt = data[:,t]
+            uhat = state_variable_transform(parameters.uhat[:,t])
+            yhat = observation_model.link(uhat,parameters.observation_model)
+            L_obs += observation_loss.loss(yt, yhat,parameters.observation_model)
+        end
+
+        # dynamics loss 
+        L_proc = 0
+        for t in 2:(size(data)[2])
+            u0 =  state_variable_transform(parameters.uhat[:,t-1])
+            u1 =  state_variable_transform(parameters.uhat[:,t])
+            dt = times[t]-times[t-1]
+            u1hat, epsilon = process_model.predict(u0,times[t-1],dt,parameters.process_model) 
+            L_proc += process_loss.loss(u1,u1hat,dt,parameters.process_loss)
+        end
+        
+        # regularization
+        L_reg = process_regularization.loss(parameters.process_model,parameters.process_regularization)
+        L_reg += observation_regularization.loss(parameters.process_model,parameters.process_regularization)
+        
+        return L_obs + L_proc + L_reg
+    end
+
+    # skips the prediction steps for intervals starting at a time in t_skip
+    function loss_function(parameters,t_skip)
+        # observation loss
+        L_obs = 0.0 
+        
+        for t in 1:(size(data)[2])
+            yt = data[:,t]
+            uhat = state_variable_transform(parameters.uhat[:,t])
+            yhat = observation_model.link(uhat,parameters.observation_model)
+            L_obs += observation_loss.loss(yt, yhat,parameters.observation_model)
+        end
+
+        # dynamics loss 
+        L_proc = 0
+        for t in 2:(size(data)[2])
+            u0 =  state_variable_transform(parameters.uhat[:,t-1])
+            u1 =  state_variable_transform(parameters.uhat[:,t])
+            dt = times[t]-times[t-1]
+            if !(times[t-1] in t_skip)
+                u1hat, epsilon = process_model.predict(u0,times[t-1],dt,parameters.process_model) 
+                L_proc += process_loss.loss(u1,u1hat,dt,parameters.process_loss)
+            end
+        end
+        
+        # regularization
+        L_reg = process_regularization.loss(parameters.process_model,parameters.process_regularization)
+        L_reg += observation_regularization.loss(parameters.process_model,parameters.process_regularization)
+        
+        return L_obs + L_proc + L_reg
+    end
+    return loss_function
+end 
+
+
 function process_data(data,time_column_name)
     
     time_alias_ = time_column_name

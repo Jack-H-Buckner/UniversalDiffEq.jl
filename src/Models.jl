@@ -146,6 +146,9 @@ function CustomDerivatives(data,derivs!,initial_parameters;time_column_name = "t
 end
 
 
+
+
+
 """
     CustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,priors::Function;kwargs ... )
 
@@ -1378,5 +1381,75 @@ function BayesianCustomDerivatives(data::DataFrame,X,derivs!::Function,initial_p
 
     return BayesianUDE(times,data,X,dataframe,X_data_frame,parameters_vector,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name,variable_column_name,value_column_name)
+
+end
+
+
+
+mutable struct CustomUDE
+    times
+    data
+    X
+    data_frame
+    X_data_frame
+    parameters
+    state_variable_transform
+    loss_function
+    process_model
+    process_loss
+    observation_model
+    observation_loss
+    process_regularization
+    observation_regularization
+    constructor
+    time_column_name
+    weights
+    variable_column_name
+    value_column_name
+end
+
+
+function CustomModel(data::DataFrame,
+                    derivs!::Function,
+                    initial_parameters,
+                    link,
+                    link_params,
+                    observation_loss::Function, 
+                    observation_params::NamedTuple,
+                    state_variable_transform;
+                    time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+
+    time_column_name = check_column_names(data, time_column_name = time_column_name)[1]
+    # convert data
+    N, dims, T, times, data, dataframe = process_data(data,time_column_name)
+
+    # generate submodels
+    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),dims,l,extrap_rho)
+    process_loss = ProcessMSE(N,T, proc_weight)
+    observation_model = LinkFunction(link_params,link,(x,u)->x)
+    observation_loss = LossFunction(observation_params,observation_loss)
+    process_regularization = L2(initial_parameters,weight=reg_weight)
+    if reg_type == "L1"
+        process_regularization = L1(initial_parameters,weight=reg_weight)
+    elseif reg_type != "L2"
+        println("Invalid regularization type - defaulting to L2")
+    end
+    observation_regularization = no_reg()
+
+    # parameters vector
+    parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+
+    # loss function
+    loss_function = init_loss(data,times, state_variable_transform,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+    # loss_function = parameters -> likeihood(parameters) + priors(parameters)
+
+    # model constructor
+    constructor = data -> CustomDerivatives(data,derivs!,initial_parameters;time_column_name=time_column_name,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
+    
+    weights = (regularization =  reg_weight, process = proc_weight, observation = obs_weight)
+
+    return CustomUDE(times,data,0,dataframe,0,parameters, state_variable_transform,loss_function,process_model,process_loss,observation_model,
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name,weights,
+                nothing, nothing)
 
 end
