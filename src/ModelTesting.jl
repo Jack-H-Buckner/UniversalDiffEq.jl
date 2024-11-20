@@ -53,6 +53,43 @@ function plot_state_estimates(UDE::UDE)
     return plot(plots...)
 end
 
+
+
+
+function plot_state_estimates(UDE::CustomUDE)
+
+    plots = []
+
+    for dim in 1:size(UDE.data)[1]
+
+        # Calculate NRMSE for the current dimension
+        N = length(UDE.parameters.uhat[dim,:])
+        NRMSE = sqrt(sum((UDE.data[dim,:] .-UDE.parameters.uhat[dim,:]).^2)/N)/std(UDE.data[dim,:])
+
+        plt=Plots.scatter(UDE.times,UDE.data[dim,:], label = "observations")
+
+        Plots.plot!(UDE.times,mapslices(UDE.state_variable_transform,UDE.parameters.uhat',dims = 2)[:,dim],
+         color = "grey", label= "estimated states",
+                    xlabel = "time", ylabel = string("x", dim))
+
+        xmax = UDE.times[argmax(UDE.times)]
+        xmin = UDE.times[argmin(UDE.times)]
+        text_x = 0.1*(xmax-xmin)+xmin
+
+        ymax = UDE.data[dim,argmax(UDE.data[dim,:])]
+        ymin = UDE.data[dim,argmin(UDE.data[dim,:])]
+        text_y = 0.7*(ymax-ymin)+ymin
+
+        Plots.annotate!(text_x, text_y, text("NRMSE = $(round(NRMSE, digits=3))", :left, 10))
+
+
+        push!(plots, plt)
+    end
+
+    return plot(plots...)
+end
+
+
 """
     observation_error_correlations(UDE)
 
@@ -157,6 +194,21 @@ function predictions(UDE::UDE)
     return inits, obs, preds
 end
 
+function predictions(UDE::CustomUDE)
+
+    inits = mapslices(UDE.state_variable_transform,UDE.parameters.uhat[:,1:(end-1)],dims=1)
+    obs = mapslices(UDE.state_variable_transform,UDE.parameters.uhat[:,2:end],dims=1)
+    preds = mapslices(UDE.state_variable_transform,UDE.parameters.uhat[:,2:end],dims=1)
+
+    for t in 1:(size(inits)[2])
+        u0 = inits[:,t]
+        u1 = obs[:,t]
+        dt = UDE.times[t+1] - UDE.times[t]
+        preds[:,t] = UDE.process_model.predict(u0,UDE.times[t],dt,UDE.parameters.process_model)[1]
+    end
+
+    return inits, obs, preds
+end
 
 
 function predictions(UDE::UQ_UDE)
@@ -316,6 +368,29 @@ function plot_predictions(UDE::UDE)
 
         Plots.annotate!(text_x, text_y, text("NRMSE = $(round(NRMSE, digits=3))", :left, 10))
 
+
+        push!(plots, plt)
+
+    end
+
+    return plot(plots...)
+end
+
+function plot_predictions(UDE::CustomUDE)
+
+    inits, obs, preds = predictions(UDE)
+
+    plots = []
+    for dim in 1:size(obs,1)
+
+        difs = obs[dim,:].-inits[dim,:]
+
+        xmax = difs[argmax(difs)]
+        xmin = difs[argmin(difs)]
+
+        plt = plot([xmin,xmax],[xmin,xmax],color = "grey", linestyle=:dash, label = "1:1", legend_position = :topleft)
+        duhat = preds[dim,:].-inits[dim,:]
+        scatter!(difs,duhat,color = "white", label = "", xlabel = "Observed change", ylabel = "Predicted change")
 
         push!(plots, plt)
 

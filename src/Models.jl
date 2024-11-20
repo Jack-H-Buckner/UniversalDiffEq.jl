@@ -146,6 +146,9 @@ function CustomDerivatives(data,derivs!,initial_parameters;time_column_name = "t
 end
 
 
+
+
+
 """
     CustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,priors::Function;kwargs ... )
 
@@ -1378,5 +1381,169 @@ function BayesianCustomDerivatives(data::DataFrame,X,derivs!::Function,initial_p
 
     return BayesianUDE(times,data,X,dataframe,X_data_frame,parameters_vector,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name,variable_column_name,value_column_name)
+
+end
+
+
+
+mutable struct CustomUDE
+    times
+    data
+    X
+    data_frame
+    X_data_frame
+    parameters
+    state_variable_transform
+    loss_function
+    likelihood
+    priors
+    process_model
+    process_loss
+    observation_model
+    observation_loss
+    process_regularization
+    observation_regularization
+    constructor
+    time_column_name
+    weights
+    variable_column_name
+    value_column_name
+end
+
+
+
+function CustomModel(data::DataFrame,
+                        derivs!::Function,
+                        initial_parameters;
+                        link = (x,u) -> x,
+                        link_params = NamedTuple(),
+                        observation_loss = (u,uhat,p) -> sum((u.-uhat).^2), 
+                        observation_params = NamedTuple(),
+                        process_loss = (u,uhat,dt,p) -> sum((u.-uhat).^2 ./dt), 
+                        process_loss_params = NamedTuple(),
+                        state_variable_transform = x->x,
+                        log_priors = x -> 0,
+                        time_column_name = "time",reg_weight=10^-6,reg_type = "L2")
+
+    time_column_name = check_column_names(data, time_column_name = time_column_name)[1]
+    # convert data
+    N, dims, T, times, data, dataframe = process_data(data,time_column_name)
+
+    # generate submodels
+    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),dims,10,0)
+    process_loss = LossFunction(process_loss_params,process_loss)
+    observation_model = LinkFunction(link_params,link,(x,u)->x)
+    observation_loss = LossFunction(observation_params,observation_loss)
+    process_regularization = L2(initial_parameters,weight=reg_weight)
+    if reg_type == "L1"
+        process_regularization = L1(initial_parameters,weight=reg_weight)
+    elseif reg_type != "L2"
+        println("Invalid regularization type - defaulting to L2")
+    end
+    observation_regularization = no_reg()
+
+    # parameters vector
+    parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+
+    # loss function
+    log_likeihood = init_loss(data,times, state_variable_transform,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+    loss_function = parameters -> log_likeihood(parameters) + log_priors(parameters)
+
+    # model constructor
+    constructor = data -> CustomModel(data,derivs,initial_parameters;link=link,link_params=link_params,
+                                        observation_loss=observation_loss,observation_params=observation_params,
+                                        process_loss=process_loss,process_loss_params=process_loss_params,
+                                        state_variable_transform=state_variable_transform,log_priors=log_priors,
+                                        time_column_name=time_column_name,reg_weight=reg_weight,reg_type=reg_type)
+
+    weights = (regularization =  reg_weight, )
+
+    return CustomUDE(times,data,0,dataframe,0,parameters, state_variable_transform,loss_function,
+                log_likeihood,log_priors,process_model,process_loss,observation_model,observation_loss,
+                process_regularization,observation_regularization,constructor,time_column_name,weights,
+                nothing, nothing)
+
+end
+
+
+"""
+    CustomModel(data::DataFrame,X::DataFrame, derivs!::Function, initial_parameters; kwargs ...)
+
+Constructs a UDE model from a DataFrame `data` a DataFrame with covariates `X` a function `derivs` and an initial guess of the paramter values `inital_parameters`.
+The modle strucutre can be further modified by the key word arguments to specify the relationship between the state variables and observations and the loss function. 
+These areguments are discussed individuals below. 
+
+# kwargs
+link - A function that takes the value of the state variable `u` and paramters `p` and retuns and estiamte of the obseration `y`
+link_params - parameters for the link function, can be an empty NamedTuple if no paramters are used
+observation_loss - loss function that describes the distance betwen the observed and estimated states
+observation_params - parameters for the obseraiton loss function - can be an empty named tuple of no paramters are needed
+process_loss - loss funciton that describes the distance betwen the observed and predicted state tranistions. 
+process_loss_params - parameters for the process loss. 
+state_variable_transform - a function that maps from the variables used in the optimizer to states variables used by the observaiton and prediction funitons. 
+log_priors - prior probabilities for the model paramters + nerual network regularization 
+time_column_name - column that indexes time in the data frames
+value_column_name - the column that indicates the variabe in  long formate covariates data sets 
+variable_column_name = the column that indicates the value of the variables in long formate covariates data sets 
+reg_weight -  weight given to regualrizing the neural network 
+reg_type - funcrional form of regualrization "L1" or "L2"
+"""
+function CustomModel(data::DataFrame,
+                        X::DataFrame,
+                        derivs!::Function,
+                        initial_parameters;
+                        link = (x,u) -> x,
+                        link_params = NamedTuple(),
+                        observation_loss = (u,uhat,p) -> sum((u.-uhat).^2), 
+                        observation_params = NamedTuple(),
+                        process_loss = (u,uhat,dt,p) -> sum((u.-uhat).^2 ./dt), 
+                        process_loss_params = NamedTuple(),
+                        state_variable_transform = x->x,
+                        log_priors = x -> 0,
+                        time_column_name = "time",
+                        value_column_name = "value",
+                        variable_column_name = "variable",
+                        reg_weight=10^-6,reg_type = "L2")
+
+
+    X_data_frame = X
+    time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
+    # convert data
+    N, dims, T, times, data, dataframe = process_data(data,time_column_name)
+    covariates, vars = interpolate_covariates(X,time_column_name,variable_column_name,value_column_name)
+
+    # generate submodels
+    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),covariates,dims,10,0)
+    process_loss = LossFunction(process_loss_params,process_loss)
+    observation_model = LinkFunction(link_params,link,(x,u)->x)
+    observation_loss = LossFunction(observation_params,observation_loss)
+    process_regularization = L2(initial_parameters,weight=reg_weight)
+    if reg_type == "L1"
+        process_regularization = L1(initial_parameters,weight=reg_weight)
+    elseif reg_type != "L2"
+        println("Invalid regularization type - defaulting to L2")
+    end
+    observation_regularization = no_reg()
+
+    # parameters vector
+    parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+
+    # loss function
+    log_likeihood = init_loss(data,times, state_variable_transform,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+    loss_function = parameters -> log_likeihood(parameters) + log_priors(parameters)
+
+    # model constructor
+    constructor = (data, X)  -> CustomModel(data,X,derivs,initial_parameters;link=link,link_params=link_params,
+                                            observation_loss=observation_loss,observation_params=observation_params,
+                                            process_loss=process_loss,process_loss_params=process_loss_params,
+                                            state_variable_transform=state_variable_transform,log_priors=log_priors,
+                                            time_column_name=time_column_name,reg_weight=reg_weight,reg_type=reg_type)
+
+    weights = (regularization =  reg_weight, )
+
+    return CustomUDE(times,data,X,dataframe,X_data_frame,parameters, state_variable_transform,loss_function,
+                    log_likeihood,log_priors,process_model,process_loss,observation_model,observation_loss,
+                    process_regularization,observation_regularization,constructor,time_column_name,weights,
+                    nothing, nothing)
 
 end
