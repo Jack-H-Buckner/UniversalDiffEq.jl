@@ -42,6 +42,7 @@ mutable struct ProcessModel
     forecast
     covariates
     right_hand_side
+    IVP
 end
 
 function ContinuousProcessModel(derivs!,parameters, dims, l ,extrap_rho)
@@ -65,7 +66,7 @@ function ContinuousProcessModel(derivs!,parameters, dims, l ,extrap_rho)
         return du
     end 
 
-    return ProcessModel(parameters,predict, forecast,0,right_hand_side)
+    return ProcessModel(parameters,predict, forecast,0,right_hand_side,IVP)
 end 
 
 
@@ -91,7 +92,7 @@ function ContinuousProcessModel(derivs!,parameters,covariates,dims,l,extrap_rho)
         return du
     end 
     
-    return ProcessModel(parameters,predict, forecast,covariates, right_hand_side)
+    return ProcessModel(parameters,predict, forecast,covariates, right_hand_side,IVP)
 end 
 
 
@@ -112,7 +113,7 @@ function DiscreteProcessModel(difference, parameters, covariates, dims, l, extra
         return difference(u,x,t,parameters) .- u
     end 
 
-    return ProcessModel(parameters,predict, forecast, covariates,right_hand_side)
+    return ProcessModel(parameters,predict, forecast, covariates,right_hand_side,nothing)
 end 
 
 function DiscreteProcessModel(difference, parameters, dims, l, extrap_rho)
@@ -131,7 +132,7 @@ function DiscreteProcessModel(difference, parameters, dims, l, extrap_rho)
         return difference(u,t,parameters) .- u
     end 
 
-    return ProcessModel(parameters,predict, forecast,0,right_hand_side)
+    return ProcessModel(parameters,predict, forecast,0,right_hand_side,nothing)
 end 
 
 
@@ -173,7 +174,7 @@ function NODEWithARD(dims,covariates; hidden = 20, nonlinearity = soft_plus)
         dudt = NN(vcat(u,X),p)
     end 
     
-    return ProcessModel(parameters,predict, forecast,covariates, right_hand_side)
+    return ProcessModel(parameters,predict, forecast,covariates, right_hand_side,IVP)
 end 
 
 
@@ -386,7 +387,7 @@ function NODE_process(dims,hidden,seed,l,extrap_rho)
     
     function predict(u,t,dt,parameters) 
         tspan =  (t,t+dt) 
-        sol = solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
+        sol = OrdinaryDiffEq.solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
                     saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
         X = Array(sol)
         return (X[:,end], 0)

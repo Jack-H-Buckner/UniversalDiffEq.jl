@@ -234,3 +234,188 @@ function SGLD!(UDE::BayesianUDE;samples = 500, burnin = Int(samples/10),a = 10.0
 
   UDE.parameters = parameters[(end-burnin):end]
 end
+
+function one_step_ahead!(UDE::UDE; verbose = true, maxiter = 500, step_size = 0.05)
+
+  loss = init_one_step_ahead_loss(UDE)
+  target = (x,u) -> loss(x)
+  adtype = Optimization.AutoZygote()
+  optf = Optimization.OptimizationFunction(target, adtype)
+  optprob = Optimization.OptimizationProblem(optf, UDE.parameters)
+  
+  # print value of loss function at each time step 
+  if verbose
+      callback = function (p, l; doplot = false)
+        print(round(l,digits = 3), " ")
+        return false
+      end
+  else
+      callback = function (p, l; doplot = false)
+        return false
+      end 
+  end
+
+  # run optimizer
+  sol = Optimization.solve(optprob, OptimizationOptimisers.Adam(step_size), callback = callback, maxiters = maxiter )
+  
+  # assign parameters to model 
+  UDE.parameters = sol.u
+end
+
+
+function one_step_ahead!(UDE::MultiUDE; verbose = true, maxiter = 500, step_size = 0.05)
+
+  loss = init_one_step_ahead_loss(UDE)
+  target = (x,u) -> loss(x)
+  adtype = Optimization.AutoZygote()
+  optf = Optimization.OptimizationFunction(target, adtype)
+  optprob = Optimization.OptimizationProblem(optf, UDE.parameters)
+  
+  # print value of loss function at each time step 
+  if verbose
+      callback = function (p, l; doplot = false)
+        print(round(l,digits = 3), " ")
+        return false
+      end
+  else
+      callback = function (p, l; doplot = false)
+        return false
+      end 
+  end
+
+  # run optimizer
+  sol = Optimization.solve(optprob, OptimizationOptimisers.Adam(step_size), callback = callback, maxiters = maxiter )
+  
+  # assign parameters to model 
+  UDE.parameters = sol.u
+  UDE.parameters.uhat .= UDE.data
+end
+
+function mini_batching!(UDE::UDE; pred_length, verbose = true, maxiter = 500, step_size = 0.05, ode_solver = Tsit5(), ad_method = ForwardDiffSensitivity())
+  
+  loss = init_mini_batch_loss(UDE,pred_length, ode_solver, ad_method)
+  target = (x,u) -> loss(x)
+  adtype = Optimization.AutoZygote()
+  optf = Optimization.OptimizationFunction(target, adtype)
+  optprob = Optimization.OptimizationProblem(optf, UDE.parameters)
+  
+  # print value of loss function at each time step 
+  if verbose
+      callback = function (p, l; doplot = false)
+        print(round(l,digits = 3), " ")
+        return false
+      end
+  else
+      callback = function (p, l; doplot = false)
+        return false
+      end 
+  end
+
+  # run optimizer
+  sol = Optimization.solve(optprob, OptimizationOptimisers.Adam(step_size), callback = callback, maxiters = maxiter )
+  
+  # assign parameters to model 
+  UDE.parameters = sol.u
+  UDE.parameters.uhat .= UDE.data
+
+end
+
+
+function mini_batching!(UDE::MultiUDE; pred_length=5,solver=Tsit5(),sensealg = ForwardDiffSensitivity(), verbose = true, maxiter = 500, step_size = 0.05)
+
+  loss = init_mini_batch_loss(UDE,pred_length,solver,sensealg)
+  target = (x,u) -> loss(x)
+  adtype = Optimization.AutoZygote()
+  optf = Optimization.OptimizationFunction(target, adtype)
+  optprob = Optimization.OptimizationProblem(optf, UDE.parameters)
+  
+  # print value of loss function at each time step 
+  if verbose
+      callback = function (p, l; doplot = false)
+        print(round(l,digits = 3), " ")
+        return false
+      end
+  else
+      callback = function (p, l; doplot = false)
+        return false
+      end 
+  end
+
+  # run optimizer
+  sol = Optimization.solve(optprob, OptimizationOptimisers.Adam(step_size), callback = callback, maxiters = maxiter )
+  
+  # assign parameters to model 
+  UDE.parameters = sol.u
+  UDE.parameters.uhat .= UDE.data
+end
+
+
+# function interpolate_derivs(u,t;d=12,alg = :gcv_svd)
+#   dudt = zeros(size(u))
+#   uhat = zeros(size(u))
+#   for i in 1:size(u)[1]
+#       A = RegularizationSmooth(Float64.(u[i,:]), t, d; alg = alg)
+#       uhat[i,:] .= A.û
+#       dudt_ = t -> DataInterpolations.derivative(A, t)
+#       dudt[i,:] .= dudt_.(t)
+#   end 
+#   return uhat, dudt
+# end 
+
+
+# requires out of place derivative calcualtion 
+# ##, RegularizationTools, DataInterpolations
+# @article{Bhagavan2024,
+#   doi = {10.21105/joss.06917},
+#   url = {https://doi.org/10.21105/joss.06917},
+#   year = {2024},
+#   publisher = {The Open Journal},
+#   volume = {9},
+#   number = {101},
+#   pages = {6917},
+#   author = {Sathvik Bhagavan and Bart de Koning and Shubham Maddhashiya and Christopher Rackauckas},
+#   title = {DataInterpolations.jl: Fast Interpolations of 1D data},
+#   journal = {Journal of Open Source Software}
+# }
+# function derivative_matching!(model; verbose = true, maxiter = 500, step_size = 0.05, d = 12, alg = :gcv_svd)
+
+#   times = model.times
+#   uhat, dudt = interpolate_derivs(model.data,model.times;d=d,alg = alg)
+#   uhat = Float64.(uhat)
+#   dudt = Float64.(dudt)
+#   function loss(parameters)
+#       L = 0
+#         for t in 1:size(uhat)[2]
+#             dudt_hat = model.process_model.right_hand_side(uhat[:,t],parameters.process_model,times[t])
+#             L += sum((dudt[:,t] .- dudt_hat).^2)
+#         end
+#       return L
+#   end 
+
+#   target = (x,u) -> loss(x)
+#   adtype = Optimization.AutoEnzyme()
+#   optf = Optimization.OptimizationFunction(target, adtype)
+#   optprob = Optimization.OptimizationProblem(optf, model.parameters)
+  
+#   # print value of loss function at each time step 
+#   if verbose
+#       callback = function (p, l; doplot = false)
+#         print(round(l,digits = 3), " ")
+#         return false
+#       end
+#   else
+#       callback = function (p, l; doplot = false)
+#         return false
+#       end 
+#   end
+
+#   # run optimizer
+#   sol = Optimization.solve(optprob, OptimizationOptimisers.Adam(step_size), callback = callback, maxiters = maxiter )
+  
+#   # assign parameters to model 
+
+#   model.parameters = sol.u
+#   model.parameters.uhat = uhat
+
+# end 
+

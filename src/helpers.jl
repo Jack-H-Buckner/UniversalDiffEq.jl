@@ -76,6 +76,99 @@ function init_loss(data,times,observation_model,observation_loss,process_model,p
 end 
 
 
+
+function init_one_step_ahead_loss(model::UDE)
+    # loss function 
+    function loss_function(parameters)
+        # dynamics loss 
+        L_proc = 0
+        for t in 2:(size(model.data)[2])
+            u0 = model.data[:,t-1]
+            u1 = model.data[:,t]
+            dt = model.times[t]-model.times[t-1]
+            u1hat, epsilon = model.process_model.predict(u0,times[t-1],dt,parameters.process_model) 
+            L_proc += process_loss.loss(u1,u1hat,dt,parameters.process_loss)
+        end
+        
+        # regularization
+        L_reg = process_regularization.loss(parameters.process_model,parameters.process_regularization)
+        L_reg += observation_regularization.loss(parameters.process_model,parameters.process_regularization)
+        
+        return L_proc + L_reg
+    end
+
+    # skips the prediction steps for intervals starting at a time in t_skip
+    function loss_function(parameters,t_skip)
+
+        # dynamics loss 
+        L_proc = 0
+        for t in 2:(size(data)[2])
+            u0 = model.data[:,t-1]
+            u1 = model.data[:,t]
+            dt = model.times[t]-model.times[t-1]
+            if !(times[t-1] in t_skip)
+                u1hat, epsilon = model.process_model.predict(u0,times[t-1],dt,parameters.process_model) 
+                L_proc += model.process_loss.loss(u1,u1hat,dt,parameters.process_loss)
+            end
+        end
+        
+        # regularization
+        L_reg = process_regularization.loss(parameters.process_model,parameters.process_regularization)
+        L_reg += observation_regularization.loss(parameters.process_model,parameters.process_regularization)
+        
+        return L_proc + L_reg
+    end
+    return loss_function
+end 
+
+function init_single_loss_one_step(model::MultiUDE)
+    
+    function loss(parameters,data,series,starts,lengths)
+        
+        # observation loss
+        L_obs = 0.0 
+        time = model.times[starts[series]:(starts[series]+lengths[series]-1)]
+        dat = data[:,starts[series]:(starts[series]+lengths[series]-1)]
+    
+        # process loss 
+        L_proc = 0
+        for t in 2:(size(dat)[2])
+            u0 = dat[:,t-1]
+            u1 = dat[:,t]
+            dt = time[t]-time[t-1]
+            u1hat, epsilon = model.process_model.predict(u0,series,time[t-1],dt,parameters.process_model) 
+            L_proc += model.process_loss.loss(u1,u1hat,dt,parameters.process_loss)
+        end
+        
+        # regularization
+        L_reg = model.process_regularization.loss(parameters.process_model,parameters.process_regularization)
+
+        return L_obs + L_proc + L_reg
+    end
+    return loss
+end
+
+
+function init_one_step_ahead_loss(model::MultiUDE)
+    
+    single_loss = init_single_loss_one_step(model)
+    N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames, labels_df = process_multi_data(model.data_frame, model.time_column_name, model.series_column_name)
+
+    function loss(parameters)
+        L = 0
+        for i in eachindex(starts)
+            L+= single_loss(parameters,data,i,starts,lengths)
+        end
+        return L
+    end   
+
+    return loss
+end 
+
+
+
+
+
 function init_loss(data,times, state_variable_transform,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
     # loss function 
     function loss_function(parameters)
@@ -139,6 +232,164 @@ function init_loss(data,times, state_variable_transform,observation_model,observ
     end
     return loss_function
 end 
+
+
+
+function init_single_loss_mini_batch(model::MultiUDE,pred_length,solver,sensealg)
+    
+    function predict_mini(u,t0,i,tsteps,parameters)
+        tspan =  (t0,tsteps[end])  # Tsit5()#ForwardDiffSensitivity()
+        params = vcat(parameters,ComponentArray((series =i, )))
+        sol = solve(model.process_model.IVP, solver, u0 = u, p=params,tspan = tspan, 
+                    saveat = tsteps,abstol=1e-6, reltol=1e-6, sensealg = sensealg  )
+        X = Array(sol)
+        return X
+    end 
+
+    function loss(parameters,data,series,starts,lengths)
+        
+        # observation loss
+        L_obs = 0.0 
+        time = model.times[starts[series]:(starts[series]+lengths[series]-1)]
+        dat = data[:,starts[series]:(starts[series]+lengths[series]-1)]
+
+        
+
+        L_proc = 0
+        inds = 1:pred_length
+        tspan = 1:pred_length
+        for t in 1:pred_length:(size(dat)[2])
+            
+            if (t - size(dat)[2]) >=pred_length
+                inds = (t+1):(t+pred_length)
+                tspan = time[inds]
+            else
+                inds = (t+1):size(dat)[2]
+                tspan = time[inds]
+            end 
+
+            u0 = dat[:,t]
+            u1 = dat[:,inds]
+            u1hat = predict_mini(u0,time[t],series,tspan,parameters.process_model)
+
+            dt = 1
+            for i in 2:length(inds) 
+                L_proc += model.process_loss.loss(u1[:,i],u1hat[:,i],dt,parameters.process_loss)
+            end 
+        end
+
+        # regularization
+        L_reg = model.process_regularization.loss(parameters.process_model,parameters.process_regularization)
+
+        return L_obs + L_proc + L_reg
+    end
+
+  
+    return loss
+end
+
+function init_mini_batch_loss(model::MultiUDE,pred_length,solver,sensealg)
+    
+    single_loss = init_single_loss_mini_batch(model,pred_length,solver,sensealg)
+    N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames, labels_df = process_multi_data(model.data_frame, model.time_column_name, model.series_column_name)
+
+    function loss(parameters)
+        L = 0
+        for i in eachindex(starts)
+            L+= single_loss(parameters,data,i,starts,lengths)
+        end
+        return L
+    end   
+
+    return loss
+end 
+
+
+
+
+
+
+
+function init_mini_batch_loss(model::UDE,pred_length, solver, sensealg)
+
+    # loss function 
+    function predict_mini(u,t0,tsteps,parameters)
+        tspan =  (t0,tsteps[end])  # Tsit5()#ForwardDiffSensitivity()
+        sol = solve(model.process_model.IVP, solver, u0 = u, p=parameters,tspan = tspan, 
+                    saveat = tsteps,abstol=1e-6, reltol=1e-6, sensealg = sensealg  )
+        X = Array(sol)
+        return X
+    end 
+
+    function loss_function(parameters)
+
+        # dynamics loss 
+        L_proc = 0
+        inds = 1:pred_length
+        tspan = 1:pred_length
+        for t in 1:pred_length:(size(model.data)[2])
+            
+            if (t - size(model.data)[2]) >=pred_length
+                inds = (t+1):(t+pred_length)
+                tspan = model.times[inds]
+            else
+                inds = (t+1):size(model.data)[2]
+                tspan = model.times[inds]
+            end 
+
+            u0 = model.data[:,t]
+            u1 = model.data[:,inds]
+            u1hat = predict_mini(u0,model.times[t],tspan,parameters.process_model)
+            #L_proc += sum( (u1 .- u1hat).^2 )/length(model.data)
+            dt = 1
+            for i in 2:length(inds) 
+                L_proc += model.process_loss.loss(u1[:,i],u1hat[:,i],dt,parameters.process_loss)
+            end 
+        end
+        
+        # regularization
+        L_reg = model.process_regularization.loss(parameters.process_model,parameters.process_regularization)
+        L_reg += model.observation_regularization.loss(parameters.process_model,parameters.process_regularization)
+        
+        return L_proc + L_reg
+    end
+
+    # skips the prediction steps for intervals starting at a time in t_skip
+    function loss_function(parameters,t_skip)
+
+        # dynamics loss 
+        L_proc = 0
+        inds = 1:pred_length
+        tspan = 1:pred_length
+        for t in 1:pred_length:(size(model.data)[2])
+            
+            if (t - size(model.data)[2]) >=pred_length
+                inds = (t+1):(t+pred_length)
+                tspan = model.times[inds]
+            else
+                inds = (t+1):size(model.data)[2]
+                tspan = model.times[inds]
+            end 
+
+            u0 = model.data[:,t]
+            u1 = model.data[:,inds]
+            u1hat = predict_mini(u0,model.times[t],tspan,parameters.process_model)
+            for i in 1:length(inds)
+                if !(tspan[i] in t_skip)
+                    L_proc += sum( (u1[:,1] .- u1hat[:,1]).^2 )/length(model.data)
+                end
+            end 
+        end
+        
+        # regularization
+        L_reg = model.process_regularization.loss(parameters.process_model,parameters.process_regularization)
+        L_reg += model.observation_regularization.loss(parameters.process_model,parameters.process_regularization)
+        
+        return L_proc + L_reg
+    end
+    return loss_function
+end 
+
 
 
 function process_data(data,time_column_name)

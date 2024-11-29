@@ -43,6 +43,7 @@ mutable struct MultiProcessModel
     forecast
     covariates
     right_hand_side
+    IVP
 end
 
 function MultiContinuousProcessModel(derivs!,parameters, dims, l ,extrap_rho)
@@ -67,7 +68,7 @@ function MultiContinuousProcessModel(derivs!,parameters, dims, l ,extrap_rho)
         return du
     end 
     
-    return MultiProcessModel(parameters,predict, forecast, 0, right_hand_side)
+    return MultiProcessModel(parameters,predict, forecast, 0, right_hand_side,IVP)
 end 
 
 
@@ -94,7 +95,7 @@ function MultiContinuousProcessModel(derivs!,parameters,covariates,dims,l,extrap
     end 
     
 
-    return MultiProcessModel(parameters,predict, forecast,covariates,right_hand_side)
+    return MultiProcessModel(parameters,predict, forecast,covariates,right_hand_side,IVP)
 end 
 
 
@@ -148,7 +149,7 @@ function MultiNODE_process(dims,hidden,covariates,seed,l,extrap_rho)
     end 
 
     
-    return MultiNODE_process(dims,IVP,derivs!,parameters,predict,forecast,covariates,right_hand_side)
+    return MultiNODE_process(dims,IVP,derivs!,parameters,predict,forecast,covariates,right_hand_side,IVP)
     
 end 
 
@@ -186,7 +187,7 @@ function MultiNODE_process(dims,hidden,seed,l,extrap_rho)
         return du
     end 
     
-    return MultiNODE_process(dims,IVP,derivs!,parameters,predict,forecast,0,right_hand_side)
+    return MultiNODE_process(dims,IVP,derivs!,parameters,predict,forecast,0,right_hand_side,IVP)
     
 end 
 

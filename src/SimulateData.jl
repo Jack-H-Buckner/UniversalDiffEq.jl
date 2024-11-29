@@ -153,7 +153,7 @@ function StochasticLotkaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,
 
     # generate time series with DifferentialEquations.jl
     prob_trueode = SDEProblem(lotka_volterra_derivs,lotka_volterra_var, u0, tspan, p)
-    ode_data = Array(solve(prob_trueode, SRIW1(), saveat = tsteps))
+    ode_data = Array(StochasticDiffEq.solve(prob_trueode, SRIW1(), saveat = tsteps))
 
     # add observation noise 
     ode_data .+= ode_data .* rand(Normal(0.0,σ), size(ode_data))
