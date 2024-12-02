@@ -350,21 +350,48 @@ function mini_batching!(UDE::MultiUDE; pred_length=5,solver=Tsit5(),sensealg = F
 end
 
 
-# function interpolate_derivs(u,t;d=12,alg = :gcv_svd)
-#   dudt = zeros(size(u))
-#   uhat = zeros(size(u))
-#   for i in 1:size(u)[1]
-#       A = RegularizationSmooth(Float64.(u[i,:]), t, d; alg = alg)
-#       uhat[i,:] .= A.û
-#       dudt_ = t -> DataInterpolations.derivative(A, t)
-#       dudt[i,:] .= dudt_.(t)
-#   end 
-#   return uhat, dudt
-# end 
+using RegularizationTools, DataInterpolations
+function interpolate_derivs(u,t;d=12,alg = :gcv_svd)
+  dudt = zeros(size(u))
+  uhat = zeros(size(u))
+  for i in 1:size(u)[1]
+      A = RegularizationSmooth(Float64.(u[i,:]), t, d; alg = alg)
+      uhat[i,:] .= A.û
+      dudt_ = t -> DataInterpolations.derivative(A, t)
+      dudt[i,:] .= dudt_.(t)
+  end 
+  return uhat, dudt
+end 
+
+
+function interpolate_derivs_multi(model;d=12,alg = :gcv_svd)
+
+  N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames, labels_df = process_multi_data(model.data_frame, model.time_column_name, model.series_column_name)
+
+
+  ts = [times[starts[series]:(starts[series]+lengths[series]-1)] for series in eachindex(starts)]
+  dats = [data[:,starts[series]:(starts[series]+lengths[series]-1)] for series in eachindex(starts)]
+
+  dudts = []
+  uhats = []
+  for i in eachindex(starts)
+    dudt = zeros(size(dats[i]))
+    uhat = zeros(size(dats[i]))
+    for j in 1:size(dats[i])[1]
+        A = RegularizationSmooth(Float64.(dats[i][j,:]), ts[i], d; alg = alg)
+        uhat[j,:] .= A.û
+        dudt_ = t -> DataInterpolations.derivative(A, t)
+        dudt[j,:] .= dudt_.(ts[i])
+    end 
+    push!(dudts,Float64.(dudt))
+    push!(uhats,Float64.(uhat))
+  end
+  return uhats, dudts, ts, eachindex(starts)
+end 
 
 
 # requires out of place derivative calcualtion 
-# ##, RegularizationTools, DataInterpolations
+
 # @article{Bhagavan2024,
 #   doi = {10.21105/joss.06917},
 #   url = {https://doi.org/10.21105/joss.06917},
@@ -377,45 +404,94 @@ end
 #   title = {DataInterpolations.jl: Fast Interpolations of 1D data},
 #   journal = {Journal of Open Source Software}
 # }
-# function derivative_matching!(model; verbose = true, maxiter = 500, step_size = 0.05, d = 12, alg = :gcv_svd)
+function derivative_matching!(model::UDE; verbose = true, maxiter = 500, step_size = 0.05, d = 12, alg = :gcv_svd, remove_ends = 2)
 
-#   times = model.times
-#   uhat, dudt = interpolate_derivs(model.data,model.times;d=d,alg = alg)
-#   uhat = Float64.(uhat)
-#   dudt = Float64.(dudt)
-#   function loss(parameters)
-#       L = 0
-#         for t in 1:size(uhat)[2]
-#             dudt_hat = model.process_model.right_hand_side(uhat[:,t],parameters.process_model,times[t])
-#             L += sum((dudt[:,t] .- dudt_hat).^2)
-#         end
-#       return L
-#   end 
+  times = model.times
+  uhat, dudt = interpolate_derivs(model.data,model.times;d=d,alg = alg)
+  uhat = Float64.(uhat)
+  dudt = Float64.(dudt)
+  function loss(parameters)
+      L = 0
+        for t in (remove_ends+1):(size(uhat)[2]-remove_ends)
+            dudt_hat = model.process_model.rhs(uhat[:,t],parameters.process_model,times[t])
+            L += sum((dudt[:,t] .- dudt_hat).^2)
+        end
+      return L
+  end 
 
-#   target = (x,u) -> loss(x)
-#   adtype = Optimization.AutoEnzyme()
-#   optf = Optimization.OptimizationFunction(target, adtype)
-#   optprob = Optimization.OptimizationProblem(optf, model.parameters)
+  target = (x,u) -> loss(x)
+  adtype = Optimization.AutoZygote()
+  optf = Optimization.OptimizationFunction(target, adtype)
+  optprob = Optimization.OptimizationProblem(optf, model.parameters)
   
-#   # print value of loss function at each time step 
-#   if verbose
-#       callback = function (p, l; doplot = false)
-#         print(round(l,digits = 3), " ")
-#         return false
-#       end
-#   else
-#       callback = function (p, l; doplot = false)
-#         return false
-#       end 
-#   end
+  # print value of loss function at each time step 
+  if verbose
+      callback = function (p, l; doplot = false)
+        print(round(l,digits = 3), " ")
+        return false
+      end
+  else
+      callback = function (p, l; doplot = false)
+        return false
+      end 
+  end
 
-#   # run optimizer
-#   sol = Optimization.solve(optprob, OptimizationOptimisers.Adam(step_size), callback = callback, maxiters = maxiter )
+  # run optimizer
+  sol = Optimization.solve(optprob, OptimizationOptimisers.Adam(step_size), callback = callback, maxiters = maxiter )
   
-#   # assign parameters to model 
+  # assign parameters to model 
 
-#   model.parameters = sol.u
-#   model.parameters.uhat = uhat
+  model.parameters = sol.u
+  model.parameters.uhat = uhat
 
-# end 
+end 
 
+
+
+function derivative_matching!(model::MultiUDE; verbose = true, maxiter = 500, step_size = 0.05, d = 12, alg = :gcv_svd, remove_ends = 2)
+
+
+  uhats, dudts, times, inds  = interpolate_derivs_multi(model;d=d,alg = alg)
+
+
+  function loss(parameters)
+      L = 0
+      for i in inds
+        for t in (remove_ends+1):(size(uhats[i])[2]- remove_ends)
+            dudt_hat = model.process_model.rhs(uhats[i][:,t], i, parameters.process_model, times[i][t])
+            L += sum((dudts[i][:,t] .- dudt_hat).^2)
+        end
+      end
+      return L
+  end 
+
+  target = (x,u) -> loss(x)
+  adtype = Optimization.AutoZygote()
+  optf = Optimization.OptimizationFunction(target, adtype)
+  optprob = Optimization.OptimizationProblem(optf, model.parameters)
+  
+  # print value of loss function at each time step 
+  if verbose
+      callback = function (p, l; doplot = false)
+        print(round(l,digits = 3), " ")
+        return false
+      end
+  else
+      callback = function (p, l; doplot = false)
+        return false
+      end 
+  end
+
+  # run optimizer
+  sol = Optimization.solve(optprob, OptimizationOptimisers.Adam(step_size), callback = callback, maxiters = maxiter )
+  
+  # assign parameters to model 
+
+  model.parameters = sol.u
+
+  N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames, labels_df = process_multi_data(model.data_frame, model.time_column_name, model.series_column_name)
+  for i in eachindex(starts) 
+    model.parameters.uhat[:,starts[i]:(starts[i]+lengths[i]-1)] .= uhats[i]
+  end 
+  
+end 

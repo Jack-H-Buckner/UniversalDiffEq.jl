@@ -42,12 +42,39 @@ mutable struct MultiProcessModel
     predict
     forecast
     covariates
-    right_hand_side
+    right_hand_side #(i,i,X,p,t)
+    rhs # (u,i,p,t)
     IVP
 end
 
-function MultiContinuousProcessModel(derivs!,parameters, dims, l ,extrap_rho)
+
+function check_arguments_multi(derivs)
+    if any([method.nargs for method in methods(derivs)] .== 5)
+
+        print("here")
+
+        function dudt!(du,u,i,p,t) 
+             du .= derivs(u,i,p,t)
+        end 
+ 
+        return dudt!, derivs
+
+     else
+ 
+
+        function right_hand_side(u,i,parameters,t)
+                du = zeros(length(u))
+                derivs(du,u,i,parameters,t)
+            return du
+        end
+        return derivs, right_hand_side
+     end
+end 
+
+
+function MultiContinuousProcessModel(derivs,parameters, dims, l ,extrap_rho)
    
+    derivs!, right_hand_side = check_arguments_multi(derivs)
     u0 = zeros(dims); tspan = (0.0,1000.0) # assessing value for the initial conditions and time span (these are arbitrary)
     derivs_t! = (du,u,p,t) -> derivs!(du,u,p.series,p,t)
     IVP = ODEProblem(derivs_t!, u0, tspan, parameters)
@@ -55,47 +82,71 @@ function MultiContinuousProcessModel(derivs!,parameters, dims, l ,extrap_rho)
     function predict(u,i,t,dt,parameters) 
         tspan =  (t,t+dt) 
         params = vcat(parameters,ComponentArray((series =i, )))
-        sol = solve(IVP, Tsit5(), u0 = u, p=params,tspan = tspan, saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
+        sol = OrdinaryDiffEq.solve(IVP, Tsit5(), u0 = u, p=params,tspan = tspan, saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
         X = Array(sol)
         return (X[:,end], 0)
     end 
     
     forecast = init_Multiforecast(predict,l,extrap_rho)
 
-    function right_hand_side(u,i,t,parameters)
-        du = zeros(length(u))
-        derivs!(du,u,i,parameters,t)
-        return du
-    end 
+    # function right_hand_side(u,i,t,parameters)
+    #     du = zeros(length(u))
+    #     derivs!(du,u,i,parameters,t)
+    #     return du
+    # end 
     
-    return MultiProcessModel(parameters,predict, forecast, 0, right_hand_side,IVP)
+    return MultiProcessModel(parameters,predict, forecast, 0, right_hand_side,right_hand_side, IVP)
 end 
 
 
-function MultiContinuousProcessModel(derivs!,parameters,covariates,dims,l,extrap_rho)
+function check_arguments_multi_X(derivs)
+    if any([method.nargs for method in methods(derivs)] .== 6)
+     
+        function dudt!(du,u,i,X,p,t) 
+             du .= derivs(u,i,X,p,t)
+        end 
+ 
+        return dudt!, derivs
+
+     else
+ 
+        function right_hand_side(u,i,X,parameters,t)
+                du = zeros(length(u))
+                derivs(du,u,i,X,parameters,t)
+            return du
+        end
+        return derivs, right_hand_side
+     end
+end 
+
+function MultiContinuousProcessModel(derivs,parameters,covariates,dims,l,extrap_rho)
    
+    derivs!, rhs = check_arguments_multi_X(derivs)
+
     u0 = zeros(dims); tspan = (0.0,1000.0) # assessing value for the initial conditions and time span (these are arbitrary)
     derivs_t! = (du,u,p,t) -> derivs!(du,u,p.series,covariates(t,p.series),p,t)
+    rhs_(u,i,p,t) = rhs(u,i,covariates(t,i),p,t)
+
     IVP = ODEProblem(derivs_t!, u0, tspan, parameters)
     
     function predict(u,i,t,dt,parameters) 
         tspan =  (t,t+dt) 
         params = vcat(parameters,ComponentArray((series =i, )))
-        sol = solve(IVP, Tsit5(), u0 = u, p=params,tspan = tspan, saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
+        sol = OrdinaryDiffEq.solve(IVP, Tsit5(), u0 = u, p=params,tspan = tspan, saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
         X = Array(sol)
         return (X[:,end], 0)
     end 
     
     forecast = init_Multiforecast(predict,l,extrap_rho)
     
-    function right_hand_side(u,i,X,t,parameters)
-        du = zeros(length(u))
-        derivs!(du,u,i,X,parameters,t)
-        return du
-    end 
+    # function right_hand_side(u,i,X,t,parameters)
+    #     du = zeros(length(u))
+    #     derivs!(du,u,i,X,parameters,t)
+    #     return du
+    # end 
     
 
-    return MultiProcessModel(parameters,predict, forecast,covariates,right_hand_side,IVP)
+    return MultiProcessModel(parameters,predict, forecast,covariates,rhs,rhs_,IVP)
 end 
 
 
@@ -135,7 +186,7 @@ function MultiNODE_process(dims,hidden,covariates,seed,l,extrap_rho)
     function predict(u,i,t,dt,parameters) 
         tspan =  (t,t+dt) 
         params = vcat(parameters,ComponentArray((series =i, )))
-        sol = solve(IVP, Tsit5(), u0 = u, p=params,tspan = tspan,saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
+        sol = OrdinaryDiffEq.solve(IVP, Tsit5(), u0 = u, p=params,tspan = tspan,saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
         X = Array(sol)
         return (X[:,end], 0)
     end 
@@ -174,7 +225,7 @@ function MultiNODE_process(dims,hidden,seed,l,extrap_rho)
     
     function predict(u,i,t,dt,parameters) 
         tspan =  (t,t+dt) 
-        sol = solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
+        sol = OrdinaryDiffEq.solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
         X = Array(sol)
         return (X[:,end], 0)
     end 

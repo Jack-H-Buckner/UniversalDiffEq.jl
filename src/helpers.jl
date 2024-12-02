@@ -240,7 +240,7 @@ function init_single_loss_mini_batch(model::MultiUDE,pred_length,solver,sensealg
     function predict_mini(u,t0,i,tsteps,parameters)
         tspan =  (t0,tsteps[end])  # Tsit5()#ForwardDiffSensitivity()
         params = vcat(parameters,ComponentArray((series =i, )))
-        sol = solve(model.process_model.IVP, solver, u0 = u, p=params,tspan = tspan, 
+        sol = OrdinaryDiffEq.solve(model.process_model.IVP, solver, u0 = u, p=params,tspan = tspan, 
                     saveat = tsteps,abstol=1e-6, reltol=1e-6, sensealg = sensealg  )
         X = Array(sol)
         return X
@@ -252,8 +252,6 @@ function init_single_loss_mini_batch(model::MultiUDE,pred_length,solver,sensealg
         L_obs = 0.0 
         time = model.times[starts[series]:(starts[series]+lengths[series]-1)]
         dat = data[:,starts[series]:(starts[series]+lengths[series]-1)]
-
-        
 
         L_proc = 0
         inds = 1:pred_length
@@ -315,7 +313,7 @@ function init_mini_batch_loss(model::UDE,pred_length, solver, sensealg)
     # loss function 
     function predict_mini(u,t0,tsteps,parameters)
         tspan =  (t0,tsteps[end])  # Tsit5()#ForwardDiffSensitivity()
-        sol = solve(model.process_model.IVP, solver, u0 = u, p=parameters,tspan = tspan, 
+        sol = OrdinaryDiffEq.solve(model.process_model.IVP, solver, u0 = u, p=parameters,tspan = tspan, 
                     saveat = tsteps,abstol=1e-6, reltol=1e-6, sensealg = sensealg  )
         X = Array(sol)
         return X

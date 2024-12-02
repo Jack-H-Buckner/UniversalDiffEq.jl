@@ -38,7 +38,7 @@ function LotkaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,sigma = 0.
 
     # generate time series with DifferentialEquations.jl
     prob_trueode = ODEProblem(lotka_volterra, u0, tspan, p)
-    ode_data = Array(solve(prob_trueode, Tsit5(), saveat = tsteps))
+    ode_data = Array(OrdinaryDiffEq.solve(prob_trueode, Tsit5(), saveat = tsteps))
 
     # add observation noise 
     ode_data .+= ode_data .* rand(Normal(0.0,sigma), size(ode_data))
@@ -100,7 +100,7 @@ function LorenzLotkaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,sigm
 
     # generate time series with DifferentialEquations.jl
     prob_trueode = ODEProblem(lorenz_lotka_volterra, u0, tspan, p)
-    ode_data = Array(solve(prob_trueode, Tsit5(), saveat = tsteps))
+    ode_data = Array(OrdinaryDiffEq.solve(prob_trueode, Tsit5(), saveat = tsteps))
 
     # add observation noise 
     ode_data .+= ode_data .* rand(Normal(0.0,sigma), size(ode_data))
@@ -193,7 +193,7 @@ function LogisticLorenz(;plot = true, seed = 123, datasize = 100,T = 30.0,sigma 
 
     # generate time series with DifferentialEquations.jl
     prob_trueode = ODEProblem(Lorenz, u0, tspan, p)
-    ode_data = Array(solve(prob_trueode, Tsit5(), saveat = tsteps))
+    ode_data = Array(OrdinaryDiffEq.solve(prob_trueode, Tsit5(), saveat = tsteps))
 
     # add observation noise 
     ode_data .+= ode_data .* rand(Normal(0.0,sigma), size(ode_data))

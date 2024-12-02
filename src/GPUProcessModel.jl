@@ -5,7 +5,7 @@ function ContinuousProcessModel_GPU(derivs!,parameters, dims, l ,extrap_rho, gpu
     
     function predict(u,t,dt,parameters) 
         tspan =  (t,t+dt)
-        sol = solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
+        sol = OrdinaryDiffEq.solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
                     saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
         X = Array(sol) |> gpu_device
         return (X[:,end], 0)
