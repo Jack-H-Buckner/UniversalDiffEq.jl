@@ -235,6 +235,19 @@ function SGLD!(UDE::BayesianUDE;samples = 500, burnin = Int(samples/10),a = 10.0
   UDE.parameters = parameters[(end-burnin):end]
 end
 
+
+"""
+  one_step_ahead!(UDE::UDE, kwargs...)
+
+Trains the model `UDE` using a modified version of the loss function where the estimated value of the state variables 
+are fixed at the value fo the observations `uhat = y`. The model is then trined to minimized the differnce between the prediced
+and observed changes in the data sets using the ADAM gradient descent algorithm.  
+
+# kwargs
+- `step_size`: Step size for ADAM optimizer. Default is `0.05`.
+- `maxiter`: Maximum number of iterations in gradient descent algorithm. Default is `500`.
+- `verbose`: Should the training loss values be printed?. Default is `false`.
+"""
 function one_step_ahead!(UDE::UDE; verbose = true, maxiter = 500, step_size = 0.05)
 
   loss = init_one_step_ahead_loss(UDE)
@@ -291,7 +304,27 @@ function one_step_ahead!(UDE::MultiUDE; verbose = true, maxiter = 500, step_size
   UDE.parameters.uhat .= UDE.data
 end
 
-function mini_batching!(UDE::UDE; pred_length, verbose = true, maxiter = 500, step_size = 0.05, ode_solver = Tsit5(), ad_method = ForwardDiffSensitivity())
+
+"""
+  mini_batching!(UDE::UDE, kwargs...)
+
+Trains the UDE model using the mini batching algorithm. Mini batching breaks the data set up into blocks of consequtive observaitons of 
+length `pred_length`. The model predicts the value at each time point in the block by solving the ODE using the first data point as the 
+initial conditions up to the time of the final data point in the next block. The loss is calcualted by comparing the predicted and observed values
+using the mean squared error. 
+
+Longer block lengths may increase the speed of training by allowing the ODE solvers to find efficent integation schemes. However. long step sizes can 
+create local minima in the loss funciton on data sets with oscilations or orther forms of variability.  
+
+# kwargs
+- `pred_length`: Number of observations in each block. Default is 10. 
+- `step_size`: Step size for ADAM optimizer. Default is `0.05`.
+- `maxiter`: Maximum number of iterations in gradient descent algorithm. Default is `500`.
+- `verbose`: Should the training loss values be printed?. Default is `false`.
+- `ode_solver`: Algorithm for solving the ODE solver from DiffEqFlux. Default is Tsit5().
+- `ad_method`: Automatic differntialion algorithm for the ODE solver from DiffEqFlux. Default is ForwardDiffSensitivity().
+"""
+function mini_batching!(UDE::UDE; pred_length = 10, verbose = true, maxiter = 500, step_size = 0.05, ode_solver = Tsit5(), ad_method = ForwardDiffSensitivity())
   
   loss = init_mini_batch_loss(UDE,pred_length, ode_solver, ad_method)
   target = (x,u) -> loss(x)
@@ -404,16 +437,37 @@ end
 #   title = {DataInterpolations.jl: Fast Interpolations of 1D data},
 #   journal = {Journal of Open Source Software}
 # }
-function derivative_matching!(model::UDE; verbose = true, maxiter = 500, step_size = 0.05, d = 12, alg = :gcv_svd, remove_ends = 2)
 
-  times = model.times
-  uhat, dudt = interpolate_derivs(model.data,model.times;d=d,alg = alg)
+"""
+  derivative_matching!(UDE::UDE; kwargs ...)
+
+Trains the UDE models using a two step process. First a smooth curve is fit to the data set using funcitons from DataInterpolations.jl (Bhagavan et al. 2024).
+The derivatives of the soothing function are then compared to the derivative rpeodicted by the right hand side of the UDE model using the mean squared error.
+This approach signifcantly increases the speed of training becuse it does not require the UDE model to be integrated by a ODE solver. Unfortunately, this method
+also relies on the accuracy of the smoothing algorithm. We suggest using this method to get close to the optial parameter sets and then applying a differnt more accurate method
+to finish the training procedure. 
+
+Note hat some of the smoothing curves will lose accuracy near the begining and end of the time series. The key word arguemnt `remove_ends`
+allows the user to specify the number of data point to leave out to remove these edge effects. 
+
+# kwargs
+- `step_size`: Step size for ADAM optimizer. Default is `0.05`.
+- `maxiter`: Maximum number of iterations in gradient descent algorithm. Default is `500`.
+- `verbose`: Should the training loss values be printed?. Default is `false`.
+- `d`: the number of grid points used by the data interpolation algorithm. Default is 12.
+- `alg`: The algorithm from DataInterpolations.jl used to fit the smoothing curve. Default is :gcv_svd.
+- `remove_ends`: Number of data points to leave off to remove edge effects while training. Defualt is 2.
+"""
+function derivative_matching!(UDE::UDE; verbose = true, maxiter = 500, step_size = 0.05, d = 12, alg = :gcv_svd, remove_ends = 2)
+
+  times = UDE.times
+  uhat, dudt = interpolate_derivs(UDE.data,UDE.times;d=d,alg = alg)
   uhat = Float64.(uhat)
   dudt = Float64.(dudt)
   function loss(parameters)
       L = 0
         for t in (remove_ends+1):(size(uhat)[2]-remove_ends)
-            dudt_hat = model.process_model.rhs(uhat[:,t],parameters.process_model,times[t])
+            dudt_hat = UDE.process_model.rhs(uhat[:,t],parameters.process_model,times[t])
             L += sum((dudt[:,t] .- dudt_hat).^2)
         end
       return L
@@ -422,7 +476,7 @@ function derivative_matching!(model::UDE; verbose = true, maxiter = 500, step_si
   target = (x,u) -> loss(x)
   adtype = Optimization.AutoZygote()
   optf = Optimization.OptimizationFunction(target, adtype)
-  optprob = Optimization.OptimizationProblem(optf, model.parameters)
+  optprob = Optimization.OptimizationProblem(optf, UDE.parameters)
   
   # print value of loss function at each time step 
   if verbose
@@ -441,24 +495,24 @@ function derivative_matching!(model::UDE; verbose = true, maxiter = 500, step_si
   
   # assign parameters to model 
 
-  model.parameters = sol.u
-  model.parameters.uhat = uhat
+  UDE.parameters = sol.u
+  UDE.parameters.uhat = uhat
 
 end 
 
 
 
-function derivative_matching!(model::MultiUDE; verbose = true, maxiter = 500, step_size = 0.05, d = 12, alg = :gcv_svd, remove_ends = 2)
+function derivative_matching!(UDE::MultiUDE; verbose = true, maxiter = 500, step_size = 0.05, d = 12, alg = :gcv_svd, remove_ends = 2)
 
 
-  uhats, dudts, times, inds  = interpolate_derivs_multi(model;d=d,alg = alg)
+  uhats, dudts, times, inds  = interpolate_derivs_multi(UDE;d=d,alg = alg)
 
 
   function loss(parameters)
       L = 0
       for i in inds
         for t in (remove_ends+1):(size(uhats[i])[2]- remove_ends)
-            dudt_hat = model.process_model.rhs(uhats[i][:,t], i, parameters.process_model, times[i][t])
+            dudt_hat = UDE.process_model.rhs(uhats[i][:,t], i, parameters.process_model, times[i][t])
             L += sum((dudts[i][:,t] .- dudt_hat).^2)
         end
       end
@@ -468,7 +522,7 @@ function derivative_matching!(model::MultiUDE; verbose = true, maxiter = 500, st
   target = (x,u) -> loss(x)
   adtype = Optimization.AutoZygote()
   optf = Optimization.OptimizationFunction(target, adtype)
-  optprob = Optimization.OptimizationProblem(optf, model.parameters)
+  optprob = Optimization.OptimizationProblem(optf, UDE.parameters)
   
   # print value of loss function at each time step 
   if verbose
@@ -487,11 +541,11 @@ function derivative_matching!(model::MultiUDE; verbose = true, maxiter = 500, st
   
   # assign parameters to model 
 
-  model.parameters = sol.u
+  UDE.parameters = sol.u
 
-  N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames, labels_df = process_multi_data(model.data_frame, model.time_column_name, model.series_column_name)
+  N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames, labels_df = process_multi_data(UDE.data_frame, UDE.time_column_name, UDE.series_column_name)
   for i in eachindex(starts) 
-    model.parameters.uhat[:,starts[i]:(starts[i]+lengths[i]-1)] .= uhats[i]
+    UDE.parameters.uhat[:,starts[i]:(starts[i]+lengths[i]-1)] .= uhats[i]
   end 
   
 end 
