@@ -41,17 +41,48 @@ mutable struct ProcessModel
     predict
     forecast
     covariates
-    right_hand_side
+    right_hand_side #(u,x,p,t)
+    rhs #(u,p,t)
+    IVP
 end
 
-function ContinuousProcessModel(derivs!,parameters, dims, l ,extrap_rho)
-   
+
+function check_arguments(derivs)
+
+    if any([method.nargs for method in methods(derivs)] .== 4)
+
+        println("here!")
+
+        function dudt!(du,u,p,t) 
+             du .= derivs(u,p,t)
+        end 
+ 
+        return dudt!, derivs
+
+     else
+ 
+        function rhs(u,parameters,t)
+                du = zeros(length(u))
+                derivs(du,u,parameters,t)
+            return du
+        end
+        return derivs, rhs
+     end
+
+end 
+
+function ContinuousProcessModel(derivs,parameters, dims, l ,extrap_rho)
+
+
+    derivs!, right_hand_side= check_arguments(derivs)
+
+    println(derivs!(zeros(2),zeros(2),parameters,0.0))
     u0 = zeros(dims); tspan = (0.0,1000.0) # assing value for the inital conditions and time span (these dont matter)
     IVP = ODEProblem(derivs!, u0, tspan, parameters)
     
     function predict(u,t,dt,parameters) 
         tspan =  (t,t+dt) 
-        sol = solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
+        sol = OrdinaryDiffEq.solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
                     saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
         X = Array(sol)
         return (X[:,end], 0)
@@ -59,25 +90,43 @@ function ContinuousProcessModel(derivs!,parameters, dims, l ,extrap_rho)
     
     forecast = init_forecast(predict,l,extrap_rho)
     
-    function right_hand_side(u,parameters,t)
-        du = zeros(length(u))
-        derivs!(du,u,parameters,t)
-        return du
-    end 
-
-    return ProcessModel(parameters,predict, forecast,0,right_hand_side)
+    return ProcessModel(parameters,predict, forecast,0,right_hand_side,right_hand_side,IVP)
 end 
 
 
-function ContinuousProcessModel(derivs!,parameters,covariates,dims,l,extrap_rho)
+function check_arguments_X(derivs)
+    
+    if any([method.nargs for method in methods(derivs)] .== 5)
+
+        function dudt!(du,u,X,p,t) 
+             du .= derivs(u,X,p,t)
+        end 
+
+        return dudt!, derivs
+
+     else
+
+ 
+        function rhs(u,x,parameters,t)
+                du = zeros(length(u))
+                derivs(du,u,x,parameters,t)
+            return du
+        end
+        return derivs, rhs
+     end
+end
+
+function ContinuousProcessModel(derivs,parameters,covariates,dims,l,extrap_rho)
    
+    derivs!, right_hand_side = check_arguments_X(derivs)
     u0 = zeros(dims); tspan = (0.0,1000.0) # assing value for the inital conditions and time span (these dont matter)
     derivs_t! = (du,u,p,t) -> derivs!(du,u,covariates(t),p,t)
+    rhs_ = (u,p,t) -> right_hand_side(u,covariates(t),p,t)
     IVP = ODEProblem(derivs_t!, u0, tspan, parameters)
     
     function predict(u,t,dt,parameters) 
         tspan =  (t,t+dt) 
-        sol = solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
+        sol = OrdinaryDiffEq.solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
                     saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
         X = Array(sol)
         return (X[:,end], 0)
@@ -85,13 +134,13 @@ function ContinuousProcessModel(derivs!,parameters,covariates,dims,l,extrap_rho)
     
     forecast = init_forecast(predict,l,extrap_rho)
 
-    function right_hand_side(u,x,parameters,t)
-        du = zeros(length(u))
-        derivs!(du,u,x,parameters,t)
-        return du
-    end 
+    # function right_hand_side(u,x,parameters,t)
+    #     du = zeros(length(u))
+    #     derivs!(du,u,x,parameters,t)
+    #     return du
+    # end 
     
-    return ProcessModel(parameters,predict, forecast,covariates, right_hand_side)
+    return ProcessModel(parameters,predict, forecast,covariates, right_hand_side,rhs_, IVP)
 end 
 
 
@@ -112,7 +161,7 @@ function DiscreteProcessModel(difference, parameters, covariates, dims, l, extra
         return difference(u,x,t,parameters) .- u
     end 
 
-    return ProcessModel(parameters,predict, forecast, covariates,right_hand_side)
+    return ProcessModel(parameters,predict, forecast, covariates,right_hand_side,nothing)
 end 
 
 function DiscreteProcessModel(difference, parameters, dims, l, extrap_rho)
@@ -131,7 +180,7 @@ function DiscreteProcessModel(difference, parameters, dims, l, extrap_rho)
         return difference(u,t,parameters) .- u
     end 
 
-    return ProcessModel(parameters,predict, forecast,0,right_hand_side)
+    return ProcessModel(parameters,predict, forecast,0,right_hand_side,nothing)
 end 
 
 
@@ -155,7 +204,7 @@ function NODEWithARD(dims,covariates; hidden = 20, nonlinearity = soft_plus)
     
     function predict(u,t,dt,parameters) 
         tspan = (t,t+dt) 
-        sol = solve(IVP, Tsit5(), u0 = vcat(u,zeros(dims)), p=parameters,tspan = tspan, 
+        sol = OrdinaryDiffEq.solve(IVP, Tsit5(), u0 = vcat(u,zeros(dims)), p=parameters,tspan = tspan, 
                     saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
         X = Array(sol)
         return (X[1:dims,end], X[(dims+1):end,end])
@@ -163,7 +212,7 @@ function NODEWithARD(dims,covariates; hidden = 20, nonlinearity = soft_plus)
     
     function forecast(u,t,dt,parameters,u1,u2,u3) 
         tspan =  (t,t+dt) 
-        sol = solve(IVP, Tsit5(), u0 = vcat(u,zeros(dims)), p=parameters,tspan = tspan, 
+        sol = OrdinaryDiffEq.solve(IVP, Tsit5(), u0 = vcat(u,zeros(dims)), p=parameters,tspan = tspan, 
                     saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
         X = Array(sol)
         return X[1:dims,end]
@@ -173,7 +222,7 @@ function NODEWithARD(dims,covariates; hidden = 20, nonlinearity = soft_plus)
         dudt = NN(vcat(u,X),p)
     end 
     
-    return ProcessModel(parameters,predict, forecast,covariates, right_hand_side)
+    return ProcessModel(parameters,predict, forecast,covariates, right_hand_side,IVP)
 end 
 
 
@@ -204,7 +253,7 @@ function GP_process_model(dims,inducing_points,covariates)
     
     function predict(u,t,dt,parameters) 
         tspan = (t,t+dt) 
-        sol = solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
+        sol = OrdinaryDiffEq.solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
                     saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
         X = Array(sol)
         return (X[:,end], 0)
@@ -212,7 +261,7 @@ function GP_process_model(dims,inducing_points,covariates)
     
     function forecast(u,t,dt,parameters,u1,u2,u3) 
         tspan =  (t,t+dt) 
-        sol = solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
+        sol = OrdinaryDiffEq.solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
                     saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
         X = Array(sol)
         return X[:,end]
@@ -343,7 +392,7 @@ function NODE_process(dims,hidden,covariates,seed,l,extrap_rho)
     
     function predict(u,t,dt,parameters) 
         tspan =  (t,t+dt) 
-        sol = solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
+        sol = OrdinaryDiffEq.solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
                     saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
         X = Array(sol)
         return (X[:,end], 0)
@@ -386,7 +435,7 @@ function NODE_process(dims,hidden,seed,l,extrap_rho)
     
     function predict(u,t,dt,parameters) 
         tspan =  (t,t+dt) 
-        sol = solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
+        sol = OrdinaryDiffEq.solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
                     saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
         X = Array(sol)
         return (X[:,end], 0)
@@ -440,7 +489,7 @@ function ContinuousModelErrors(dims,known_dynamics,init_known_dynamics_parameter
     
     function predict(u,t,dt,parameters) 
         tspan =  (t,t+dt) 
-        sol = solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
+        sol = OrdinaryDiffEq.solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
                     saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
         X = Array(sol)
         return (X[:,end],0)
