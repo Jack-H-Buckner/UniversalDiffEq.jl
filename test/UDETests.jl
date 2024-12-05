@@ -39,6 +39,26 @@ model = UniversalDiffEq.CustomDerivatives(training_data,derivs!,init_parameters,
 
 gradient_descent!(model,step_size = 0.05,maxiter=2)
 
+# alternative training routines
+# model derivitives
+function derivs(u,p,t)
+    C  = NN(u,p.NN) # NNstates are
+    [p.r*u[1] - C[1], p.theta*C[1] -p.m*u[2]]
+end
+
+# parameters
+init_parameters = (NN = init_params ,r = 1.0,m=0.5,theta=0.5)
+
+
+model = UniversalDiffEq.CustomDerivatives(training_data,derivs,init_parameters)
+
+mini_batching!(model,step_size = 0.05,maxiter=2)
+derivative_matching!(model,step_size = 0.05,maxiter=2)
+derivative_matching!(model,step_size = 0.05,maxiter=2)
+one_step_ahead!(model,step_size = 0.05,maxiter=2)
+kalman_filter!(model,0.01,step_size = 0.05,maxiter=2)
+
+
 # with covariates
 dims_in = 2
 hidden_units = 10
