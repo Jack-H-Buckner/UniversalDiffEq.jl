@@ -86,13 +86,13 @@ function init_one_step_ahead_loss(model::UDE)
             u0 = model.data[:,t-1]
             u1 = model.data[:,t]
             dt = model.times[t]-model.times[t-1]
-            u1hat, epsilon = model.process_model.predict(u0,times[t-1],dt,parameters.process_model) 
-            L_proc += process_loss.loss(u1,u1hat,dt,parameters.process_loss)
+            u1hat, epsilon = model.process_model.predict(u0,model.times[t-1],dt,parameters.process_model) 
+            L_proc += model.process_loss.loss(u1,u1hat,dt,parameters.process_loss)
         end
         
         # regularization
-        L_reg = process_regularization.loss(parameters.process_model,parameters.process_regularization)
-        L_reg += observation_regularization.loss(parameters.process_model,parameters.process_regularization)
+        L_reg = model.process_regularization.loss(parameters.process_model,parameters.process_regularization)
+        L_reg += model.observation_regularization.loss(parameters.process_model,parameters.process_regularization)
         
         return L_proc + L_reg
     end
@@ -107,14 +107,14 @@ function init_one_step_ahead_loss(model::UDE)
             u1 = model.data[:,t]
             dt = model.times[t]-model.times[t-1]
             if !(times[t-1] in t_skip)
-                u1hat, epsilon = model.process_model.predict(u0,times[t-1],dt,parameters.process_model) 
+                u1hat, epsilon = model.process_model.predict(u0,model.times[t-1],dt,parameters.process_model) 
                 L_proc += model.process_loss.loss(u1,u1hat,dt,parameters.process_loss)
             end
         end
         
         # regularization
-        L_reg = process_regularization.loss(parameters.process_model,parameters.process_regularization)
-        L_reg += observation_regularization.loss(parameters.process_model,parameters.process_regularization)
+        L_reg = model.process_regularization.loss(parameters.process_model,parameters.process_regularization)
+        L_reg += model.observation_regularization.loss(parameters.process_model,parameters.process_regularization)
         
         return L_proc + L_reg
     end

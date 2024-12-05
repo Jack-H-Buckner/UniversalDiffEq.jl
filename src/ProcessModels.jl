@@ -51,8 +51,6 @@ function check_arguments(derivs)
 
     if any([method.nargs for method in methods(derivs)] .== 4)
 
-        println("here!")
-
         function dudt!(du,u,p,t) 
              du .= derivs(u,p,t)
         end 
@@ -75,8 +73,7 @@ function ContinuousProcessModel(derivs,parameters, dims, l ,extrap_rho)
 
 
     derivs!, right_hand_side= check_arguments(derivs)
-
-    println(derivs!(zeros(2),zeros(2),parameters,0.0))
+    
     u0 = zeros(dims); tspan = (0.0,1000.0) # assing value for the inital conditions and time span (these dont matter)
     IVP = ODEProblem(derivs!, u0, tspan, parameters)
     
