@@ -43,7 +43,8 @@ gradient_descent!(model,step_size = 0.05,maxiter=2)
 # model derivitives
 function derivs(u,p,t)
     C  = NN(u,p.NN) # NNstates are
-    [p.r*u[1] - C[1], p.theta*C[1] -p.m*u[2]]
+    du = [p.r*u[1] - C[1], p.theta*C[1] -p.m*u[2]]
+    return du
 end
 
 # parameters
