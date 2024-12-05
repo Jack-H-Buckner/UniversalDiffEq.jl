@@ -383,7 +383,6 @@ function mini_batching!(UDE::MultiUDE; pred_length=5,solver=Tsit5(),sensealg = F
 end
 
 
-using RegularizationTools, DataInterpolations
 function interpolate_derivs(u,t;d=12,alg = :gcv_svd)
   dudt = zeros(size(u))
   uhat = zeros(size(u))
