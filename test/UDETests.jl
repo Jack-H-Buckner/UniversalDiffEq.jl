@@ -54,7 +54,6 @@ model = UniversalDiffEq.CustomDerivatives(training_data,derivs,init_parameters)
 
 mini_batching!(model,step_size = 0.05,maxiter=2)
 derivative_matching!(model,step_size = 0.05,maxiter=2)
-derivative_matching!(model,step_size = 0.05,maxiter=2)
 one_step_ahead!(model,step_size = 0.05,maxiter=2)
 kalman_filter!(model,0.01,step_size = 0.05,maxiter=2)
 
