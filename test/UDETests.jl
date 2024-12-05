@@ -64,14 +64,14 @@ dims_in = 2
 hidden_units = 10
 nonlinearity = tanh
 dims_out = 1
-NN = Lux.Chain(Lux.Dense(dims_in,hidden_units,nonlinearity),Lux.Dense(hidden_units,dims_out))
+NN_X = Lux.Chain(Lux.Dense(dims_in,hidden_units,nonlinearity),Lux.Dense(hidden_units,dims_out))
 
 # initialize parameters 
 rng = Random.default_rng() 
 NNparameters, NNstates = Lux.setup(rng,NN) 
 
-function derivs!(du,u,covariates,p,t)
-    C, states = NN(u,p.NN, NNstates) # NNstates are
+function derivs_X!(du,u,covariates,p,t)
+    C, states = NN_X(u,p.NN, NNstates) # NNstates are
     du[1] = p.r*u[1] - C[1] + p.beta[1] * covariates[1]
     du[2] = p.theta*C[1] -p.m*u[2] + p.beta[2] * covariates[1]
 end
@@ -86,5 +86,5 @@ init_parameters = (NN = NNparameters,r = 1.0,m=0.5,theta=0.5, beta = [0,0])
 
 data,X,plt = LorenzLotkaVolterra(T = 7.0, datasize = 120)
 
-model = CustomDerivatives(data,X,derivs!,init_parameters,priors;proc_weight=2.0,obs_weight=0.5,reg_weight=10^-4)
+model = CustomDerivatives(data,X,derivs_X!,init_parameters,priors;proc_weight=2.0,obs_weight=0.5,reg_weight=10^-4)
 gradient_descent!(model,step_size = 0.05,maxiter=2)
