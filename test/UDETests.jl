@@ -68,7 +68,7 @@ NN_X = Lux.Chain(Lux.Dense(dims_in,hidden_units,nonlinearity),Lux.Dense(hidden_u
 
 # initialize parameters 
 rng = Random.default_rng() 
-NNparameters, NNstates = Lux.setup(rng,NN) 
+NNparameters, NNstates = Lux.setup(rng,NN_X) 
 
 function derivs_X!(du,u,covariates,p,t)
     C, states = NN_X(u,p.NN, NNstates) # NNstates are
