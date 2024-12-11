@@ -200,7 +200,7 @@ function MultiNODE_process(dims,hidden,covariates,seed,l,extrap_rho)
     end 
 
     
-    return MultiNODE_process(dims,IVP,derivs!,parameters,predict,forecast,covariates,right_hand_side,IVP)
+    return MultiNODE_process(dims,IVP,derivs!,parameters,predict,forecast,covariates,right_hand_side)
     
 end 
 
@@ -238,7 +238,7 @@ function MultiNODE_process(dims,hidden,seed,l,extrap_rho)
         return du
     end 
     
-    return MultiNODE_process(dims,IVP,derivs!,parameters,predict,forecast,0,right_hand_side,IVP)
+    return MultiNODE_process(dims,IVP,derivs!,parameters,predict,forecast,0,right_hand_side)
     
 end 
 
