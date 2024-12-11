@@ -122,10 +122,7 @@ end
 
 function predict(UDE::MultiUDE,test_data::DataFrame)
     
-    if !(UDE.time_column_name in names(test_data) && UDE.series_column_name in names(test_data))
-    throw(ArgumentError("The test data must have the same time and series column names as the training data."))
-    end
-    
+    check_test_data_names(UDE.data_frame, test_data)
     N, T, dims, data, times,  dataframe, series_ls, inds, starts,
     lengths = process_multi_data(test_data, UDE.time_column_name, UDE.series_column_name)
 
