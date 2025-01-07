@@ -151,6 +151,43 @@ end
 
 
 
+function MultiDiscreteProcessModel(difference,parameters,covariates,dims,l,extrap_rho)
+    
+    function predict(u,i,t,dt,parameters) 
+        tspan =  t:(t+dt)
+        for t in tspan
+            u = difference(u,i,covariates(t,i),parameters,t)
+        end 
+        return (u, 0)
+    end 
+    
+    forecast = init_forecast(predict,l,extrap_rho)
+    
+    function right_hand_side(u,i,X,parameters,t)
+        return difference(u,i,X,parameters,t) .- u
+    end 
+
+    return MultiProcessModel(parameters,predict,forecast,covariates,right_hand_side,nothing,nothing)
+end 
+
+function MultiDiscreteProcessModel(difference,parameters,dims,l,extrap_rho)
+    
+    function predict(u,i,t,dt,parameters) 
+        tspan =  t:(t+dt)
+        for t in tspan
+            u = difference(u,i,parameters,t)
+        end 
+        return (u, 0)
+    end 
+    
+    forecast = init_forecast(predict,l,extrap_rho)
+    
+    function right_hand_side(u,i,parameters,t)
+        return difference(u,i,parameters,t) .- u
+    end 
+
+    return MultiProcessModel(parameters,predict,forecast,0,right_hand_side,nothing,nothing)
+end 
 
 mutable struct MultiNODE_process
     dims::Int # number of state variables
