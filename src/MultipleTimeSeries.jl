@@ -353,3 +353,64 @@ function MultiCustomDerivatives(data,X,derivs!,initial_parameters;time_column_na
 
 end
 
+
+
+function MultiCustomDifference(data,diff,initial_parameters;time_column_name = "time", series_column_name = "series",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
+    
+    time_column_name, series_column_name = check_column_names(data, time_column_name = time_column_name, series_column_name = series_column_name)
+
+    # convert data
+    N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames, labels_df = process_multi_data(data, time_column_name, series_column_name)
+    
+    # generate submodels 
+    process_model = MultiDiscreteProcessModel(diff,ComponentArray(initial_parameters),dims,l,extrap_rho)
+    process_loss = ProcessMSE(N,T, proc_weight)
+    observation_model = Identity()
+    observation_loss = ObservationMSE(N,obs_weight)
+    process_regularization = L2(initial_parameters,weight=reg_weight)
+    observation_regularization = no_reg()
+    
+    # parameters vector
+    parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+
+    # loss function 
+    loss_function = init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,time_column_name,series_column_name,labels_df )
+
+    # model constructor
+    constructor = (data) -> MultiCustomDerivatives(data,diff,initial_parameters;time_column_name = time_column_name , series_column_name =  series_column_name,
+                    proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l)
+    
+    return MultiUDE(times,data,0,dataframe,0,parameters,loss_function,process_model,process_loss,observation_model,
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name,nothing,nothing,labels_df,varnames)
+
+end
+
+function MultiCustomDifference(data,X,diff,initial_parameters;time_column_name = "time", series_column_name = "series", variable_column_name = nothing, value_column_name = nothing,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
+    X_data_frame = X
+    time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name, series_column_name = series_column_name, value_column_name = value_column_name, variable_column_name = variable_column_name)
+    # convert data
+    N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames, labels_df = process_multi_data(data, time_column_name, series_column_name)
+    covariates, variables = interpolate_covariates(X, time_column_name, series_column_name,  variable_column_name, value_column_name)
+
+    # generate submodels 
+    process_model = MultiDiscreteProcessModel(diff,ComponentArray(initial_parameters),covariates,dims,l,extrap_rho)
+    process_loss = ProcessMSE(N,T, proc_weight)
+    observation_model = Identity()
+    observation_loss = ObservationMSE(N,obs_weight)
+    process_regularization = L2(initial_parameters,weight=reg_weight)
+    observation_regularization = no_reg()
+    
+    # parameters vector
+    parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+
+    # loss function 
+    loss_function = init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,time_column_name,series_column_name,labels_df )
+
+    # model constructor
+    constructor = (data,X) -> MultiCustomDifference(data,X,diff,initial_parameters;time_column_name = time_column_name , series_column_name =  series_column_name,
+                        variable_column_name = variable_column_name, value_column_name = value_column_name, proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l)
+    
+    return MultiUDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name,variable_column_name,value_column_name, labels_df,varnames)
+
+end
