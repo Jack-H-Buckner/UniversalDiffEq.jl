@@ -158,7 +158,9 @@ function DiscreteProcessModel(difference, parameters, covariates, dims, l, extra
         return difference(u,x,t,parameters) .- u
     end 
 
-    return ProcessModel(parameters,predict, forecast, covariates,right_hand_side,nothing)
+    rhs = (u,p,t) ->predict(u,t,1,p) 
+
+    return ProcessModel(parameters,predict, forecast, covariates,right_hand_side,rhs,nothing)
 end 
 
 function DiscreteProcessModel(difference, parameters, dims, l, extrap_rho)
@@ -177,7 +179,9 @@ function DiscreteProcessModel(difference, parameters, dims, l, extrap_rho)
         return difference(u,t,parameters) .- u
     end 
 
-    return ProcessModel(parameters,predict, forecast,0,right_hand_side,nothing)
+    rhs = (u,p,t) ->predict(u,t,1,p) 
+
+    return ProcessModel(parameters,predict, forecast,0,right_hand_side,rhs,nothing)
 end 
 
 
