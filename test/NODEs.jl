@@ -17,11 +17,14 @@ X <- reshape2::melt(X, id.var = "year")
 model = UniversalDiffEq.NODE(data;time_column_name = "year")
 model.constructor(data)
 gradient_descent!(model,maxiter = 2, verbose= true)
+derivative_matching!(model,maxiter = 2, verbose= true)
+
 
 # with wide covars
 model = UniversalDiffEq.NODE(data, X_wide;time_column_name = "year")
 model.constructor(data, X_wide)
 gradient_descent!(model,maxiter = 2, verbose= true)
+derivative_matching!(model,maxiter = 2, verbose= true)
 
 # with long covars
 model = UniversalDiffEq.NODE(data, X;time_column_name = "year", variable_column_name = "variable", value_column_name = "value")
