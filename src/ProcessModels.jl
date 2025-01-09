@@ -369,6 +369,7 @@ mutable struct NODE_process
     forecast
     covariates    
     right_hand_side
+    rhs
 end 
 
 
@@ -386,6 +387,10 @@ function NODE_process(dims,hidden,covariates,seed,l,extrap_rho)
     function derivs!(du,u,parameters,t)
         du .= NN(vcat(u,covariates(t)),parameters.NN,states)[1]
         return du
+    end 
+
+    function rhs(u,p,t)
+        NN(vcat(u,covariates(t)),p.NN,states)[1]
     end 
 
     u0 = zeros(dims); tspan = (0.0,1000.0) # assing value for the inital conditions and time span (these dont matter)
@@ -411,7 +416,7 @@ function NODE_process(dims,hidden,covariates,seed,l,extrap_rho)
         return NN(vcat(u,x),parameters.NN,states)[1]
     end 
     
-    return NODE_process(dims,IVP,derivs!,parameters,predict,forecast,covariates,right_hand_side)
+    return NODE_process(dims,IVP,derivs!,parameters,predict,forecast,covariates,right_hand_side,rhs)
     
 end 
 
@@ -431,6 +436,10 @@ function NODE_process(dims,hidden,seed,l,extrap_rho)
         return du
     end 
 
+    function rhs(u,p,t)
+        NN(u,p.NN,states)[1]
+    end 
+
     u0 = zeros(dims); tspan = (0.0,1000.0) # assing value for the inital conditions and time span (these dont matter)
     IVP = ODEProblem(derivs!, u0, tspan, parameters)
     
@@ -448,7 +457,7 @@ function NODE_process(dims,hidden,seed,l,extrap_rho)
         return NN(u,parameters.NN,states)[1]
     end
 
-    return NODE_process(dims,IVP,derivs!,parameters,predict,forecast,[],right_hand_side)
+    return NODE_process(dims,IVP,derivs!,parameters,predict,forecast,[],right_hand_side,rhs)
     
 end 
 
