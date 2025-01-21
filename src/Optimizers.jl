@@ -236,190 +236,7 @@ function SGLD!(UDE::BayesianUDE;samples = 500, burnin = Int(samples/10),a = 10.0
 end
 
 
-"""
-  one_step_ahead!(UDE::UDE, kwargs...)
-
-Trains the model `UDE` using a modified version of the loss function where the estimated value of the state variables 
-are fixed at the value fo the observations `uhat = y`. The model is then trined to minimized the differnce between the prediced
-and observed changes in the data sets using the ADAM gradient descent algorithm.  
-
-# kwargs
-- `step_size`: Step size for ADAM optimizer. Default is `0.05`.
-- `maxiter`: Maximum number of iterations in gradient descent algorithm. Default is `500`.
-- `verbose`: Should the training loss values be printed?. Default is `false`.
-"""
-function one_step_ahead!(UDE::UDE; verbose = true, maxiter = 500, step_size = 0.05)
-
-  loss = init_one_step_ahead_loss(UDE)
-  target = (x,u) -> loss(x)
-  adtype = Optimization.AutoZygote()
-  optf = Optimization.OptimizationFunction(target, adtype)
-  optprob = Optimization.OptimizationProblem(optf, UDE.parameters)
-  
-  # print value of loss function at each time step 
-  if verbose
-      callback = function (p, l; doplot = false)
-        print(round(l,digits = 3), " ")
-        return false
-      end
-  else
-      callback = function (p, l; doplot = false)
-        return false
-      end 
-  end
-
-  # run optimizer
-  sol = Optimization.solve(optprob, OptimizationOptimisers.Adam(step_size), callback = callback, maxiters = maxiter )
-  
-  # assign parameters to model 
-  UDE.parameters = sol.u
-end
-
-
-function one_step_ahead!(UDE::MultiUDE; verbose = true, maxiter = 500, step_size = 0.05)
-
-  loss = init_one_step_ahead_loss(UDE)
-  target = (x,u) -> loss(x)
-  adtype = Optimization.AutoZygote()
-  optf = Optimization.OptimizationFunction(target, adtype)
-  optprob = Optimization.OptimizationProblem(optf, UDE.parameters)
-  
-  # print value of loss function at each time step 
-  if verbose
-      callback = function (p, l; doplot = false)
-        print(round(l,digits = 3), " ")
-        return false
-      end
-  else
-      callback = function (p, l; doplot = false)
-        return false
-      end 
-  end
-
-  # run optimizer
-  sol = Optimization.solve(optprob, OptimizationOptimisers.Adam(step_size), callback = callback, maxiters = maxiter )
-  
-  # assign parameters to model 
-  UDE.parameters = sol.u
-  UDE.parameters.uhat .= UDE.data
-end
-
-
-"""
-  mini_batching!(UDE::UDE, kwargs...)
-
-Trains the UDE model using the mini batching algorithm. Mini batching breaks the data set up into blocks of consequtive observaitons of 
-length `pred_length`. The model predicts the value at each time point in the block by solving the ODE using the first data point as the 
-initial conditions up to the time of the final data point in the next block. The loss is calcualted by comparing the predicted and observed values
-using the mean squared error. 
-
-Longer block lengths may increase the speed of training by allowing the ODE solvers to find efficent integation schemes. However. long step sizes can 
-create local minima in the loss funciton on data sets with oscilations or orther forms of variability.  
-
-# kwargs
-- `pred_length`: Number of observations in each block. Default is 10. 
-- `step_size`: Step size for ADAM optimizer. Default is `0.05`.
-- `maxiter`: Maximum number of iterations in gradient descent algorithm. Default is `500`.
-- `verbose`: Should the training loss values be printed?. Default is `false`.
-- `ode_solver`: Algorithm for solving the ODE solver from DiffEqFlux. Default is Tsit5().
-- `ad_method`: Automatic differntialion algorithm for the ODE solver from DiffEqFlux. Default is ForwardDiffSensitivity().
-"""
-function mini_batching!(UDE::UDE; pred_length = 10, verbose = true, maxiter = 500, step_size = 0.05, ode_solver = Tsit5(), ad_method = ForwardDiffSensitivity())
-  
-  loss = init_mini_batch_loss(UDE,pred_length, ode_solver, ad_method)
-  target = (x,u) -> loss(x)
-  adtype = Optimization.AutoZygote()
-  optf = Optimization.OptimizationFunction(target, adtype)
-  optprob = Optimization.OptimizationProblem(optf, UDE.parameters)
-  
-  # print value of loss function at each time step 
-  if verbose
-      callback = function (p, l; doplot = false)
-        print(round(l,digits = 3), " ")
-        return false
-      end
-  else
-      callback = function (p, l; doplot = false)
-        return false
-      end 
-  end
-
-  # run optimizer
-  sol = Optimization.solve(optprob, OptimizationOptimisers.Adam(step_size), callback = callback, maxiters = maxiter )
-  
-  # assign parameters to model 
-  UDE.parameters = sol.u
-  UDE.parameters.uhat .= UDE.data
-
-end
-
-
-function mini_batching!(UDE::MultiUDE; pred_length=5,solver=Tsit5(),sensealg = ForwardDiffSensitivity(), verbose = true, maxiter = 500, step_size = 0.05)
-
-  loss = init_mini_batch_loss(UDE,pred_length,solver,sensealg)
-  target = (x,u) -> loss(x)
-  adtype = Optimization.AutoZygote()
-  optf = Optimization.OptimizationFunction(target, adtype)
-  optprob = Optimization.OptimizationProblem(optf, UDE.parameters)
-  
-  # print value of loss function at each time step 
-  if verbose
-      callback = function (p, l; doplot = false)
-        print(round(l,digits = 3), " ")
-        return false
-      end
-  else
-      callback = function (p, l; doplot = false)
-        return false
-      end 
-  end
-
-  # run optimizer
-  sol = Optimization.solve(optprob, OptimizationOptimisers.Adam(step_size), callback = callback, maxiters = maxiter )
-  
-  # assign parameters to model 
-  UDE.parameters = sol.u
-  UDE.parameters.uhat .= UDE.data
-end
-
-
-function interpolate_derivs(u,t;d=12,alg = :gcv_svd)
-  dudt = zeros(size(u))
-  uhat = zeros(size(u))
-  for i in 1:size(u)[1]
-      A = RegularizationSmooth(Float64.(u[i,:]), t, d; alg = alg)
-      uhat[i,:] .= A.û
-      dudt_ = t -> DataInterpolations.derivative(A, t)
-      dudt[i,:] .= dudt_.(t)
-  end 
-  return uhat, dudt
-end 
-
-
-function interpolate_derivs_multi(model;d=12,alg = :gcv_svd)
-
-  N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames, labels_df = process_multi_data(model.data_frame, model.time_column_name, model.series_column_name)
-
-
-  ts = [times[starts[series]:(starts[series]+lengths[series]-1)] for series in eachindex(starts)]
-  dats = [data[:,starts[series]:(starts[series]+lengths[series]-1)] for series in eachindex(starts)]
-
-  dudts = []
-  uhats = []
-  for i in eachindex(starts)
-    dudt = zeros(size(dats[i]))
-    uhat = zeros(size(dats[i]))
-    for j in 1:size(dats[i])[1]
-        A = RegularizationSmooth(Float64.(dats[i][j,:]), ts[i], d; alg = alg)
-        uhat[j,:] .= A.û
-        dudt_ = t -> DataInterpolations.derivative(A, t)
-        dudt[j,:] .= dudt_.(ts[i])
-    end 
-    push!(dudts,Float64.(dudt))
-    push!(uhats,Float64.(uhat))
-  end
-  return uhats, dudts, ts, eachindex(starts)
-end 
+ 
 
 
 # requires out of place derivative calcualtion 
@@ -437,72 +254,35 @@ end
 #   journal = {Journal of Open Source Software}
 # }
 
-"""
-  derivative_matching!(UDE::UDE; kwargs ...)
 
-Trains the UDE models using a two step process. First a smooth curve is fit to the data set using funcitons from DataInterpolations.jl (Bhagavan et al. 2024).
-The derivatives of the soothing function are then compared to the derivative rpeodicted by the right hand side of the UDE model using the mean squared error.
-This approach signifcantly increases the speed of training becuse it does not require the UDE model to be integrated by a ODE solver. Unfortunately, this method
-also relies on the accuracy of the smoothing algorithm. We suggest using this method to get close to the optial parameter sets and then applying a differnt more accurate method
-to finish the training procedure. 
+function interpolate_derivs_multi(model;d=12,alg = :gcv_svd)
 
-Note hat some of the smoothing curves will lose accuracy near the begining and end of the time series. The key word arguemnt `remove_ends`
-allows the user to specify the number of data point to leave out to remove these edge effects. 
+  N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames, labels_df = process_multi_data(model.data_frame, model.time_column_name, model.series_column_name)
 
-# kwargs
-- `step_size`: Step size for ADAM optimizer. Default is `0.05`.
-- `maxiter`: Maximum number of iterations in gradient descent algorithm. Default is `500`.
-- `verbose`: Should the training loss values be printed?. Default is `false`.
-- `d`: the number of grid points used by the data interpolation algorithm. Default is 12.
-- `alg`: The algorithm from DataInterpolations.jl used to fit the smoothing curve. Default is :gcv_svd.
-- `remove_ends`: Number of data points to leave off to remove edge effects while training. Defualt is 2.
-"""
-function derivative_matching!(UDE::UDE; verbose = true, maxiter = 500, step_size = 0.05, d = 12, alg = :gcv_svd, remove_ends = 2)
 
-  times = UDE.times
-  uhat, dudt = interpolate_derivs(UDE.data,UDE.times;d=d,alg = alg)
-  uhat = Float64.(uhat)
-  dudt = Float64.(dudt)
-  function loss(parameters)
-      L = 0
-        for t in (remove_ends+1):(size(uhat)[2]-remove_ends)
-            dudt_hat = UDE.process_model.rhs(uhat[:,t],parameters.process_model,times[t])
-            L += sum((dudt[:,t] .- dudt_hat).^2)
-        end
-      return L
-  end 
+  ts = [times[starts[series]:(starts[series]+lengths[series]-1)] for series in eachindex(starts)]
+  dats = [data[:,starts[series]:(starts[series]+lengths[series]-1)] for series in eachindex(starts)]
 
-  target = (x,u) -> loss(x)
-  adtype = Optimization.AutoZygote()
-  optf = Optimization.OptimizationFunction(target, adtype)
-  optprob = Optimization.OptimizationProblem(optf, UDE.parameters)
-  
-  # print value of loss function at each time step 
-  if verbose
-      callback = function (p, l; doplot = false)
-        print(round(l,digits = 3), " ")
-        return false
-      end
-  else
-      callback = function (p, l; doplot = false)
-        return false
+  dudts = []
+  uhats = []
+  for i in eachindex(starts)
+      dudt = zeros(size(dats[i]))
+      uhat = zeros(size(dats[i]))
+      for j in 1:size(dats[i])[1]
+          A = RegularizationSmooth(Float64.(dats[i][j,:]), ts[i], d; alg = alg)
+          uhat[j,:] .= A.û
+          dudt_ = t -> DataInterpolations.derivative(A, t)
+          dudt[j,:] .= dudt_.(ts[i])
       end 
+      push!(dudts,Float64.(dudt))
+      push!(uhats,Float64.(uhat))
   end
-
-  # run optimizer
-  sol = Optimization.solve(optprob, OptimizationOptimisers.Adam(step_size), callback = callback, maxiters = maxiter )
-  
-  # assign parameters to model 
-
-  UDE.parameters = sol.u
-  UDE.parameters.uhat = uhat
-
-end 
+  return uhats, dudts, ts, eachindex(starts)
+end
 
 
 
 function derivative_matching!(UDE::MultiUDE; verbose = true, maxiter = 500, step_size = 0.05, d = 12, alg = :gcv_svd, remove_ends = 2)
-
 
   uhats, dudts, times, inds  = interpolate_derivs_multi(UDE;d=d,alg = alg)
 
@@ -548,3 +328,239 @@ function derivative_matching!(UDE::MultiUDE; verbose = true, maxiter = 500, step
   end 
   
 end 
+
+
+
+function default_options(loss_function)
+  if loss_function == "conditional likelihood"
+    return (step_size = 0.025, maxiter = 500)
+  elseif loss_function == "marginal likelihood"
+    return (step_size = 0.005, maxiter = 1000)
+  elseif loss_function == "derivative matching"
+    return (step_size = 0.05, maxiter = 500)
+  elseif loss_function == "shooting"
+    return(step_size = 0.05, maxiter = 500)
+  elseif loss_function == "multiple shooting"
+    return (step_size = 0.05, maxiter = 500)
+  end
+end 
+
+
+
+
+"""
+ train!(UDE::UDE;  kwargs...)
+
+This funciton provides access to several training routines for UDE models. The user provides the UDE model object and can then choose between several loss funcitons and optimization algorthms using the key work arguments. 
+The training routine will update the UDE object with the trained paramters and return any other useful quantities estimated during the training procedure. 
+The options 
+
+Trains the UDE model by minimizing the loss function using the ADAM gradient descent algorithm for `maxiter` step of size `step_size.`
+Four loss functions are available using the `loss_function` argument: conditional likelihood, marginal likelihood, derivative matching, shooting, and multiple shooting.
+The `options` argument is a named tuple that can be used to pass parameters to the training routine. 
+
+
+# kwargs
+- `loss_function`: Determines the loss function used to train the model and defaults to  "derivative matching."
+- `verbose`: If true, the value of the loss function will print between each set of the optimizer.
+- `maxiter`: The number of iterations used to run the ADAM gradient descent algorithm.
+- `step_size`: The number of steps to run the ADAM algorithm
+- `loss_options`: a named tuple with keyword arguments to help construct the loss function.
+- `optim_options`: a named tuple with key word arguments to pass to the optiizaiton algorithm. 
+
+# loss function options
+Users can choose from one of four loss functions: conditional likelihood, marginal likelihood, derivative matching, and mini batching.
+
+
+## Conditional likelihood:
+To use the conditional likelihood as set the keyword argument  `loss_function = "conditional likelihood"`.
+
+This option trains the UDE model while accounting for imperfect observaitons and process uncertainty by maximizing the conditional likelihood of a state space model where the UDE is used as the process model.
+The conditional likelihood is faster to compute, but can be less accurate than the marginal likelihood.
+
+
+## Marginal likelihood:
+To use the marginal likelihood as the keyword argument `loss_function = "marginal likelihood"`.
+
+This option maximizes the marginal likelihood of a state space model, which is approximated using an unscented Kalman filter.
+This option is slower than the conditional likelihood but should, in theory, increase the accuracy of the trained model (i.e. reduce bias). 
+
+### loss_options
+- `process_error`: an initial estimate of the level of process error. Default is 0.1. 
+- `observation_error`: The level of observation error in the data set. No default will throw an error if not provided. 
+- `α`: parameter for the knalmand filter algorithm. Defualt is 10^-3.
+- `β`: parameter for the knalmand filter algorithm. Defualt is 2.
+- `κ`: parameter for the knalmand filter algorithm. Defualt is 2.
+
+## Derivative matching:
+To use the derivative matching training routine set  `loss_function = "derivative matching".`
+This function trains the UDE model in a two-step process. First, a smoothing function is fit to the the data using a spline regression.
+Then, the UDE model is trained by comparing the derivatives of the smoothing functions to the derivatives predicted by the right-hand side of the UDE.
+this training routine is much faster than the alternative, but may be less accurate.
+
+### options
+- `d`:  the number of degrees of freedom in the curve fitting function defaults to 12.
+- `alg`:  the algorithm used to fit the curve to the data set see the DataInterpolations package for details it, defaults to generalized cross validation `:gcv_svd`
+- `remove_ends`: The number of data points to leave off of the end of the data set when training the UDE to reduce edge effects from the curve fitting process defaults to 0
+
+## Shooting:
+This option calculates the loss by solving the ODE from the initial to the final data point and comparing the observed to the predicted trajectory with MSE.
+The initial data point is estimated as a free parameter to reduce the impacts of observaiton error.
+
+## multiple shooting:
+This option calculates the loss by breaking the data into blocks of sequential observations. It then uses the UDE to forecast from the initial data point in each block to the first data point in the next block.
+The loss is defined as the mean squared error between the forecasts and the data points.
+The initial data point in each block is estimated as a free parameter to reduce the impacts of observaiton error.
+
+### options
+- `pred_length`: The number of data points in each block, default, is 10.
+
+"""
+function train!(UDE::UDE; 
+  loss_function = "derivative matching", 
+  optimizer = "ADAM",
+  regularization_weight = 0.0, 
+  verbose = true, 
+  loss_options = NamedTuple(),
+  optim_options = NamedTuple())
+
+  # set up loss function 
+  loss = x -> 0
+  params = UDE.parameters
+  uhat = 0
+  if loss_function == "conditional likelihood"
+
+    new_options = ComponentArray(loss_options)
+    options = ComponentArray((observation_error = 0.025, process_error = 0.025))
+    options[keys(new_options)] .= new_options
+
+    loss, params, _  = conditional_likelihood(UDE,regularization_weight,  options.observation_error, options.process_error)
+
+  elseif loss_function == "marginal likelihood"
+
+    L = size(UDE.data)[1]
+    Pν = errors_to_matrix(0.1, L)
+    if :process_error in keys(loss_options)
+      Pν = errors_to_matrix(loss_options.process_error, L)
+    end 
+
+    Pη = 0
+    if :observation_error in keys(loss_options)
+      Pη = errors_to_matrix(loss_options.observation_error, L)
+    else 
+      throw("Marginal likelihood requires observation errors")
+    end 
+
+    new_options = ComponentArray(loss_options)
+    options = ComponentArray((α = 10^-3, β = 2,κ = 0))
+    inds  = broadcast(i -> !(keys(new_options)[i] in [:process_error,:observation_error]), 1:length(keys(new_options)))
+    keys_ = keys(new_options)[inds]
+    options[keys_] .= new_options[keys_]
+
+    loss, params, uhat = marginal_likelihood(UDE,regularization_weight,Pν,Pη,options.α,options.β,options.κ)
+
+  elseif loss_function == "derivative matching"
+
+    new_options = ComponentArray(loss_options)
+    options = ComponentArray((d = 12, remove_ends = 0))
+    options[keys(new_options)] .= new_options
+
+    loss, params, uhat = derivative_matching_loss(UDE, regularization_weight; d = options.d, alg = :gcv_svd, remove_ends = options.remove_ends)
+
+  elseif loss_function == "shooting"
+
+    loss, params, _ = shooting_loss(UDE)
+    uhat = UDE.data
+
+  elseif loss_function == "multiple shooting"
+
+    new_options = ComponentArray(loss_options)
+    options = ComponentArray((pred_length = 5))
+    options[keys(new_options)] .= new_options
+
+    loss, params, _  = multiple_shooting_loss(UDE,options.pred_length)
+    uhat = UDE.data
+  end
+
+  # optimize loss function
+  # set optimization problem 
+  target = (x,p) -> loss(x)
+  adtype = Optimization.AutoZygote()
+  optf = Optimization.OptimizationFunction(target, adtype)
+  optprob = Optimization.OptimizationProblem(optf,params)
+  
+  if verbose
+      callback = function (p, l; doplot = false)
+        print(round(l,digits = 3), " ")
+        return false
+      end
+  else
+      callback = function (p, l; doplot = false)
+        return false
+      end 
+  end
+
+  sol = 0 
+  Pν = nothing
+  if optimizer == "ADAM"
+
+    new_options = ComponentArray(optim_options)
+    options = ComponentArray(default_options(loss_function))
+    options[keys(new_options)] .= new_options
+
+    # run optimizer
+    sol = Optimization.solve(optprob, OptimizationOptimisers.Adam(options.step_size), callback = callback, maxiters = options.maxiter )
+    if loss_function == "marginal likelihood"
+      Pν = sol.u.Pν
+      UDE.parameters = sol.u.UDE
+    else
+      UDE.parameters = sol.u
+    end
+  elseif optimizer == "BFGS"
+
+    new_options = ComponentArray(optim_options)
+    options = ComponentArray((initial_step_norm = 0.01, ))
+    options[keys(new_options)] .= new_options
+
+    sol = Optimization.solve(optprob, Optim.BFGS(; initial_stepnorm = initial_step_norm);
+        callback, allow_f_increases = false)
+
+    # assign parameters to model 
+  end 
+
+  # update model parameters 
+  
+
+  # states
+ if loss_function == "derivative matching"
+    UDE.parameters.uhat .= uhat
+
+  elseif loss_function == "shooting"
+    UDE.parameters.uhat .= shooting_states(UDE)
+
+  elseif loss_function == "multiple shooting"
+    new_options = ComponentArray(loss_options)
+    options = ComponentArray((pred_length = 5))
+    options[keys(new_options)] .= new_options
+
+    UDE.parameters.uhat = multiple_shooting_states(UDE,options.pred_length)
+  
+  elseif loss_function == "marginal likelihood"
+   
+    H,Pν,Pη,L,α,β,κ = uhat
+    Pν = sol.u.Pν*sol.u.Pν'
+    f = (u,t,dt,p) -> UDE.process_model.predict(u,t,dt,p)[1]
+    x, Px =ukf_smoothing(UDE.data,UDE.times,f,sol.u.UDE.process_model,H,Pν,Pη,L,α,β,κ)
+
+    UDE.parameters.uhat = x
+  
+  end
+
+  return Pν
+  
+end 
+
+
+
+
+

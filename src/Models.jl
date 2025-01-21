@@ -42,6 +42,7 @@ mutable struct UDE
     weights
     variable_column_name
     value_column_name
+    solvers
 end
 
 """
@@ -107,16 +108,19 @@ Constructs a UDE model for the data set `data`  based on user-defined derivative
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
+- `ode_solver`: method to aproximate solutions to the differntail equation. Defaul is `Tsit5()`
+- `ad_method`:method to evalaute derivatives of the ODE solver. Default is `ForwardDiffSensitivity()`
 ...
 """
-function CustomDerivatives(data,derivs!,initial_parameters;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+function CustomDerivatives(data,derivs!,initial_parameters;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2", 
+                            ode_solver = Tsit5(), ad_method = ForwardDiffSensitivity())
 
     time_column_name = check_column_names(data, time_column_name = time_column_name)[1]
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name)
 
     # generate submodels
-    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),dims,l,extrap_rho)
+    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),dims,l,extrap_rho; ode_solver = ode_solver, ad_method = ad_method)
     process_loss = ProcessMSE(N,T, proc_weight)
     observation_model = Identity()
     observation_loss = ObservationMSE(N,obs_weight)
@@ -135,13 +139,13 @@ function CustomDerivatives(data,derivs!,initial_parameters;time_column_name = "t
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
 
     # model constructor
-    constructor = data -> CustomDerivatives(data,derivs!,initial_parameters;time_column_name=time_column_name,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
+    constructor = data -> CustomDerivatives(data,derivs!,initial_parameters;time_column_name=time_column_name,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type,ode_solver = ode_solver, ad_method = ad_method)
 
     weights = (regularization =  reg_weight, process = proc_weight, observation = obs_weight)
 
     return UDE(times,data,0,dataframe,0,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name,weights,
-                nothing, nothing)
+                nothing, nothing, (ode = ode_solver, ad = ad_method))
 
 end
 
@@ -173,14 +177,19 @@ end
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
+- `ode_solver`: method to aproximate solutions to the differntail equation. Defaul is `Tsit5()`
+- `ad_method`:method to evalaute derivatives of the ODE solver. Default is `ForwardDiffSensitivity()`
 """
-function CustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,priors::Function;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+function CustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,priors::Function;
+                                time_column_name = "time",proc_weight=1.0,obs_weight=1.0,
+                                reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2",
+                                ode_solver = Tsit5(), ad_method = ForwardDiffSensitivity())
     time_column_name = check_column_names(data, time_column_name = time_column_name)[1]
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name )
 
     # generate submodels
-    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),dims,l,extrap_rho)
+    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),dims,l,extrap_rho; ode_solver = ode_solver, ad_method=ad_method)
     process_loss = ProcessMSE(N,T, proc_weight)
     observation_model = Identity()
     observation_loss = ObservationMSE(N,obs_weight)
@@ -204,14 +213,13 @@ function CustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,
         loss_(parameters,tskip) + priors(parameters.process_model)
     end
     # model constructor
-    constructor = data -> CustomDerivatives(data,derivs!,initial_parameters,priors;time_column_name = time_column_name ,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type)
+    constructor = data -> CustomDerivatives(data,derivs!,initial_parameters,priors;time_column_name = time_column_name ,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type,ode_solver = ode_solver, ad_method=ad_method)
 
     weights = (regularization =  reg_weight, process = proc_weight, observation = obs_weight)
 
     return UDE(times,data,0,dataframe,0,parameters,loss_function,process_model,process_loss,observation_model,
-
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name, weights,
-                nothing, nothing )
+                nothing, nothing,(ode = ode_solver, ad = ad_method) )
 
 end
 
@@ -234,8 +242,13 @@ When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
+- `ode_solver`: method to aproximate solutions to the differntail equation. Defaul is `Tsit5()`.
+- `ad_method`:method to evalaute derivatives of the ODE solver. Default is `ForwardDiffSensitivity()`.
 """
-function CustomDerivatives(data::DataFrame,X::DataFrame,derivs!::Function,initial_parameters;time_column_name = "time",variable_column_name = nothing ,value_column_name = nothing,proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+function CustomDerivatives(data::DataFrame,X::DataFrame,derivs!::Function,initial_parameters;time_column_name = "time",
+                            variable_column_name = nothing ,value_column_name = nothing,
+                            proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,
+                            reg_type = "L2",ode_solver = Tsit5(), ad_method = ForwardDiffSensitivity())
 
     X_data_frame = X
     time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
@@ -244,7 +257,7 @@ function CustomDerivatives(data::DataFrame,X::DataFrame,derivs!::Function,initia
     covariates, vars = interpolate_covariates(X,time_column_name,variable_column_name,value_column_name)
 
     # generate submodels
-    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),covariates,dims,l,extrap_rho)
+    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),covariates,dims,l,extrap_rho; ode_solver = ode_solver , ad_method = ad_method)
     process_loss = ProcessMSE(N,T, proc_weight)
     observation_model = Identity()
     observation_loss = ObservationMSE(N,obs_weight)
@@ -263,19 +276,21 @@ function CustomDerivatives(data::DataFrame,X::DataFrame,derivs!::Function,initia
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
 
     # model constructor
-    constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters;time_column_name = time_column_name, variable_column_name=variable_column_name, value_column_name=value_column_name, proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type)
+    constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters;time_column_name = time_column_name, variable_column_name=variable_column_name, value_column_name=value_column_name, proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type,ode_solver = ode_solver , ad_method = ad_method)
 
     weights = (regularization =  reg_weight, process = proc_weight, observation = obs_weight)
 
     return UDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name,
-                weights,
-                variable_column_name,value_column_name)
+                weights,variable_column_name,value_column_name,(ode = ode_solver, ad = ad_method))
 
 end
 
 
-function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters,priors::Function;time_column_name = "time",variable_column_name = nothing ,value_column_name = nothing, proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters,priors::Function;time_column_name = "time",variable_column_name = nothing ,value_column_name = nothing, 
+                                proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,
+                                extrap_rho=0.1,l=0.25,reg_type = "L2",
+                                ode_solver = Tsit5(), ad_method = ForwardDiffSensitivity())
     
     X_data_frame = X
     time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
@@ -284,7 +299,7 @@ function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameter
     covariates, vars = interpolate_covariates(X,time_column_name,variable_column_name,value_column_name)
 
     # generate submodels
-    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),covariates,dims,l,extrap_rho)
+    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),covariates,dims,l,extrap_rho; ode_solver = ode_solver, ad_method = ad_method)
     process_loss = ProcessMSE(N,T, proc_weight)
     observation_model = Identity()
     observation_loss = ObservationMSE(N,obs_weight)
@@ -308,18 +323,22 @@ function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameter
         loss_(parameters,tskip) + priors(parameters.process_model)
     end
     # model constructor
-    constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters,priors;time_column_name=time_column_name, variable_column_name=variable_column_name, value_column_name=value_column_name, proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type)
+    constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters,priors;time_column_name=time_column_name, variable_column_name=variable_column_name, value_column_name=value_column_name, proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type, ode_solver = ode_solver, ad_method = ad_method)
 
     weights = (regularization =  reg_weight, process = proc_weight, observation = obs_weight)
 
     return UDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name, weights,
-                variable_column_name,value_column_name)
+                variable_column_name,value_column_name,(ode = ode_solver, ad = ad_method))
 
 end
 
 
-function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters,observation_loss::Function, observation_parameters::NamedTuple,priors::Function;time_column_name = "time",variable_column_name = nothing ,value_column_name = nothing, proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters,observation_loss::Function, observation_parameters::NamedTuple,priors::Function;time_column_name = "time",
+                            variable_column_name = nothing ,value_column_name = nothing,
+                             proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,
+                             l=0.25,reg_type = "L2",
+                             ode_solver = Tsit5(), ad_method = ForwardDiffSensitivity())
     
     X_data_frame = X
     time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
@@ -329,7 +348,7 @@ function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameter
     covariates, vars = interpolate_covariates(X,time_column_name,variable_column_name,value_column_name)
 
     # generate submodels
-    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),covariates,dims,l,extrap_rho)
+    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),covariates,dims,l,extrap_rho;ode_solver = ode_solver, ad_method = ad_method)
     process_loss = ProcessMSE(N,T, proc_weight)
     observation_model = Identity()
     observation_loss = LossFunction(observation_loss, observation_parameters)
@@ -354,19 +373,23 @@ function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameter
         loss_(parameters,tskip) + priors(parameters.process_model)
     end
     # model constructor
-    constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters,priors;time_column_name=time_column_name, variable_column_name=variable_column_name, value_column_name=value_column_name, proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type)
+    constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters,priors;time_column_name=time_column_name, variable_column_name=variable_column_name, value_column_name=value_column_name, proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type, ode_solver = ode_solver, ad_method = ad_method)
 
     weights = (regularization =  reg_weight, process = proc_weight, observation = obs_weight)
 
     return UDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name, weights,
-                variable_column_name,value_column_name)
+                variable_column_name,value_column_name,(ode = ode_solver, ad = ad_method))
 
 end
 
 
 
-function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters,observation_loss::Function, observation_parameters::NamedTuple; time_column_name = "time",variable_column_name = nothing ,value_column_name = nothing, proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2")
+function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters,observation_loss::Function, 
+                            observation_parameters::NamedTuple; time_column_name = "time",
+                            variable_column_name = nothing ,value_column_name = nothing, 
+                            proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,
+                            reg_type = "L2",ode_solver = Tsit5(), ad_method = ForwardDiffSensitivity())
     
     X_data_frame = X
     time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
@@ -376,7 +399,7 @@ function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameter
     covariates, vars = interpolate_covariates(X,time_column_name,variable_column_name,value_column_name)
 
     # generate submodels
-    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),covariates,dims,l,extrap_rho)
+    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),covariates,dims,l,extrap_rho; ode_solver = ode_solver, ad_method = ad_method)
     process_loss = ProcessMSE(N,T, proc_weight)
     observation_model = Identity()
     observation_loss = LossFunction(observation_loss, observation_parameters)
@@ -401,13 +424,13 @@ function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameter
         loss_(parameters,tskip) + priors(parameters.process_model)
     end
     # model constructor
-    constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters,priors;time_column_name=time_column_name, variable_column_name=variable_column_name, value_column_name=value_column_name, proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type)
+    constructor = (data,X) -> CustomDerivatives(data,X,derivs!,initial_parameters,priors;time_column_name=time_column_name, variable_column_name=variable_column_name, value_column_name=value_column_name, proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,reg_type = reg_type,ode_solver = ode_solver, ad_method = ad_method)
 
     weights = (regularization =  reg_weight, process = proc_weight, observation = obs_weight)
 
     return UDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name, weights,
-                variable_column_name,value_column_name)
+                variable_column_name,value_column_name,(ode = ode_solver, ad = ad_method))
 
 end
 
@@ -463,7 +486,7 @@ function CustomDifference(data,step,initial_parameters;time_column_name = "time"
 
     return UDE(times,data,0,dataframe,0,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name,weights,
-                nothing, nothing)
+                nothing, nothing, nothing)
 
 end
 
@@ -521,7 +544,7 @@ function CustomDifference(data::DataFrame,step,initial_parameters,priors::Functi
 
     return UDE(times,data,0,dataframe,0,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name,weights,
-                nothing, nothing)
+                nothing, nothing, nothing)
 
 end
 
@@ -577,7 +600,7 @@ function CustomDifference(data::DataFrame,X,step,initial_parameters;time_column_
 
     return UDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name, weights,
-                variable_column_name,value_column_name)
+                variable_column_name,value_column_name, nothing)
 
 end
 
@@ -615,7 +638,7 @@ function CustomDifference(data::DataFrame,X,step,initial_parameters,priors::Func
 
     return UDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name, weights,
-                variable_column_name,value_column_name)
+                variable_column_name,value_column_name, nothing)
 
 end
 
@@ -664,7 +687,7 @@ function NNDE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_weigh
 
     return UDE(times,data,0,dataframe,0,parameters,loss_function,process_model,process_loss,observation_model,
              observation_loss,process_regularization,observation_regularization,constructor,time_column_name,weights,
-                                nothing, nothing)
+                                nothing, nothing, nothing)
 
 end
 
@@ -695,7 +718,7 @@ function NNDE(data, X;time_column_name = "time",variable_column_name = nothing ,
 
     return UDE(times,data,0,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name,
-                variable_column_name, value_column_name)
+                variable_column_name, value_column_name, nothing)
 
 end
 
@@ -717,14 +740,18 @@ Constructs a nonparametric continuous-time model for the data set `data` using a
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
+- `ode_solver`: method to aproximate solutions to the differntail equation. Defaul is `Tsit5()`.
+- `ad_method`:method to evalaute derivatives of the ODE solver. Default is `ForwardDiffSensitivity()`.
 """
-function NODE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0 )
+function NODE(data;time_column_name = "time",hidden_units=10,seed = 1,
+                proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", 
+                l = 0.25,extrap_rho = 0.0,ode_solver = Tsit5(), ad_method = ForwardDiffSensitivity() )
     time_column_name = check_column_names(data, time_column_name = time_column_name)[1]
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name)
 
     # submodels
-    process_model = NODE_process(dims,hidden_units,seed,l,extrap_rho)
+    process_model = NODE_process(dims,hidden_units,seed,l,extrap_rho;ode_solver = ode_solver , ad_method=ad_method)
     process_loss = ProcessMSE(N,T,proc_weight)
     observation_model = Identity()
     observation_loss = ObservationMSE(N,obs_weight)
@@ -744,13 +771,13 @@ function NODE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_weigh
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
 
 
-    constructor = (data) -> NODE(data;time_column_name=time_column_name,hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight)
+    constructor = (data) -> NODE(data;time_column_name=time_column_name,hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,ode_solver = ode_solver , ad_method=ad_method)
 
     weights = (regularization =  reg_weight, process = proc_weight, observation = obs_weight)
 
     return UDE(times,data,0,dataframe,0,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name, weights,
-                nothing, nothing)
+                nothing, nothing, (ode = ode_solver, ad = ad_method))
 end
 
 
@@ -770,8 +797,12 @@ When a data frame `X` is supplied the model will run with covariates. The argume
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
+- `ode_solver`: method to aproximate solutions to the differntail equation. Defaul is `Tsit5()`.
+- `ad_method`:method to evalaute derivatives of the ODE solver. Default is `ForwardDiffSensitivity()`.
 """
-function NODE(data,X;time_column_name = "time", variable_column_name = nothing ,value_column_name = nothing, hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", l = 0.25,extrap_rho = 0.0 )
+function NODE(data,X;time_column_name = "time", variable_column_name = nothing ,value_column_name = nothing, hidden_units=10,seed = 1,
+                proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", 
+                l = 0.25,extrap_rho = 0.0, ode_solver = Tsit5(), ad_method = ForwardDiffSensitivity() )
     X_data_frame = X
     time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
     # convert data
@@ -779,7 +810,7 @@ function NODE(data,X;time_column_name = "time", variable_column_name = nothing ,
     covariates, vars = interpolate_covariates(X,time_column_name,variable_column_name,value_column_name)
 
     # submodels
-    process_model = NODE_process(dims,hidden_units,covariates,seed,l,extrap_rho)
+    process_model = NODE_process(dims,hidden_units,covariates,seed,l,extrap_rho; ode_solver =ode_solver, ad_method = ad_method)
     process_loss = ProcessMSE(N,T,proc_weight)
     observation_model = Identity()
     observation_loss = ObservationMSE(N,obs_weight)
@@ -799,13 +830,13 @@ function NODE(data,X;time_column_name = "time", variable_column_name = nothing ,
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
 
 
-    constructor = (data,X) -> NODE(data,X;time_column_name=time_column_name,variable_column_name=variable_column_name,value_column_name=value_column_name,hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type,l=l,extrap_rho=extrap_rho)
+    constructor = (data,X) -> NODE(data,X;time_column_name=time_column_name,variable_column_name=variable_column_name,value_column_name=value_column_name,hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type,l=l,extrap_rho=extrap_rho,ode_solver =ode_solver, ad_method = ad_method)
 
     weights = (regularization =  reg_weight, process = proc_weight, observation = obs_weight)
 
     return UDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name,weights,
-                variable_column_name, value_column_name)
+                variable_column_name, value_column_name, (ode = ode_solver, ad = ad_method))
 end
 
 
@@ -839,7 +870,7 @@ function NODE_wth_ARD(data,X,Σ,λ,α,β;time_column_name = "time", variable_col
 
     return UDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name,weights,
-                variable_column_name, value_column_name)
+                variable_column_name, value_column_name, (ode = ode_solver, ad = ad_method))
 end
 
 
@@ -875,7 +906,7 @@ function GP(data,X,Σ,α,β;time_column_name = "time", variable_column_name = no
 
     return UDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name,weights,
-                variable_column_name, value_column_name)
+                variable_column_name, value_column_name, (ode = ode_solver, ad = ad_method))
 end
 
 
@@ -929,7 +960,7 @@ function EasyNODE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_w
 
     untrainedNODE = UDE(times,data,0,dataframe,0,parameters,loss_function,process_model,process_loss,observation_model,
         observation_loss,process_regularization,observation_regularization,constructor,time_column_name,
-        nothing, nothing, weights)
+        nothing, nothing, weights, nothing)
 
 
     return gradient_descent!(untrainedNODE, step_size = step_size, maxiter = maxiter, verbose = verbose)
@@ -987,7 +1018,7 @@ function EasyNODE(data,X;time_column_name = "time",variable_column_name = nothin
     weights = (regularization =  reg_weight, process = proc_weight, observation = obs_weight)
 
     untrainedNODE = UDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
-        observation_loss,process_regularization,observation_regularization,constructor,time_column_name, weights,variable_column_name,value_column_name)
+        observation_loss,process_regularization,observation_regularization,constructor,time_column_name, weights,variable_column_name,value_column_name, nothing)
         return gradient_descent!(untrainedNODE, step_size = step_size, maxiter = maxiter, verbose = verbose)
 end
 
@@ -1054,7 +1085,7 @@ function EasyUDE(data,known_dynamics!,initial_parameters;time_column_name = "tim
     weights = (regularization =  reg_weight, process = proc_weight, observation = obs_weight)
 
     untrainedUDE = UDE(times,data,0,dataframe,0,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor,time_column_name, weights,nothing,nothing)
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name, weights,nothing,nothing,nothing)
     return gradient_descent!(untrainedUDE, step_size = step_size, maxiter = maxiter, verbose = verbose)
 end
 
@@ -1124,7 +1155,7 @@ function EasyUDE(data::DataFrame,X,known_dynamics!::Function,initial_parameters;
     weights = (regularization =  reg_weight, process = proc_weight, observation = obs_weight)
 
     untrainedUDE = UDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor,time_column_name,weights,variable_column_name,value_column_name)
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name,weights,variable_column_name,value_column_name, nothing)
     return gradient_descent!(untrainedUDE, step_size = step_size, maxiter = maxiter, verbose = verbose)
 end
 
@@ -1423,14 +1454,16 @@ function CustomModel(data::DataFrame,
                         process_loss_params = NamedTuple(),
                         state_variable_transform = x->x,
                         log_priors = x -> 0,
-                        time_column_name = "time",reg_weight=10^-6,reg_type = "L2")
+                        time_column_name = "time",reg_weight=10^-6,reg_type = "L2",
+                        ode_solver = Tsit5(), 
+                        ad_method = ForwardDiffSensitivity())
 
     time_column_name = check_column_names(data, time_column_name = time_column_name)[1]
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name)
 
     # generate submodels
-    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),dims,10,0)
+    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),dims,10,0; ode_solver=ode_solver,ad_method=ad_method)
     process_loss = LossFunction(process_loss_params,process_loss)
     observation_model = LinkFunction(link_params,link,(x,u)->x)
     observation_loss = LossFunction(observation_params,observation_loss)
@@ -1454,7 +1487,8 @@ function CustomModel(data::DataFrame,
                                         observation_loss=observation_loss,observation_params=observation_params,
                                         process_loss=process_loss,process_loss_params=process_loss_params,
                                         state_variable_transform=state_variable_transform,log_priors=log_priors,
-                                        time_column_name=time_column_name,reg_weight=reg_weight,reg_type=reg_type)
+                                        time_column_name=time_column_name,reg_weight=reg_weight,reg_type=reg_type,
+                                        ode_solver=ode_solver,ad_method=ad_method)
 
     weights = (regularization =  reg_weight, )
 
@@ -1503,7 +1537,9 @@ function CustomModel(data::DataFrame,
                         time_column_name = "time",
                         value_column_name = "value",
                         variable_column_name = "variable",
-                        reg_weight=10^-6,reg_type = "L2")
+                        reg_weight=10^-6,reg_type = "L2",
+                        ode_solver = Tsit5(), 
+                        ad_method = ForwardDiffSensitivity())
 
 
     X_data_frame = X
@@ -1513,7 +1549,7 @@ function CustomModel(data::DataFrame,
     covariates, vars = interpolate_covariates(X,time_column_name,variable_column_name,value_column_name)
 
     # generate submodels
-    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),covariates,dims,10,0)
+    process_model = ContinuousProcessModel(derivs!,ComponentArray(initial_parameters),covariates,dims,10,0;ode_solver=ode_solver,ad_method=ad_method)
     process_loss = LossFunction(process_loss_params,process_loss)
     observation_model = LinkFunction(link_params,link,(x,u)->x)
     observation_loss = LossFunction(observation_params,observation_loss)
@@ -1537,7 +1573,8 @@ function CustomModel(data::DataFrame,
                                             observation_loss=observation_loss,observation_params=observation_params,
                                             process_loss=process_loss,process_loss_params=process_loss_params,
                                             state_variable_transform=state_variable_transform,log_priors=log_priors,
-                                            time_column_name=time_column_name,reg_weight=reg_weight,reg_type=reg_type)
+                                            time_column_name=time_column_name,reg_weight=reg_weight,reg_type=reg_type,
+                                            ode_solver=ode_solver,ad_method=ad_method)
 
     weights = (regularization =  reg_weight, )
 

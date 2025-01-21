@@ -252,6 +252,7 @@ function init_single_loss_mini_batch(model::MultiUDE,pred_length,solver,sensealg
         L_obs = 0.0 
         time = model.times[starts[series]:(starts[series]+lengths[series]-1)]
         dat = data[:,starts[series]:(starts[series]+lengths[series]-1)]
+        uhats = parameters.uhat[:,starts[series]:(starts[series]+lengths[series]-1)]
 
         L_proc = 0
         inds = 1:pred_length
@@ -266,7 +267,7 @@ function init_single_loss_mini_batch(model::MultiUDE,pred_length,solver,sensealg
                 tspan = time[inds]
             end 
 
-            u0 = dat[:,t]
+            u0 = uhats[:,t]
             u1 = dat[:,inds]
             u1hat = predict_mini(u0,time[t],series,tspan,parameters.process_model)
 
@@ -335,7 +336,7 @@ function init_mini_batch_loss(model::UDE,pred_length, solver, sensealg)
                 tspan = model.times[inds]
             end 
 
-            u0 = model.data[:,t]
+            u0 = parameters.uhat[:,t]
             u1 = model.data[:,inds]
             u1hat = predict_mini(u0,model.times[t],tspan,parameters.process_model)
             #L_proc += sum( (u1 .- u1hat).^2 )/length(model.data)
@@ -387,6 +388,103 @@ function init_mini_batch_loss(model::UDE,pred_length, solver, sensealg)
     end
     return loss_function
 end 
+
+
+
+
+function init_single_shooting_loss(model::MultiUDE,solver,sensealg)
+    
+    function predict(u,t0,i,tsteps,parameters)
+        tspan =  (t0,tsteps[end])  # Tsit5()#ForwardDiffSensitivity()
+        params = vcat(parameters,ComponentArray((series =i, )))
+        sol = OrdinaryDiffEq.solve(model.process_model.IVP, solver, u0 = u, p=params,tspan = tspan, 
+                    saveat = tsteps,abstol=1e-6, reltol=1e-6, sensealg = sensealg  )
+        X = Array(sol)
+        return X
+    end 
+
+    function loss(parameters,data,series,starts,lengths)
+        
+        # observation loss
+        L_obs = 0.0 
+        time = model.times[starts[series]:(starts[series]+lengths[series]-1)]
+        dat = data[:,starts[series]:(starts[series]+lengths[series]-1)]
+
+        # 
+        u0 = parameters.uhat[:,starts[series]]
+        u1 = dat[:,2:end]
+        t0 = time[1]
+        times = time[2:end]
+        u1hat = predict_mini(u0,t0,series,times,parameters.process_model)
+
+        dt = 1
+        for i in 2:length(inds) 
+            L_proc += model.process_loss.loss(u1[:,i],u1hat[:,i],dt,parameters.process_loss)
+        end 
+
+        # regularization
+        L_reg = model.process_regularization.loss(parameters.process_model,parameters.process_regularization)
+
+        return L_obs + L_proc + L_reg
+    end
+
+    return loss
+end
+
+function init_shoting_loss(model::MultiUDE,pred_length,solver,sensealg)
+    
+    single_loss = init_single_shooting_loss(model,solver,sensealg)
+    N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames, labels_df = process_multi_data(model.data_frame, model.time_column_name, model.series_column_name)
+
+    function loss(parameters)
+        L = 0
+        for i in eachindex(starts)
+            L+= single_loss(parameters,data,i,starts,lengths)
+        end
+        return L
+    end   
+
+    return loss
+end 
+
+
+
+
+function init_shooting_loss(model::UDE, solver, sensealg)
+
+    # loss function 
+    function predict(u,t0,tsteps,parameters)
+        tspan =  (t0,tsteps[end])  # Tsit5()#ForwardDiffSensitivity()
+        sol = OrdinaryDiffEq.solve(model.process_model.IVP, solver, u0 = u, p=parameters,tspan = tspan, 
+                    saveat = tsteps,abstol=1e-6, reltol=1e-6, sensealg = sensealg  )
+        X = Array(sol)
+        return X
+    end 
+
+    function loss_function(parameters)
+
+        # dynamics loss 
+        L_proc = 0
+        u0 = parameters.uhat[:,1]
+        t0 = model.times[1]
+        times = model.times[2:end]
+        u1 = model.data[:,2:end]
+        u1hat = predict(u0,t0,times,parameters.process_model)
+        dt = 1
+        for i in 2:length(inds) 
+            L_proc += model.process_loss.loss(u1[:,i],u1hat[:,i],dt,parameters.process_loss)
+        end 
+        
+        # regularization
+        L_reg = model.process_regularization.loss(parameters.process_model,parameters.process_regularization)
+        L_reg += model.observation_regularization.loss(parameters.process_model,parameters.process_regularization)
+        
+        return L_proc + L_reg
+    end
+
+    return loss_function
+end 
+
 
 
 
