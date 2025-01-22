@@ -593,7 +593,7 @@ function single_multiple_shooting_loss(UDE::MultiUDE,pred_length)
             u0 = uhats[:,t]
             u1 = dat[:,inds]
             u1hat = predict_mini(u0,series,tspan,parameters.process_model)
-            for i in 1:length(inds) 
+            for i in eachindex(inds) 
                 L_proc += sum((u1[:,i].-u1hat[:,i]).^2)/length(dat)
             end 
         end
@@ -647,10 +647,10 @@ function multiple_shooting_states(UDE::MultiUDE,  pred_length)
     tspan = 1:pred_length
     uhats = zeros(size(UDE.data))
     
-    for series in 1:length(starts)
+    for series in eachindex(starts)
 
-        times = UDE.times[(starts[series]):(starts[series]+lengths[series]-1)]
-        uhat = UDE.parameters.uhat[:,(starts[series]):(starts[series]+lengths[series]-1)]
+        times = UDE.times[starts[series]:(starts[series]+lengths[series]-1)]
+        uhat = UDE.parameters.uhat[:,starts[series]:(starts[series]+lengths[series]-1)]
 
         for t in 1:pred_length:length(times)
             inds = 0

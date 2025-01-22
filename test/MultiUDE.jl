@@ -29,7 +29,11 @@ init_parameters = (NN = init_params, m=0.5)
 model = UniversalDiffEq.MultiCustomDerivatives(training_data,derivs!,init_parameters,
                                 time_column_name = "time", series_column_name = "series")
 
-gradient_descent!(model,step_size = 0.05,maxiter=2)
+train!(model; loss_function = "derivative matching", optimizer = "ADAM",optim_options = (maxiter = 1,))
+train!(model; loss_function = "shooting", optimizer = "ADAM",optim_options = (maxiter = 1,))
+train!(model; loss_function = "multiple shooting", optimizer = "ADAM",optim_options = (maxiter = 1,))
+train!(model; loss_function = "conditional likelihood", optimizer = "ADAM",optim_options = (maxiter = 1,))
+train!(model; loss_function = "marginal likelihood", optimizer = "ADAM",optim_options = (maxiter = 1,))
 
 
 
@@ -47,10 +51,10 @@ init_parameters2 = (NN = init_params,)
 model = UniversalDiffEq.MultiCustomDifference(training_data,diff,init_parameters2;
                             time_column_name = "time", series_column_name = "series")
 
-UniversalDiffEq.gradient_descent!(model,step_size = 0.05,maxiter=2)
-
-
-
+train!(model; loss_function = "conditional likelihood", optimizer = "ADAM",optim_options = (maxiter = 1,))
+train!(model; loss_function = "marginal likelihood", optimizer = "ADAM",optim_options = (maxiter = 1,))
+                            
+                            
 function diff2(u,i,X,p,t)
     ut = u .+ NN(u,p.NN)[1] .- p.b* X[1]
     return ut
@@ -62,4 +66,7 @@ training_X = DataFrame(time = vcat(1:5,1:5), series = vcat(repeat([1],5),repeat(
 model = UniversalDiffEq.MultiCustomDifference(training_data,training_X,diff2,init_parameters3;
                             time_column_name = "time", series_column_name = "series")
 
-UniversalDiffEq.gradient_descent!(model,step_size = 0.05,maxiter=2)
+train!(model; loss_function = "conditional likelihood", optimizer = "ADAM",optim_options = (maxiter = 1,))
+train!(model; loss_function = "marginal likelihood", optimizer = "ADAM",optim_options = (maxiter = 1,))
+                                                        
+                                     

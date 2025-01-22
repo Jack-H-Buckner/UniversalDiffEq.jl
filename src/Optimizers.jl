@@ -447,7 +447,7 @@ function train!(UDE::UDE;
     options = ComponentArray((initial_step_norm = 0.01, ))
     options[keys(new_options)] .= new_options
 
-    sol = Optimization.solve(optprob, Optim.BFGS(; initial_stepnorm = initial_step_norm);
+    sol = Optimization.solve(optprob, Optim.BFGS(; initial_stepnorm = options.initial_step_norm);
         callback, allow_f_increases = false)
 
     # assign parameters to model 
@@ -607,7 +607,7 @@ function train!(UDE::MultiUDE;
     options = ComponentArray((initial_step_norm = 0.01, ))
     options[keys(new_options)] .= new_options
 
-    sol = Optimization.solve(optprob, Optim.BFGS(; initial_stepnorm = initial_step_norm);
+    sol = Optimization.solve(optprob, Optim.BFGS(; initial_stepnorm = options.initial_step_norm);
         callback, allow_f_increases = false)
 
     # assign parameters to model
