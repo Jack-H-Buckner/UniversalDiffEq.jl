@@ -21,8 +21,8 @@ include("Optimizers.jl")
 include("CrossValidation.jl")
 include("NeuralNetworkConstructors.jl")
 include("UnscentedKalmanFilter.jl")
+include("LossFunctionConstructors.jl")
 
-
-export UDE, MultiUDE, CustomDerivatives, CustomModel, NNDE, NODE, MultiNODE, MultiCustomDerivatives ,gradient_decent!, BFGS!, kalman_filter!, mini_batching!, derivative_matching!, one_step_ahead!, kalman_filter!, plot_state_estiamtes, plot_predictions, plot_forecast, leave_future_out_cv, LokaVolterra, LorenzLokaVolterra, vectorfield_and_nullclines, get_right_hand_side, CustomDifference, plot_state_estimates, LotkaVolterra, LorenzLotkaVolterra, kfold_cv, gradient_descent!, equilibrium_and_stability, EasyNODE, EasyUDE, BayesianNODE, BayesianUDE, NUTS!, SGLD!, predict, get_parameters, plot_bifurcation_diagram, bifurcation_data, cross_validation_kfold, simulate_coral_data, SimpleNeuralNetwork
+export UDE, MultiUDE, CustomDerivatives, CustomModel, NNDE, NODE, MultiNODE, MultiCustomDerivatives ,train!, plot_state_estiamtes, plot_predictions, plot_forecast, leave_future_out_cv, LokaVolterra, LorenzLokaVolterra, vectorfield_and_nullclines, get_right_hand_side, CustomDifference, plot_state_estimates, LotkaVolterra, LorenzLotkaVolterra, kfold_cv, gradient_descent!, equilibrium_and_stability, EasyNODE, EasyUDE, BayesianNODE, BayesianUDE, NUTS!, SGLD!, predict, get_parameters, plot_bifurcation_diagram, bifurcation_data, cross_validation_kfold, simulate_coral_data, SimpleNeuralNetwork
 
 end

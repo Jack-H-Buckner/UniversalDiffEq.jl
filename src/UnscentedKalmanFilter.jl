@@ -52,17 +52,17 @@ function ukf_update(y,x̄,Px,t,dt,f,p,H,Pν,Pη,L,α,β,κ)
     return x̂, Px.+ Pν , ll
 end 
 
-function ukf_smoothing(y,times,t0,x̄0,Px0,f,pf,H,Pν,Pη,L,α,β,κ)
+
+
+function ukf_smoothing(y,times,f,pf,H,Pν,Pη,L,α,β,κ)
     T = size(y)[2]
     xls = zeros(size(y))
     Pxls = zeros(size(y)[1],size(y)[1],size(y)[2])
-    x̂ = x̄0
-    Px = Px0
-    dt = times[1]-t0
-    for t in 1:T
-        if t >1
-            dt = times[t]-times[t-1]
-        end 
+    x̂ = y[:,1]
+    Px = Pη
+    xls[:,1] =  x̂ 
+    for t in 2:T
+        dt = times[t]-times[t-1]
         x̂, Px, llt = ukf_update(y[:,t],x̂,Px,times[t],dt,f,pf,H,Pν,Pη,L,α,β,κ)
         xls[:,t] = x̂
         Pxls[:,:,t] = Px 
@@ -71,16 +71,14 @@ function ukf_smoothing(y,times,t0,x̄0,Px0,f,pf,H,Pν,Pη,L,α,β,κ)
 end
 
 
-function ukf_likeihood(y,times,t0,x̄0,Px0,f,pf,H,Pν,Pη,L,α,β,κ)
+
+function ukf_likeihood(y,times,f,pf,H,Pν,Pη,L,α,β,κ)
     T = size(y)[2]
     ll = 0
-    x̂ = x̄0
-    Px = Px0
-    dt = times[1]-t0
-    for t in 1:T 
-        if t >1
-            dt = times[t]-times[t-1]
-        end 
+    x̂ = y[:,1]
+    Px = Pη
+    for t in 2:T 
+        dt = times[t]-times[t-1]
         x̂, Px, llt = ukf_update(y[:,t],x̂,Px,times[t],dt,f,pf,H,Pν,Pη,L,α,β,κ)
         ll += llt
     end
@@ -88,13 +86,13 @@ function ukf_likeihood(y,times,t0,x̄0,Px0,f,pf,H,Pν,Pη,L,α,β,κ)
 end
 
 
-function init_kalman_loss(UDE::UDE,t0,x̄0,Px0,H,Pν,Pη,L,α,β,κ)
+function init_kalman_loss(UDE::UDE,H,Pη,L,α,β,κ)
     y = UDE.data
     times = UDE.times
     f = (u,t,dt,p) -> UDE.process_model.predict(u,t,dt,p)[1]
     function loss(parameters)
         Pν = parameters.Pν * parameters.Pν'
-       -1*ukf_likeihood(y,times,t0,x̄0,Px0,f,parameters.UDE.process_model,H,Pν,Pη,L,α,β,κ)
+       -1*ukf_likeihood(y,times,f,parameters.UDE.process_model,H,Pν,Pη,L,α,β,κ)
     end
     return loss
 end
@@ -112,68 +110,7 @@ function mean_and_cov(x)
 end
 
 
-function kalman_filter!(UDE::UDE, σ2; t0 = -999, x̄0 = -999, Px0 = -999, H = -999, Pν = -999, Pη = -999, α = 10^-3, β = 2,κ = 0, verbose = true, maxiter = 500, step_size = 0.05)
-    
-    # check for optional defualt paramters and set efaults if empty 
-    if t0 == -999
-        t0 = 2*UDE.times[1] - UDE.times[2]
-    end 
-    if x̄0 == -999
-        x̄0, _ = mean_and_cov(UDE.data)
-    end 
-
-    if Px0 == -999
-        _, Px0 = mean_and_cov(UDE.data)
-    end 
-    
-    L = size(UDE.data)[1]
-    if H == -999
-        H = Matrix(I,L,L)
-    end
-
-    if Pν == -999
-        Pν = σ2*Matrix(I,L,L)
-    end 
-
-    if Pη == -999
-        Pη = σ2*Matrix(I,L,L)
-    end
-
-    
-    loss = init_kalman_loss(UDE,t0,x̄0,Px0,H,Pν,Pη,L,α,β,κ)
-    target = (x,u) -> loss(x)
-    adtype = Optimization.AutoZygote()
-    optf = Optimization.OptimizationFunction(target, adtype)
-    Pν_ = Pν
-    optprob = Optimization.OptimizationProblem(optf, ComponentArray((UDE = UDE.parameters, Pν = Pν_)))
-    
-    # print value of loss function at each time step 
-    if verbose
-        callback = function (p, l; doplot = false)
-          print(round(l,digits = 3), " ")
-          return false
-        end
-    else
-        callback = function (p, l; doplot = false)
-          return false
-        end 
-    end
-  
-    # run optimizer
-    sol = Optimization.solve(optprob, OptimizationOptimisers.Adam(step_size), callback = callback, maxiters = maxiter )
-    
-    # assign parameters to model 
-    UDE.parameters = sol.u.UDE
-    f = (u,t,dt,p) -> UDE.process_model.predict(u,t,dt,p)[1]
-    Pν = sol.u.Pν*sol.u.Pν'
-    x, Px =ukf_smoothing(UDE.data,UDE.times,t0,x̄0,Px0,f,sol.u.UDE.process_model,H,Pν,Pη,L,α,β,κ)
-    UDE.parameters.uhat .= x
-    return Pν, Px
-end
-
-
-
-  function init_single_kalman_loss(UDE::MultiUDE,t0,x̄0,Px0,H,Pη,L,α,β,κ)
+function init_single_kalman_loss(UDE::MultiUDE,H,Pη,L,α,β,κ)
     
     Imat = Matrix(I,L,L)
     function loss(parameters,data,series,starts,lengths)
@@ -184,7 +121,7 @@ end
 
         Pν = Imat .* parameters.Pν.^2
 
-        nll = -1*ukf_likeihood(y,times,t0,x̄0,Px0,f,parameters.UDE.process_model,H,Pν,Pη,L,α,β,κ)
+        nll = -1*ukf_likeihood(y,times,f,parameters.UDE.process_model,H,Pν,Pη,L,α,β,κ)
 
         # regularization
         L_reg = UDE.process_regularization.loss(parameters.UDE.process_model,parameters.UDE.process_regularization)
@@ -197,9 +134,9 @@ end
 end
 
 
-function init_kalman_loss(UDE::MultiUDE,t0,x̄0,Px0,H,Pη,L,α,β,κ)
+function init_kalman_loss(UDE::MultiUDE,H,Pη,L,α,β,κ)
     
-    single_loss = init_single_kalman_loss(UDE,t0,x̄0,Px0,H,Pη,L,α,β,κ)
+    single_loss = init_single_kalman_loss(UDE,H,Pη,L,α,β,κ)
     N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames, labels_df = process_multi_data(UDE.data_frame, UDE.time_column_name, UDE.series_column_name)
 
     function loss(parameters)
@@ -215,7 +152,7 @@ end
 
 
 
-function ukf_smooth(UDE::MultiUDE,parameters,t0,x̄0,Px0,H,Pη,L,α,β,κ)
+function ukf_smooth(UDE::MultiUDE,parameters,H,Pη,L,α,β,κ)
 
     N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames, labels_df = process_multi_data(UDE.data_frame, UDE.time_column_name, UDE.series_column_name)
 
@@ -227,7 +164,7 @@ function ukf_smooth(UDE::MultiUDE,parameters,t0,x̄0,Px0,H,Pη,L,α,β,κ)
         times = UDE.times[starts[series]:(starts[series]+lengths[series]-1)]
         y = data[:,starts[series]:(starts[series]+lengths[series]-1)]
         f = (u,t,dt,p) -> UDE.process_model.predict(u,series,t,dt,p)[1]
-        x,Px = ukf_smoothing(y,times,t0,x̄0,Px0,f,parameters.UDE.process_model,H,Pν,Pη,L,α,β,κ)
+        x,Px = ukf_smoothing(y,times,f,parameters.UDE.process_model,H,Pν,Pη,L,α,β,κ)
         x_[:,starts[series]:(starts[series]+lengths[series]-1)] .= x
         Px_[:,:,starts[series]:(starts[series]+lengths[series]-1)] .= Px
     end
@@ -240,20 +177,8 @@ end
 
 
 
-function kalman_filter!(UDE::MultiUDE, σ2; t0 = -999, x̄0 = -999, Px0 = -999, H = -999, Pν = -999, Pη = -999, α = 10^-3, β = 2,κ = 0, verbose = true, maxiter = 500, step_size = 0.05)
+function kalman_filter!(UDE::MultiUDE, σ2; H = -999, Pν = -999, Pη = -999, α = 10^-3, β = 2,κ = 0, verbose = true, maxiter = 500, step_size = 0.05)
     
-    
-    # check for optional defualt paramters and set efaults if empty 
-    if t0 == -999
-        t0 = 2*UDE.times[1] - UDE.times[2]
-    end 
-    if x̄0 == -999
-        x̄0, _ = mean_and_cov(UDE.data)
-    end 
-
-    if Px0 == -999
-        _, Px0 = mean_and_cov(UDE.data)
-    end 
     
     L = size(UDE.data)[1]
     if H == -999
@@ -269,7 +194,7 @@ function kalman_filter!(UDE::MultiUDE, σ2; t0 = -999, x̄0 = -999, Px0 = -999, 
     end
 
 
-    loss = init_kalman_loss(UDE,t0,x̄0,Px0,H,Pη,L,α,β,κ)
+    loss = init_kalman_loss(UDE,H,Pη,L,α,β,κ)
     target = (x,u) -> loss(x)
     adtype = Optimization.AutoZygote()
     optf = Optimization.OptimizationFunction(target, adtype)
@@ -297,10 +222,11 @@ function kalman_filter!(UDE::MultiUDE, σ2; t0 = -999, x̄0 = -999, Px0 = -999, 
 
     # assign parameters to model 
     UDE.parameters = sol.u.UDE
-    x, Px = ukf_smooth(UDE,sol.u,t0,x̄0,Px0,H,Pη,L,α,β,κ)
+    x, Px = ukf_smooth(UDE,sol.u,H,Pη,L,α,β,κ)
     UDE.parameters.uhat .= x
     Imat = Matrix(I,L,L)
     Pν = Imat .* sol.u.Pν
+
     return Pν, Px
 
 end

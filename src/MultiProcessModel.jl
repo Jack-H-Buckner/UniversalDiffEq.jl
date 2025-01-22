@@ -51,7 +51,6 @@ end
 function check_arguments_multi(derivs)
     if any([method.nargs for method in methods(derivs)] .== 5)
 
-        print("here")
 
         function dudt!(du,u,i,p,t) 
              du .= derivs(u,i,p,t)
@@ -72,7 +71,7 @@ function check_arguments_multi(derivs)
 end 
 
 
-function MultiContinuousProcessModel(derivs,parameters, dims, l ,extrap_rho)
+function MultiContinuousProcessModel(derivs,parameters, dims, l ,extrap_rho; ode_solver = Tsit5(), ad_method = ForwardDiffSensitivity())
    
     derivs!, right_hand_side = check_arguments_multi(derivs)
     u0 = zeros(dims); tspan = (0.0,1000.0) # assessing value for the initial conditions and time span (these are arbitrary)
@@ -82,7 +81,7 @@ function MultiContinuousProcessModel(derivs,parameters, dims, l ,extrap_rho)
     function predict(u,i,t,dt,parameters) 
         tspan =  (t,t+dt) 
         params = vcat(parameters,ComponentArray((series =i, )))
-        sol = OrdinaryDiffEq.solve(IVP, Tsit5(), u0 = u, p=params,tspan = tspan, saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
+        sol = OrdinaryDiffEq.solve(IVP,ode_solver, u0 = u, p=params,tspan = tspan, saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ad_method  )
         X = Array(sol)
         return (X[:,end], 0)
     end 
@@ -119,7 +118,7 @@ function check_arguments_multi_X(derivs)
      end
 end 
 
-function MultiContinuousProcessModel(derivs,parameters,covariates,dims,l,extrap_rho)
+function MultiContinuousProcessModel(derivs,parameters,covariates,dims,l,extrap_rho; ode_solver = Tsit5(), ad_method = ForwardDiffSensitivity())
    
     derivs!, rhs = check_arguments_multi_X(derivs)
 
@@ -132,7 +131,7 @@ function MultiContinuousProcessModel(derivs,parameters,covariates,dims,l,extrap_
     function predict(u,i,t,dt,parameters) 
         tspan =  (t,t+dt) 
         params = vcat(parameters,ComponentArray((series =i, )))
-        sol = OrdinaryDiffEq.solve(IVP, Tsit5(), u0 = u, p=params,tspan = tspan, saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
+        sol = OrdinaryDiffEq.solve(IVP, ode_solver, u0 = u, p=params,tspan = tspan, saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ad_method )
         X = Array(sol)
         return (X[:,end], 0)
     end 
@@ -201,7 +200,7 @@ mutable struct MultiNODE_process
 end 
 
 
-function MultiNODE_process(dims,hidden,covariates,seed,l,extrap_rho)
+function MultiNODE_process(dims,hidden,covariates,seed,l,extrap_rho; ode_solver = Tsit5(), ad_method = ForwardDiffSensitivity())
     
     # initial neural network
     NN = Lux.Chain(Lux.Dense(dims+length(covariates(0,1)),hidden,tanh), Lux.Dense(hidden,dims))
@@ -223,7 +222,7 @@ function MultiNODE_process(dims,hidden,covariates,seed,l,extrap_rho)
     function predict(u,i,t,dt,parameters) 
         tspan =  (t,t+dt) 
         params = vcat(parameters,ComponentArray((series =i, )))
-        sol = OrdinaryDiffEq.solve(IVP, Tsit5(), u0 = u, p=params,tspan = tspan,saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
+        sol = OrdinaryDiffEq.solve(IVP, ode_solver, u0 = u, p=params,tspan = tspan,saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ad_method)
         X = Array(sol)
         return (X[:,end], 0)
     end 
@@ -242,7 +241,7 @@ function MultiNODE_process(dims,hidden,covariates,seed,l,extrap_rho)
 end 
 
 
-function MultiNODE_process(dims,hidden,seed,l,extrap_rho)
+function MultiNODE_process(dims,hidden,seed,l,extrap_rho; ode_solver = Tsit5(), ad_method = ForwardDiffSensitivity())
     
     # initial neural network
     NN = Lux.Chain(Lux.Dense(dims,hidden,tanh), Lux.Dense(hidden,dims))
@@ -262,7 +261,7 @@ function MultiNODE_process(dims,hidden,seed,l,extrap_rho)
     
     function predict(u,i,t,dt,parameters) 
         tspan =  (t,t+dt) 
-        sol = OrdinaryDiffEq.solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
+        sol = OrdinaryDiffEq.solve(IVP, ode_solver, u0 = u, p=parameters,tspan = tspan, saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ad_method )
         X = Array(sol)
         return (X[:,end], 0)
     end 

@@ -17,10 +17,11 @@ NN, init_params = SimpleNeuralNetwork(dims_in,dims_out; hidden = hidden_units, n
 
 
 # model derivitives
-function derivs!(du,u,p,t)
+function derivs!(u,p,t)
     C  = NN(u,p.NN) # NNstates are
-    du[1] = p.r*u[1] - C[1]
-    du[2] = p.theta*C[1] -p.m*u[2]
+    du1 = p.r*u[1] - C[1]
+    du2 = p.theta*C[1] -p.m*u[2]
+    return [du1,du2]
 end
 
 # parameters
@@ -37,13 +38,18 @@ end
 
 model = UniversalDiffEq.CustomDerivatives(training_data,derivs!,init_parameters,priors)
 
-gradient_descent!(model,step_size = 0.05,maxiter=2)
+train!(model; loss_function = "derivative matching", optimizer = "ADAM",optim_options = (maxiter = 1,))
+train!(model; loss_function = "shooting", optimizer = "ADAM",optim_options = (maxiter = 1,))
+train!(model; loss_function = "multiple shooting", optimizer = "ADAM",optim_options = (maxiter = 1,))
+train!(model; loss_function = "conditional likelihood", optimizer = "ADAM",optim_options = (maxiter = 1,))
+train!(model; loss_function = "marginal likelihood", optimizer = "ADAM",optim_options = (maxiter = 1,), loss_options = (observation_error = 0.01,))
+
 
 # alternative training routines
 # model derivitives
-function derivs(u,p,t)
+function derivs(du,u,p,t)
     C  = NN(u,p.NN) # NNstates are
-    du = [p.r*u[1] - C[1], p.theta*C[1] - p.m*u[2]]
+    du .= [p.r*u[1] - C[1], p.theta*C[1] - p.m*u[2]]
     return du
 end
 
@@ -53,11 +59,7 @@ init_parameters = (NN = init_params ,r = 1.0,m=0.5,theta=0.5)
 
 model = UniversalDiffEq.CustomDerivatives(training_data,derivs,init_parameters)
 
-mini_batching!(model,step_size = 0.05,maxiter=2)
-derivative_matching!(model,step_size = 0.05,maxiter=2)
-one_step_ahead!(model,step_size = 0.05,maxiter=2)
-kalman_filter!(model,0.01,step_size = 0.05,maxiter=2)
-
+train!(model; loss_function = "conditional likelihood", optimizer = "ADAM",optim_options = (maxiter = 1,))
 
 # with covariates
 dims_in = 2
@@ -87,4 +89,4 @@ init_parameters = (NN = NNparameters,r = 1.0,m=0.5,theta=0.5, beta = [0,0])
 data,X,plt = LorenzLotkaVolterra(T = 7.0, datasize = 120)
 
 model = CustomDerivatives(data,X,derivs_X!,init_parameters,priors;proc_weight=2.0,obs_weight=0.5,reg_weight=10^-4)
-gradient_descent!(model,step_size = 0.05,maxiter=2)
+train!(model; loss_function = "conditional likelihood", optimizer = "ADAM",optim_options = (maxiter = 1,))

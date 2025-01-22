@@ -69,7 +69,7 @@ function check_arguments(derivs)
 
 end 
 
-function ContinuousProcessModel(derivs,parameters, dims, l ,extrap_rho)
+function ContinuousProcessModel(derivs,parameters, dims, l ,extrap_rho; ode_solver = Tsit5(), ad_method = ForwardDiffSensitivity())
 
 
     derivs!, right_hand_side= check_arguments(derivs)
@@ -79,8 +79,8 @@ function ContinuousProcessModel(derivs,parameters, dims, l ,extrap_rho)
     
     function predict(u,t,dt,parameters) 
         tspan =  (t,t+dt) 
-        sol = OrdinaryDiffEq.solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
-                    saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
+        sol = OrdinaryDiffEq.solve(IVP, ode_solver, u0 = u, p=parameters,tspan = tspan, 
+                    saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ad_method )
         X = Array(sol)
         return (X[:,end], 0)
     end 
@@ -113,7 +113,7 @@ function check_arguments_X(derivs)
      end
 end
 
-function ContinuousProcessModel(derivs,parameters,covariates,dims,l,extrap_rho)
+function ContinuousProcessModel(derivs,parameters,covariates,dims,l,extrap_rho; ode_solver = Tsit5(), ad_method = ForwardDiffSensitivity())
    
     derivs!, right_hand_side = check_arguments_X(derivs)
     u0 = zeros(dims); tspan = (0.0,1000.0) # assing value for the inital conditions and time span (these dont matter)
@@ -123,8 +123,8 @@ function ContinuousProcessModel(derivs,parameters,covariates,dims,l,extrap_rho)
     
     function predict(u,t,dt,parameters) 
         tspan =  (t,t+dt) 
-        sol = OrdinaryDiffEq.solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
-                    saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
+        sol = OrdinaryDiffEq.solve(IVP, ode_solver, u0 = u, p=parameters,tspan = tspan, 
+                    saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ad_method )
         X = Array(sol)
         return (X[:,end], 0)
     end 
@@ -373,7 +373,7 @@ mutable struct NODE_process
 end 
 
 
-function NODE_process(dims,hidden,covariates,seed,l,extrap_rho)
+function NODE_process(dims,hidden,covariates,seed,l,extrap_rho; ode_solver = Tsit5(), ad_method = ForwardDiffSensitivity())
     
     # initial neurla Network
     NN = Lux.Chain(Lux.Dense(dims+length(covariates(0)),hidden,tanh), Lux.Dense(hidden,dims))
@@ -398,8 +398,8 @@ function NODE_process(dims,hidden,covariates,seed,l,extrap_rho)
     
     function predict(u,t,dt,parameters) 
         tspan =  (t,t+dt) 
-        sol = OrdinaryDiffEq.solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
-                    saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
+        sol = OrdinaryDiffEq.solve(IVP, ode_solver , u0 = u, p=parameters,tspan = tspan, 
+                    saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ad_method )
         X = Array(sol)
         return (X[:,end], 0)
     end 
@@ -421,7 +421,7 @@ function NODE_process(dims,hidden,covariates,seed,l,extrap_rho)
 end 
 
 
-function NODE_process(dims,hidden,seed,l,extrap_rho)
+function NODE_process(dims,hidden,seed,l,extrap_rho; ode_solver = Tsit5(), ad_method = ForwardDiffSensitivity())
     
     # initial neurla Network
     NN = Lux.Chain(Lux.Dense(dims,hidden,tanh), Lux.Dense(hidden,dims))
@@ -445,8 +445,8 @@ function NODE_process(dims,hidden,seed,l,extrap_rho)
     
     function predict(u,t,dt,parameters) 
         tspan =  (t,t+dt) 
-        sol = OrdinaryDiffEq.solve(IVP, Tsit5(), u0 = u, p=parameters,tspan = tspan, 
-                    saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ForwardDiffSensitivity() )
+        sol = OrdinaryDiffEq.solve(IVP, ode_solver, u0 = u, p=parameters,tspan = tspan, 
+                    saveat = (t,t+dt),abstol=1e-6, reltol=1e-6, sensealg = ad_method)
         X = Array(sol)
         return (X[:,end], 0)
     end 
