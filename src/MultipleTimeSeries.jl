@@ -45,6 +45,7 @@ mutable struct MultiUDE
     value_column_name
     series_labels
     varnames
+    solvers
 end
 
 function init_single_loss(process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization)
@@ -210,7 +211,7 @@ function MultiNODE(data;time_column_name = "time", series_column_name = "series"
     
     constructor = (data) -> MultiNODE(data;time_column_name = time_column_name , series_column_name = time_column_name ,hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type, l=l,extrap_rho=extrap_rho,ode_solver =ode_solver, ad_method = ad_method)
     
-    return MultiUDE(times,data,0,dataframe,0,parameters,loss_function,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name,nothing,nothing,labels_df,varnames)
+    return MultiUDE(times,data,0,dataframe,0,parameters,loss_function,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name,nothing,nothing,labels_df,varnames,(ode = ode_solver, ad = ad_method))
     
 end 
 
@@ -273,7 +274,7 @@ function MultiNODE(data,X;time_column_name = "time", series_column_name = "serie
     constructor = (data,X) -> MultiNODE(data,X;time_column_name = time_column_name , series_column_name =  series_column_name, variable_column_name = variable_column_name, value_column_name = value_column_name,
                                         hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type, l=l,extrap_rho=extrap_rho, ode_solver =ode_solver, ad_method = ad_method)
     
-    return MultiUDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name, variable_column_name, value_column_name,labels_df,varnames)
+    return MultiUDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name, variable_column_name, value_column_name,labels_df,varnames,(ode = ode_solver, ad = ad_method))
     
 end 
 
@@ -324,7 +325,7 @@ function MultiCustomDerivatives(data,derivs!,initial_parameters;time_column_name
                     ode_solver =ode_solver, ad_method = ad_method)
     
     return MultiUDE(times,data,0,dataframe,0,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name,nothing,nothing,labels_df,varnames)
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name,nothing,nothing,labels_df,varnames,(ode = ode_solver, ad = ad_method))
 
 end
 
@@ -356,7 +357,7 @@ function MultiCustomDerivatives(data,X,derivs!,initial_parameters;time_column_na
                         ode_solver =ode_solver, ad_method = ad_method)
     
     return MultiUDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name,variable_column_name,value_column_name, labels_df,varnames)
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name,variable_column_name,value_column_name, labels_df,varnames,(ode = ode_solver, ad = ad_method))
 
 end
 
@@ -388,7 +389,7 @@ function MultiCustomDifference(data,diff,initial_parameters;time_column_name = "
                     proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l)
     
     return MultiUDE(times,data,0,dataframe,0,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name,nothing,nothing,labels_df,varnames)
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name,nothing,nothing,labels_df,varnames,())
 
 end
 
@@ -418,6 +419,6 @@ function MultiCustomDifference(data,X,diff,initial_parameters;time_column_name =
                         variable_column_name = variable_column_name, value_column_name = value_column_name, proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l)
     
     return MultiUDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
-                observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name,variable_column_name,value_column_name, labels_df,varnames)
+                observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name,variable_column_name,value_column_name, labels_df,varnames,())
 
 end

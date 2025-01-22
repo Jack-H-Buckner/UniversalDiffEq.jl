@@ -51,7 +51,6 @@ end
 function check_arguments_multi(derivs)
     if any([method.nargs for method in methods(derivs)] .== 5)
 
-        print("here")
 
         function dudt!(du,u,i,p,t) 
              du .= derivs(u,i,p,t)

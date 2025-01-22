@@ -415,6 +415,14 @@ The initial data point in each block is estimated as a free parameter to reduce 
 ### options
 - `pred_length`: The number of data points in each block, default, is 10.
 
+
+# Optimization algorithms
+
+The method used to minimize the loss function. Two options are available, ADAM and BFGS. ADAM is a first order gradient descent
+algorthim and BFGS uses aproximate second order information. 
+
+The user can specify the maximum number of iteration `maxiter` for each algoritmh using the `optim_options` key word argument. 
+For ADAM the `optim_options` can be used to specify the step size and for BFGS you can sepcify the initial step norm. 
 """
 function train!(UDE::UDE; 
   loss_function = "derivative matching", 
@@ -478,7 +486,7 @@ function train!(UDE::UDE;
     options = ComponentArray((pred_length = 5))
     options[keys(new_options)] .= new_options
 
-    loss, params, _  = multiple_shooting_loss(UDE,options.pred_length)
+    loss, params, _  = multiple_shooting_loss(UDE,regularization_weight,options.pred_length)
     uhat = UDE.data
   end
 
@@ -564,3 +572,144 @@ end
 
 
 
+function train!(UDE::MultiUDE; 
+  loss_function = "derivative matching", 
+  optimizer = "ADAM",
+  regularization_weight = 0.0, 
+  verbose = true, 
+  loss_options = NamedTuple(),
+  optim_options = NamedTuple())
+
+  # set up loss function 
+  loss = x -> 0
+  params = UDE.parameters
+  uhat = 0
+  if loss_function == "conditional likelihood"
+
+    new_options = ComponentArray(loss_options)
+    options = ComponentArray((observation_error = 0.025, process_error = 0.025))
+    options[keys(new_options)] .= new_options
+
+    loss, params, _  = conditional_likelihood(UDE,regularization_weight,  options.observation_error, options.process_error)
+
+  elseif loss_function == "marginal likelihood"
+
+    L = size(UDE.data)[1]
+    Pν = errors_to_matrix(0.1, L)
+    if :process_error in keys(loss_options)
+      Pν = errors_to_matrix(loss_options.process_error, L)
+    end 
+
+    Pη = 0
+    if :observation_error in keys(loss_options)
+      Pη = errors_to_matrix(loss_options.observation_error, L)
+    else 
+      throw("Marginal likelihood requires observation errors. \n Use `loss_options = (observation_error = ...,)` to sepciyg its value.")
+    end 
+
+    new_options = ComponentArray(loss_options)
+    options = ComponentArray((α = 10^-3, β = 2,κ = 0))
+    inds  = broadcast(i -> !(keys(new_options)[i] in [:process_error,:observation_error]), 1:length(keys(new_options)))
+    keys_ = keys(new_options)[inds]
+    options[keys_] .= new_options[keys_]
+
+    loss, params, uhat = marginal_likelihood(UDE,regularization_weight,Pν,Pη,options.α,options.β,options.κ)
+
+  elseif loss_function == "derivative matching"
+
+    new_options = ComponentArray(loss_options)
+    options = ComponentArray((d = 12, remove_ends = 0))
+    options[keys(new_options)] .= new_options
+
+    loss, params, uhat = derivative_matching_loss(UDE, regularization_weight; d = options.d, alg = :gcv_svd, remove_ends = options.remove_ends)
+
+  elseif loss_function == "shooting"
+
+    loss, params, _ = shooting_loss(UDE,regularization_weight)
+    uhat = UDE.data
+
+  elseif loss_function == "multiple shooting"
+
+    new_options = ComponentArray(loss_options)
+    options = ComponentArray((pred_length = 5))
+    options[keys(new_options)] .= new_options
+
+    loss, params, _  = multiple_shooting_loss(UDE,regularization_weight,options.pred_length)
+    uhat = UDE.data
+  end
+
+  # optimize loss function
+  # set optimization problem 
+  target = (x,p) -> loss(x)
+  adtype = Optimization.AutoZygote()
+  optf = Optimization.OptimizationFunction(target, adtype)
+  optprob = Optimization.OptimizationProblem(optf,params)
+  
+  if verbose
+      callback = function (p, l; doplot = false)
+        print(round(l,digits = 3), " ")
+        return false
+      end
+  else
+      callback = function (p, l; doplot = false)
+        return false
+      end 
+  end
+
+  sol = 0 
+  Pν = nothing
+  if optimizer == "ADAM"
+
+    new_options = ComponentArray(optim_options)
+    options = ComponentArray(default_options(loss_function))
+    options[keys(new_options)] .= new_options
+
+    # run optimizer
+    sol = Optimization.solve(optprob, OptimizationOptimisers.Adam(options.step_size), callback = callback, maxiters = options.maxiter )
+    if loss_function == "marginal likelihood"
+      Pν = sol.u.Pν * sol.u.Pν'
+      UDE.parameters = sol.u.UDE
+    else
+      UDE.parameters = sol.u
+    end
+  elseif optimizer == "BFGS"
+
+    new_options = ComponentArray(optim_options)
+    options = ComponentArray((initial_step_norm = 0.01, ))
+    options[keys(new_options)] .= new_options
+
+    sol = Optimization.solve(optprob, Optim.BFGS(; initial_stepnorm = initial_step_norm);
+        callback, allow_f_increases = false)
+
+    # assign parameters to model 
+  end 
+
+  # update model parameters 
+  
+
+  # states
+ if loss_function == "derivative matching"
+    UDE.parameters.uhat .= uhat
+
+  elseif loss_function == "shooting"
+    UDE.parameters.uhat .= shooting_states(UDE)
+
+  elseif loss_function == "multiple shooting"
+    new_options = ComponentArray(loss_options)
+    options = ComponentArray((pred_length = 5))
+    options[keys(new_options)] .= new_options
+
+    UDE.parameters.uhat = multiple_shooting_states(UDE,options.pred_length)
+  
+  elseif loss_function == "marginal likelihood"
+   
+    H,Pη,L,α,β,κ = uhat
+    f = (u,t,dt,p) -> UDE.process_model.predict(u,t,dt,p)[1]
+    x, Px =ukf_smooth(UDE,sol.u,H,Pη,L,α,β,κ)
+    UDE.parameters.uhat = x
+  
+  end
+
+  return Pν
+  
+end 
