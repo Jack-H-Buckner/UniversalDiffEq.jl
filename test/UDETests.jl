@@ -17,7 +17,7 @@ NN, init_params = SimpleNeuralNetwork(dims_in,dims_out; hidden = hidden_units, n
 
 
 # model derivitives
-function derivs!(du,u,p,t)
+function derivs!(u,p,t)
     C  = NN(u,p.NN) # NNstates are
     du[1] = p.r*u[1] - C[1]
     du[2] = p.theta*C[1] -p.m*u[2]
@@ -46,9 +46,9 @@ train!(model; loss_function = "marginal likelihood", optimizer = "ADAM",optim_op
 
 # alternative training routines
 # model derivitives
-function derivs(u,p,t)
+function derivs(du,u,p,t)
     C  = NN(u,p.NN) # NNstates are
-    du = [p.r*u[1] - C[1], p.theta*C[1] - p.m*u[2]]
+    du .= [p.r*u[1] - C[1], p.theta*C[1] - p.m*u[2]]
     return du
 end
 
