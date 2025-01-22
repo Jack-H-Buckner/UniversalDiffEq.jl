@@ -665,7 +665,7 @@ function multiple_shooting_states(UDE::MultiUDE,  pred_length)
 
             u0 = uhat[:,t]
             u = predict(u0,series,tspan,UDE.parameters.process_model)
-            uhats[:,starts[series].+inds .-1] = u
+            uhats[:, starts[series] .+ inds .-1] = u
 
         end
     end
