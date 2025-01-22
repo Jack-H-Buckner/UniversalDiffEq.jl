@@ -19,8 +19,9 @@ NN, init_params = SimpleNeuralNetwork(dims_in,dims_out; hidden = hidden_units, n
 # model derivitives
 function derivs!(u,p,t)
     C  = NN(u,p.NN) # NNstates are
-    du[1] = p.r*u[1] - C[1]
-    du[2] = p.theta*C[1] -p.m*u[2]
+    du1 = p.r*u[1] - C[1]
+    du2 = p.theta*C[1] -p.m*u[2]
+    return [du1,du2]
 end
 
 # parameters
