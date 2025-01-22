@@ -399,6 +399,20 @@ end
 
 
 
+# requires out of place derivative calcualtion 
+
+# @article{Bhagavan2024,
+#   doi = {10.21105/joss.06917},
+#   url = {https://doi.org/10.21105/joss.06917},
+#   year = {2024},
+#   publisher = {The Open Journal},
+#   volume = {9},
+#   number = {101},
+#   pages = {6917},
+#   author = {Sathvik Bhagavan and Bart de Koning and Shubham Maddhashiya and Christopher Rackauckas},
+#   title = {DataInterpolations.jl: Fast Interpolations of 1D data},
+#   journal = {Journal of Open Source Software}
+# }
 
   
 function derivative_matching_loss(UDE::MultiUDE, regularization_weight; d = 12, alg = :gcv_svd, remove_ends = 2)

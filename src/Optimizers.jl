@@ -239,98 +239,6 @@ end
  
 
 
-# requires out of place derivative calcualtion 
-
-# @article{Bhagavan2024,
-#   doi = {10.21105/joss.06917},
-#   url = {https://doi.org/10.21105/joss.06917},
-#   year = {2024},
-#   publisher = {The Open Journal},
-#   volume = {9},
-#   number = {101},
-#   pages = {6917},
-#   author = {Sathvik Bhagavan and Bart de Koning and Shubham Maddhashiya and Christopher Rackauckas},
-#   title = {DataInterpolations.jl: Fast Interpolations of 1D data},
-#   journal = {Journal of Open Source Software}
-# }
-
-
-function interpolate_derivs_multi(model;d=12,alg = :gcv_svd)
-
-  N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames, labels_df = process_multi_data(model.data_frame, model.time_column_name, model.series_column_name)
-
-
-  ts = [times[starts[series]:(starts[series]+lengths[series]-1)] for series in eachindex(starts)]
-  dats = [data[:,starts[series]:(starts[series]+lengths[series]-1)] for series in eachindex(starts)]
-
-  dudts = []
-  uhats = []
-  for i in eachindex(starts)
-      dudt = zeros(size(dats[i]))
-      uhat = zeros(size(dats[i]))
-      for j in 1:size(dats[i])[1]
-          A = RegularizationSmooth(Float64.(dats[i][j,:]), ts[i], d; alg = alg)
-          uhat[j,:] .= A.û
-          dudt_ = t -> DataInterpolations.derivative(A, t)
-          dudt[j,:] .= dudt_.(ts[i])
-      end 
-      push!(dudts,Float64.(dudt))
-      push!(uhats,Float64.(uhat))
-  end
-  return uhats, dudts, ts, eachindex(starts)
-end
-
-
-
-function derivative_matching!(UDE::MultiUDE; verbose = true, maxiter = 500, step_size = 0.05, d = 12, alg = :gcv_svd, remove_ends = 2)
-
-  uhats, dudts, times, inds  = interpolate_derivs_multi(UDE;d=d,alg = alg)
-
-
-  function loss(parameters)
-      L = 0
-      for i in inds
-        for t in (remove_ends+1):(size(uhats[i])[2]- remove_ends)
-            dudt_hat = UDE.process_model.rhs(uhats[i][:,t], i, parameters.process_model, times[i][t])
-            L += sum((dudts[i][:,t] .- dudt_hat).^2)
-        end
-      end
-      return L
-  end 
-
-  target = (x,u) -> loss(x)
-  adtype = Optimization.AutoZygote()
-  optf = Optimization.OptimizationFunction(target, adtype)
-  optprob = Optimization.OptimizationProblem(optf, UDE.parameters)
-  
-  # print value of loss function at each time step 
-  if verbose
-      callback = function (p, l; doplot = false)
-        print(round(l,digits = 3), " ")
-        return false
-      end
-  else
-      callback = function (p, l; doplot = false)
-        return false
-      end 
-  end
-
-  # run optimizer
-  sol = Optimization.solve(optprob, OptimizationOptimisers.Adam(step_size), callback = callback, maxiters = maxiter )
-  
-  # assign parameters to model 
-
-  UDE.parameters = sol.u
-
-  N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames, labels_df = process_multi_data(UDE.data_frame, UDE.time_column_name, UDE.series_column_name)
-  for i in eachindex(starts) 
-    UDE.parameters.uhat[:,starts[i]:(starts[i]+lengths[i]-1)] .= uhats[i]
-  end 
-  
-end 
-
-
-
 function default_options(loss_function)
   if loss_function == "conditional likelihood"
     return (step_size = 0.025, maxiter = 500)
@@ -468,7 +376,9 @@ function train!(UDE::UDE;
     loss, params, uhat = marginal_likelihood(UDE,regularization_weight,Pν,Pη,options.α,options.β,options.κ)
 
   elseif loss_function == "derivative matching"
-
+    if UDE.solvers == nothing
+      throw("This method does not work with discrete time models (e.g. CustomDifference), please select from 'conditional likelihood' or 'marginal likelihood'. ")
+    end 
     new_options = ComponentArray(loss_options)
     options = ComponentArray((d = 12, remove_ends = 0))
     options[keys(new_options)] .= new_options
@@ -476,18 +386,25 @@ function train!(UDE::UDE;
     loss, params, uhat = derivative_matching_loss(UDE, regularization_weight; d = options.d, alg = :gcv_svd, remove_ends = options.remove_ends)
 
   elseif loss_function == "shooting"
-
+    if UDE.solvers == nothing
+      throw("This method does not work with discrete time models (e.g. CustomDifference), please select from 'conditional likelihood' or 'marginal likelihood'. ")
+    end 
     loss, params, _ = shooting_loss(UDE)
     uhat = UDE.data
 
   elseif loss_function == "multiple shooting"
-
+    if UDE.solvers == nothing
+      throw("This method does not work with discrete time models (e.g. CustomDifference), please select from 'conditional likelihood' or 'marginal likelihood'. ")
+    end 
     new_options = ComponentArray(loss_options)
     options = ComponentArray((pred_length = 5))
     options[keys(new_options)] .= new_options
 
     loss, params, _  = multiple_shooting_loss(UDE,regularization_weight,options.pred_length)
     uhat = UDE.data
+  else 
+    throw("Selelect a valid loss function. Choose from, 'conditional likelihood', 'marginal likelihood', 'derivative matching', 'shooting', or 'multiple shooting' ")
+
   end
 
   # optimize loss function
@@ -534,38 +451,42 @@ function train!(UDE::UDE;
         callback, allow_f_increases = false)
 
     # assign parameters to model 
+  else 
+    throw("Selelect a valid optimization algorithm. Choose from, 'ADAM', or 'BFGS'. ")
+
   end 
 
   # update model parameters 
   
 
   # states
- if loss_function == "derivative matching"
-    UDE.parameters.uhat .= uhat
+  out = nothing
+  if loss_function == "derivative matching"
+      UDE.parameters.uhat .= uhat
 
-  elseif loss_function == "shooting"
-    UDE.parameters.uhat .= shooting_states(UDE)
+    elseif loss_function == "shooting"
+      UDE.parameters.uhat .= shooting_states(UDE)
 
-  elseif loss_function == "multiple shooting"
-    new_options = ComponentArray(loss_options)
-    options = ComponentArray((pred_length = 5))
-    options[keys(new_options)] .= new_options
+    elseif loss_function == "multiple shooting"
+      new_options = ComponentArray(loss_options)
+      options = ComponentArray((pred_length = 5))
+      options[keys(new_options)] .= new_options
 
-    UDE.parameters.uhat = multiple_shooting_states(UDE,options.pred_length)
-  
-  elseif loss_function == "marginal likelihood"
-   
-    H,Pν,Pη,L,α,β,κ = uhat
-    Pν = sol.u.Pν*sol.u.Pν'
-    f = (u,t,dt,p) -> UDE.process_model.predict(u,t,dt,p)[1]
-    x, Px =ukf_smoothing(UDE.data,UDE.times,f,sol.u.UDE.process_model,H,Pν,Pη,L,α,β,κ)
+      UDE.parameters.uhat = multiple_shooting_states(UDE,options.pred_length)
+    
+    elseif loss_function == "marginal likelihood"
+    
+      H,Pν,Pη,L,α,β,κ = uhat
+      Pν = sol.u.Pν*sol.u.Pν'
+      f = (u,t,dt,p) -> UDE.process_model.predict(u,t,dt,p)[1]
+      x, Px =ukf_smoothing(UDE.data,UDE.times,f,sol.u.UDE.process_model,H,Pν,Pη,L,α,β,κ)
+      out = (Pν = Pν, Px = Px)
+      UDE.parameters.uhat = x
+    
+    end
 
-    UDE.parameters.uhat = x
-  
-  end
-
-  return Pν
-  
+    return out
+    
 end 
 
 
@@ -616,7 +537,9 @@ function train!(UDE::MultiUDE;
     loss, params, uhat = marginal_likelihood(UDE,regularization_weight,Pν,Pη,options.α,options.β,options.κ)
 
   elseif loss_function == "derivative matching"
-
+    if UDE.solvers == nothing
+      throw("This method does not work with discrete time models (e.g. CustomDifference), please select from 'conditional likelihood' or 'marginal likelihood'. ")
+    end 
     new_options = ComponentArray(loss_options)
     options = ComponentArray((d = 12, remove_ends = 0))
     options[keys(new_options)] .= new_options
@@ -624,18 +547,24 @@ function train!(UDE::MultiUDE;
     loss, params, uhat = derivative_matching_loss(UDE, regularization_weight; d = options.d, alg = :gcv_svd, remove_ends = options.remove_ends)
 
   elseif loss_function == "shooting"
-
+    if UDE.solvers == nothing
+      throw("This method does not work with discrete time models (e.g. CustomDifference), please select from 'conditional likelihood' or 'marginal likelihood'. ")
+    end 
     loss, params, _ = shooting_loss(UDE,regularization_weight)
     uhat = UDE.data
 
   elseif loss_function == "multiple shooting"
-
+    if UDE.solvers == nothing
+      throw("This method does not work with discrete time models (e.g. CustomDifference), please select from 'conditional likelihood' or 'marginal likelihood'. ")
+    end 
     new_options = ComponentArray(loss_options)
     options = ComponentArray((pred_length = 5))
     options[keys(new_options)] .= new_options
 
     loss, params, _  = multiple_shooting_loss(UDE,regularization_weight,options.pred_length)
     uhat = UDE.data
+  else 
+    throw("Selelect a valid loss function. Choose from, 'conditional likelihood', 'marginal likelihood', 'derivative matching', 'shooting', or 'multiple shooting'. ")
   end
 
   # optimize loss function
@@ -681,35 +610,39 @@ function train!(UDE::MultiUDE;
     sol = Optimization.solve(optprob, Optim.BFGS(; initial_stepnorm = initial_step_norm);
         callback, allow_f_increases = false)
 
-    # assign parameters to model 
+    # assign parameters to model
+  else 
+    throw("Selelect a valid optimization algorithm. Choose from, 'ADAM', or 'BFGS'. ") 
   end 
 
   # update model parameters 
   
 
   # states
- if loss_function == "derivative matching"
-    UDE.parameters.uhat .= uhat
+  out = nothing
+  if loss_function == "derivative matching"
+      UDE.parameters.uhat .= uhat
 
-  elseif loss_function == "shooting"
-    UDE.parameters.uhat .= shooting_states(UDE)
+    elseif loss_function == "shooting"
+      UDE.parameters.uhat .= shooting_states(UDE)
 
-  elseif loss_function == "multiple shooting"
-    new_options = ComponentArray(loss_options)
-    options = ComponentArray((pred_length = 5))
-    options[keys(new_options)] .= new_options
+    elseif loss_function == "multiple shooting"
+      new_options = ComponentArray(loss_options)
+      options = ComponentArray((pred_length = 5))
+      options[keys(new_options)] .= new_options
 
-    UDE.parameters.uhat = multiple_shooting_states(UDE,options.pred_length)
-  
-  elseif loss_function == "marginal likelihood"
-   
-    H,Pη,L,α,β,κ = uhat
-    f = (u,t,dt,p) -> UDE.process_model.predict(u,t,dt,p)[1]
-    x, Px =ukf_smooth(UDE,sol.u,H,Pη,L,α,β,κ)
-    UDE.parameters.uhat = x
-  
-  end
+      UDE.parameters.uhat = multiple_shooting_states(UDE,options.pred_length)
+    
+    elseif loss_function == "marginal likelihood"
+    
+      H,Pη,L,α,β,κ = uhat
+      f = (u,t,dt,p) -> UDE.process_model.predict(u,t,dt,p)[1]
+      x, Px =ukf_smooth(UDE,sol.u,H,Pη,L,α,β,κ)
+      out = (Pν = Pν, Px = Px)
+      UDE.parameters.uhat = x
+    
+    end
 
-  return Pν
+  return out
   
 end 
