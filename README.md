@@ -9,9 +9,9 @@
 [![Docs](https://img.shields.io/badge/docs-dev-blue)](https://jack-h-buckner.github.io/UniversalDiffEq.jl/dev/)
 [![Preprint](https://img.shields.io/badge/preprint-arXiv-red)](https://arxiv.org/abs/2410.09233)
 
-UniversalDiffEq.jl builds [Universal Differential Equations](https://arxiv.org/abs/2001.04385) (UDEs) to learn nonlinear dynamics from time series data. The models and training routines are constructed to address several challenges common in ecology and environmental science. Our package uses [DiffEqFlux.jl](https://github.com/SciML/DiffEqFlux.jl) to implement UDEs. Models built with UniversalDiffEq.jl are constructed within a state-space modeling framework that simultaneously accounts for imperfect (noisy) observations and stochastic (unpredictable) dynamics. UniversalDiffEq.jl also builds training routines based on a state-space framework that can improve the performance of UDEs on datasets from open systems whose dynamics are determined by a combination of endogenous feedback mechanisms and stochastic external forcing.
+UniversalDiffEq.jl builds [Universal Differential Equations](https://arxiv.org/abs/2001.04385)(UDEs), dynamic models that combine neural networks with parametric equaitons to learn nonlinear dynamics from time series data. This pacakge provides functions to build and train UDEs. It includes several training routines designed to work well when the data contain observaiton error and the underlying process is stochastic. The  package uses [Lux.jl](https://lux.csail.mit.edu/stable/) to consturct neural netowrks build into the model and [DiffEqFlux.jl](https://github.com/SciML/DiffEqFlux.jl) for automatic differentation. 
 
-The package provides one specific implementation of universal differential equations designed for systems with stochastic dynamics and noisy data. If you want to explore the technical details of UDEs and develop highly customized models, please use DiffEqFlux.jl instead.
+The package provides one specific implementation of universal differential equations. If you need to develop highly customized models, please use [DiffEqFlux.jl](https://github.com/SciML/DiffEqFlux.jl) instead.
 
 To install and load UniversalDiffEq, open Julia and type the following code:
 
@@ -29,21 +29,66 @@ add https://github.com/Jack-H-Buckner/UniversalDiffEq.jl.git
 ```
 
 # Tutorial
-As a simple example to get started on `UniversalDiffEq.jl`, we fit a NODE model to a synthetic data set generated with the classical [Lotka-Volterra model](https://en.wikipedia.org/wiki/Lotka%E2%80%93Volterra_equations). Model fit is given by the normalized root mean square error (NRMSE) for prey ($x1$) and predator ($x2$).
+As a simple example to get started on `UniversalDiffEq.jl`, we fit a UDE model to a synthetic data set generated with the classical [Lotka-Volterra model](https://en.wikipedia.org/wiki/Lotka%E2%80%93Volterra_equations), that uses a nerual network to learn the species interaction term. 
+
+```math
+\frac{dx_1}{dt} = rx_1 (1-x_1/k)- NN(x_1,x_2)\\
+\frac{dx_2}{dt} = \theta NN(x_1,x_2) - mx_2
+```
 
 ```julia
 using UniversalDiffEq, DataFrames
 
-data,plt = LotkaVolterra();
-model = NODE(data);
-gradient_descent!(model);
-plot_predictions(model)
+data,plt = UniversalDiffEq.LotkaVolterra() # Generate synthetic predator prey data
+
+# Build neural network 
+NN,params = UniversalDiffEq.SimpleNeuralNetwork(2,1)
+
+# Set model parameters 
+init_parameters = (NN = params,r = 0.1,k = 10.1, m = 0.1, theta = 0.1)
+
+# Define rates of change UDE model 
+function dudt(u,p,t)
+
+    C = abs(NN(u,p.NN)[1]) # Calculate prey consumption rate with neurla network 
+    r, k, theta, m = abs.([p.r, p.k, p.theta, p.m]) # transform modle parameters to get positve values
+
+    # calcualte rates of change for prey u[1] and predator u[2]  
+    dx1 = r*u[1]*(1-u[1]/k) - C
+    dx2 = theta*C - m*u[2]
+
+    return [dx1,dx2]
+end
+
+# construct UDE model using the CustomDerivatives function 
+model = CustomDerivatives(data,dudt,init_parameters)
+
+# Use the train function to fit the model to the data
+train!(model;  loss_function = "derivative matching", 
+                optimizer = "ADAM",
+                regularization_weight = 0.0, 
+                verbose = false,
+                loss_options = (d = 10, ),
+                optim_options = (maxiter = 1000, step_size = 0.01))
+
+# compare the estiamtes value of the state varaibles to the data set
 plot_state_estimates(model)
 ```
 
-<img alt="Lotka-Volterra Predictions" width = "500px" src="README images/lotkaVolterra_example_predictions.png" />
+<img alt="Lotka-Volterra Predictions" width = "500px" src="README images/state_plot.png" />
 
-<img alt="Lotka-Volterra States" width = "500px" src="README images/lotkaVolterra_example_states.png" />
+```julia
+# compare predicted to observed changes 
+plot_predictions(model)
+```
+<img alt="Lotka-Volterra States" width = "500px" src="README images/predictions_plot.png" />
+
+```julia
+# plot forecast 
+p1, (p2,p3) = UniversalDiffEq.plot_forecast(model, 50)
+p1
+```
+<img alt="Lotka-Volterra States" width = "500px" src="README images/forecast_plot.png" />
 
 Please see the documentation for a detailed tutorial.
 
