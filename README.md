@@ -32,7 +32,8 @@ add https://github.com/Jack-H-Buckner/UniversalDiffEq.jl.git
 As a simple example to get started on `UniversalDiffEq.jl`, we fit a UDE model to a synthetic data set generated with the classical [Lotka-Volterra model](https://en.wikipedia.org/wiki/Lotka%E2%80%93Volterra_equations), that uses a nerual network to learn the species interaction term. 
 
 ```math
-\frac{dx_1}{dt} = rx_1 (1-x_1/k)- NN(x_1,x_2)\\
+\frac{dx_1}{dt} = rx_1 (1-x_1/k)- NN(x_1,x_2) \\
+
 \frac{dx_2}{dt} = \theta NN(x_1,x_2) - mx_2
 ```
 
