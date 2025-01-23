@@ -53,8 +53,8 @@ init_parameters = (NN = params,r = 0.1,k = 10.1, m = 0.1, theta = 0.1)
 # Define rates of change UDE model 
 function dudt(u,p,t)
 
-    C = abs(NN(u,p.NN)[1]) # Calculate prey consumption rate with neurla network 
-    r, k, theta, m = abs.([p.r, p.k, p.theta, p.m]) # transform modle parameters to get positve values
+    C = abs(NN(u,p.NN)[1]) # Calculate prey consumption rate with neural network 
+    r, k, theta, m = abs.([p.r, p.k, p.theta, p.m]) # transform model parameters to get positve values
 
     # calcualte rates of change for prey u[1] and predator u[2]  
     dx1 = r*u[1]*(1-u[1]/k) - C
@@ -63,7 +63,7 @@ function dudt(u,p,t)
     return [dx1,dx2]
 end
 
-# construct UDE model using the CustomDerivatives function 
+# onstruct UDE model using the CustomDerivatives function 
 model = CustomDerivatives(data,dudt,init_parameters)
 
 # Use the train function to fit the model to the data
@@ -74,14 +74,14 @@ train!(model;  loss_function = "derivative matching",
                 loss_options = (d = 10, ),
                 optim_options = (maxiter = 1000, step_size = 0.01))
 
-# compare the estiamtes value of the state varaibles to the data set
+# Compare the estimates value of the state variables to the data set
 plot_state_estimates(model)
 ```
 
 <img alt="Lotka-Volterra Predictions" width = "500px" src="README images/state_plot.png" />
 
 ```julia
-# compare predicted to observed changes 
+# Compare predicted to observed changes 
 plot_predictions(model)
 ```
 <img alt="Lotka-Volterra States" width = "500px" src="README images/predictions_plot.png" />
