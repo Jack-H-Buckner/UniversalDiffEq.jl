@@ -63,7 +63,7 @@ function dudt(u,p,t)
     return [dx1,dx2]
 end
 
-# onstruct UDE model using the CustomDerivatives function 
+# Construct UDE model using the CustomDerivatives function 
 model = CustomDerivatives(data,dudt,init_parameters)
 
 # Use the train function to fit the model to the data
