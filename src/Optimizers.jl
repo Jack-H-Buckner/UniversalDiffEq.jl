@@ -259,33 +259,30 @@ end
 """
  train!(UDE::UDE;  kwargs...)
 
-This funciton provides access to several training routines for UDE models. The user provides the UDE model object and can then choose between several loss funcitons and optimization algorthms using the key work arguments. 
+This function provides access to several training routines for UDE models. The user provides an UDE model object and can choose between several loss funcitons and optimization algorthms using the keyword arguments. 
 The training routine will update the UDE object with the trained paramters and return any other useful quantities estimated during the training procedure. 
-The options 
 
 Trains the UDE model by minimizing the loss function using the ADAM gradient descent algorithm for `maxiter` step of size `step_size.`
 Four loss functions are available using the `loss_function` argument: conditional likelihood, marginal likelihood, derivative matching, shooting, and multiple shooting.
 The `options` argument is a named tuple that can be used to pass parameters to the training routine. 
 
-
 # kwargs
-- `loss_function`: Determines the loss function used to train the model and defaults to  "derivative matching."
-- `verbose`: If true, the value of the loss function will print between each set of the optimizer.
+- `loss_function`: Determines the loss function used to train the model and defaults to  `"derivative matching"`.
+- `verbose`: If true, the value of the loss function will print between each iteration of the optimizer.
 - `maxiter`: The number of iterations used to run the ADAM gradient descent algorithm.
 - `step_size`: The number of steps to run the ADAM algorithm
 - `loss_options`: a named tuple with keyword arguments to help construct the loss function.
 - `optim_options`: a named tuple with key word arguments to pass to the optiizaiton algorithm. 
 
-# loss function options
-Users can choose from one of four loss functions: conditional likelihood, marginal likelihood, derivative matching, and mini batching.
+# `loss_function` options
+Users can choose from one of four loss functions: `"conditional likelihood"`, `"marginal likelihood"`, `"derivative matching"`, and `"mini batching"`.
 
 
 ## Conditional likelihood:
 To use the conditional likelihood as set the keyword argument  `loss_function = "conditional likelihood"`.
 
-This option trains the UDE model while accounting for imperfect observaitons and process uncertainty by maximizing the conditional likelihood of a state space model where the UDE is used as the process model.
+This option trains the UDE model while accounting for imperfect observations and process uncertainty by maximizing the conditional likelihood of a state space model where the UDE is used as the process model.
 The conditional likelihood is faster to compute, but can be less accurate than the marginal likelihood.
-
 
 ## Marginal likelihood:
 To use the marginal likelihood as the keyword argument `loss_function = "marginal likelihood"`.
@@ -296,9 +293,9 @@ This option is slower than the conditional likelihood but should, in theory, inc
 ### loss_options
 - `process_error`: an initial estimate of the level of process error. Default is 0.1. 
 - `observation_error`: The level of observation error in the data set. No default will throw an error if not provided. 
-- `α`: parameter for the knalmand filter algorithm. Defualt is 10^-3.
-- `β`: parameter for the knalmand filter algorithm. Defualt is 2.
-- `κ`: parameter for the knalmand filter algorithm. Defualt is 2.
+- `α`: parameter for the Kalman filter algorithm. Defualt is 10^-3.
+- `β`: parameter for the Kalman filter algorithm. Defualt is 2.
+- `κ`: parameter for the Kalman filter algorithm. Defualt is 2.
 
 ## Derivative matching:
 To use the derivative matching training routine set  `loss_function = "derivative matching".`
@@ -306,21 +303,22 @@ This function trains the UDE model in a two-step process. First, a smoothing fun
 Then, the UDE model is trained by comparing the derivatives of the smoothing functions to the derivatives predicted by the right-hand side of the UDE.
 this training routine is much faster than the alternative, but may be less accurate.
 
-### options
-- `d`:  the number of degrees of freedom in the curve fitting function defaults to 12.
-- `alg`:  the algorithm used to fit the curve to the data set see the DataInterpolations package for details it, defaults to generalized cross validation `:gcv_svd`
-- `remove_ends`: The number of data points to leave off of the end of the data set when training the UDE to reduce edge effects from the curve fitting process defaults to 0
+### loss_options
+- `d`:  the number of degrees of freedom in the curve fitting function. Defaults to 12.
+- `alg`:  the algorithm used to fit the curve to the data set see the DataInterpolations package for details. Defaults to generalized cross validation `:gcv_svd`
+- `remove_ends`: The number of data points to leave off of the end of the data set when training the UDE to reduce edge effects from the curve fitting process. Defaults to `0`
 
 ## Shooting:
 This option calculates the loss by solving the ODE from the initial to the final data point and comparing the observed to the predicted trajectory with MSE.
 The initial data point is estimated as a free parameter to reduce the impacts of observaiton error.
 
-## multiple shooting:
+## Multiple shooting:
+To use the multiple shooting method set `loss_function = "mini batching"`
 This option calculates the loss by breaking the data into blocks of sequential observations. It then uses the UDE to forecast from the initial data point in each block to the first data point in the next block.
 The loss is defined as the mean squared error between the forecasts and the data points.
 The initial data point in each block is estimated as a free parameter to reduce the impacts of observaiton error.
 
-### options
+### loss_options
 - `pred_length`: The number of data points in each block, default, is 10.
 
 
