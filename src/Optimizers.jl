@@ -304,7 +304,7 @@ To use the derivative matching training routine set `loss_function = "derivative
 
 This function trains the UDE model in a two-step process. First, a smoothing function is fit to the data using a spline regression.
 Then, the UDE model is trained by comparing the derivatives of the smoothing functions to the derivatives predicted by the right-hand side of the UDE.
-this training routine is much faster than the alternative, but may be less accurate.
+This training routine is much faster than the alternatives, but may be less accurate.
 
 ### loss_options
 - `d`: The number of degrees of freedom in the curve fitting function. Defaults to 12.
