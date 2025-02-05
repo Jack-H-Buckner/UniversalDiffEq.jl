@@ -261,7 +261,7 @@ end
 
 This function provides access to several training routines for UDE models. The user provides the UDE model object and can then choose between several loss functions and optimization algorithms using the keyword arguments.
 The training routine will update the UDE object with the trained parameters and return any other useful quantities estimated during the training procedure.
-The default optimizer trains the UDE model by minimizing the loss function using the ADAM gradient descent algorithm for `maxiter` steps of size `step_size.`
+The default optimizer trains the UDE model by minimizing the loss function using the ADAM gradient descent algorithm for `maxiter` steps of size `step_size`.
 Five loss functions are available using the `loss_function` argument: conditional likelihood, marginal likelihood, derivative matching, shooting, and multiple shooting.
 The `loss_options` and `optim_options` arguments are named tuples that can be used to pass parameters to the training routine.
 
@@ -276,6 +276,14 @@ The `loss_options` and `optim_options` arguments are named tuples that can be us
 
 # Loss Functions
 Users can choose from one of five loss functions: conditional likelihood, marginal likelihood, derivative matching, shooting, and multiple shooting.
+
+| Loss Function          | Discrete Model | Continuous Model | Speed    |
+|------------------------|----------------|------------------|----------|
+| Conditional likelihood | Yes            | Yes              | Moderate |
+| Marginal likelihood    | Yes            | Yes              | Slow     |
+| Derivative matching    | No             | Yes              | Fast     |
+| Shooting               | No             | Yes              | Moderate |
+| Multiple shooting      | No             | Yes              | Moderate |rte |
 
 
 ## Conditional likelihood:
@@ -299,7 +307,7 @@ This option is slower than the conditional likelihood but should, in theory, inc
 
 
 ## Derivative matching:
-To use the derivative matching training routine set `loss_function = "derivative matching".`
+To use the derivative matching training routine set `loss_function = "derivative matching"`.
 
 This function trains the UDE model in a two-step process. First, a smoothing function is fit to the data using a spline regression.
 Then, the UDE model is trained by comparing the derivatives of the smoothing functions to the derivatives predicted by the right-hand side of the UDE.
@@ -312,14 +320,14 @@ This training routine is much faster than the alternatives, but may be less accu
 
 
 ## Shooting:
-To use the shooting training routine set `loss_function = "shooting".`
+To use the shooting training routine set `loss_function = "shooting"`.
 
 This option calculates the loss by solving the ODE from the initial to the final data point and comparing the observed to the predicted trajectory with mean squared error (MSE).
 The initial data point is estimated as a free parameter to reduce the impacts of observation error.
 
 
 ## Multiple shooting:
-To use the multiple shooting training routine set `loss_function = "multiple shooting".`
+To use the multiple shooting training routine set `loss_function = "multiple shooting"`.
 
 This option calculates the loss by breaking the data into blocks of sequential observations. It then uses the UDE to forecast from the initial data point in each block to the first data point in the next block.
 The loss is defined as the MSE between the forecasts and the data points.
