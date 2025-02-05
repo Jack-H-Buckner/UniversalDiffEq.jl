@@ -283,7 +283,7 @@ Users can choose from one of five loss functions: conditional likelihood, margin
 | Marginal likelihood    | Yes            | Yes              | Slow     |
 | Derivative matching    | No             | Yes              | Fast     |
 | Shooting               | No             | Yes              | Moderate |
-| Multiple shooting      | No             | Yes              | Moderate |rte |
+| Multiple shooting      | No             | Yes              | Moderate |
 
 
 ## Conditional likelihood:
