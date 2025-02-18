@@ -281,7 +281,7 @@ end
 """
     MultiCustomDerivatives(data,derivs!,initial_parameters;kwargs...)
 
-Builds a UDE model that can be trianed on multiple time series simultaniously. The user defined derivatives functions must allow for an extra argument `i` that indexes over the time seris in the data set (e.g. `derivs!(du,u,i,)`). `data` is a DataFrame object with time arguments placed in a column labeled `t` and a second column with a unique index for each time series. The remaining columns have observations of the state variables at each point in time and for each time series.
+Builds a UDE model that can be trianed on multiple time series simultaniously. The user defined derivatives functions must allow for an extra argument `i` that indexes over the time series in the data set (e.g. `derivs!(du,u,i,)`). `data` is a DataFrame object with time arguments placed in a column labeled `t` and a second column with a unique index for each time series. The remaining columns have observations of the state variables at each point in time and for each time series.
 
 # kwargs
 
