@@ -649,7 +649,6 @@ function train!(UDE::MultiUDE;
     elseif loss_function == "marginal likelihood"
 
       H,Pη,L,α,β,κ = uhat
-      f = (u,t,dt,p) -> UDE.process_model.predict(u,t,dt,p)[1]
       x, Px =ukf_smooth(UDE,sol.u,H,Pη,L,α,β,κ)
       out = (Pν = Pν, Px = Px)
       UDE.parameters.uhat = x

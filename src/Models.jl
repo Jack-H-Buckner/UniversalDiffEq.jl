@@ -388,7 +388,7 @@ end
 function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameters,observation_loss::Function, 
                             observation_parameters::NamedTuple; time_column_name = "time",
                             variable_column_name = nothing ,value_column_name = nothing, 
-                            proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,
+                            proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.0,l=10000000000.0,
                             reg_type = "L2",ode_solver = Tsit5(), ad_method = ForwardDiffSensitivity())
     
     X_data_frame = X
