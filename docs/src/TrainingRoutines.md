@@ -1,4 +1,4 @@
-# Training routines
+# Training routines (This section is incomepte see the docuemtnation for the train! funiton in the API)
 
 
 There are many differnt methods for training NODE and UDE models. These methods tradeoff between accuracy, stability, and computing time. Their performance may also be related to the characteristics of the training data. However, this is an active area of research where it is difficult to make definitive statements. 
@@ -27,9 +27,48 @@ The success of the training procedure can be evaluated using the `plot_state_est
 
 ### State-space loss functions
 
-State-space loss functions assume the data include observation errors and that the underlying dynamics cannot be perfectly predicted by the UDE model. These state-space training rotines account for these sources of unceritainty by embedding the UDE model into a state-space modeling framework.  
+State-space loss functions assume the data $y_t \in R^d$ can be described by a set of state variables $u_t \in R^d$ and observation errors $\epsilon_t \in R^d$. The UDE model $f(u,X(t),t|\theta)$ with paramters $\theta$ and covariates $X$ is used to learn the dynamcis of the state varibles $u_t$.  Combining these assumptions yield two equations that descibe the observation set $y_t$
 
-### State-space conditional likelihood
+$$
+y_t = u_t + \epsilon_t \\ 
+u_{t+1} = u_t + \int_{t}^{t+1} f(u,X(v),v|\theta) dv + \nu_t
+$$
+
+Given these two equations we can calculate the likelihood of the data $y_t$ given the parameters of the UDE $\theta$ in two ways, the conditional and marginal likeihood. The conditional likelihood is used in bayesian settings and describes the likelihood of the data given the UDE paramters $\theta$ and point estimates of the state variables $\hat{u}_t$. The marginal likelihood desribes the likelihood of the observaitons $y_t$ given the model parameters $\theta$ while accounting for uncertianty in the estimates of the state variables $u_t$. The marginal likelihood is used in frequenties setting and produces unbiased maximum likelihood estiamtes of the paramters $\theta$. In paractice, both likelihood functions can be used to train the UDE models with good results. The conditional likeihood is more compuationally efficent, while the marginal likelihood is, in theory, more accurate. 
+
+#### Conditional likelihood
+We calcualte the conditional likelihood by jointly estimating the UDE model parameters $\theta$ and the value of the underlying state variables $\hat{u}_t$. We assume that the process $\nu_{i,t}$ and observation errors $\epsilon_{i,t}$ along each dimesnon of the data set $i\in \{1:d\}$, are independnet identically distributed normal random variables with variances $\tau^2$ and $\sigma^2$ respectively. 
+
+Given this assumption the log likelihood function has two components, a term corresponding to the observation errors, and term corresponding to the process process errors. The observation error term is the sum of the mean squared observaiton errors scaled by the observaiton variance  $\sigma^2$
+
+$$
+L_{obs}(\hat{u}) = \sum_{t=1}^{T} \sum_{i=1}^{d} \left( \frac{y_{i,t}-\hat{u}_{i,t}}{\sigma}\right)^2
+$$
+
+The process error term has the same stucture but it calcautle the sum of squarred process errors
+
+$$
+L_{proc}(\hat{u},\theta) = \sum_{t=1}^{T} \sum_{i=1}^{d} \left( \frac{\hat{u}_{i,t+1} - F(\hat{u}_t,t,\theta)}{\tau}\right)^2, 
+$$
+
+where
+
+$$
+F(u,\theta) = u + \int_{t}^{t+1} f(u,X(v),v|\theta) dv + \nu_t.
+$$
+
+Combining these terms yields the log conditiona likeihood function 
+
+$$
+L(\hat{u},\theta) = L_{obs}(\hat{u}) + L_{proc}(\hat{u},\theta).
+$$
+
+#### Marginal
+We calcualte the marginal likeihood using an unscented kalman filters. 
+
+$$
+\Pi_{t=1}^{T}\int_{-\infty}^{\infty} \left(\frac{y_t-u_t}{\sigma}\right)^2f(u_t;\{y\}_{1:(t-1)},\theta)
+$$
 
 ### Shooting
 
