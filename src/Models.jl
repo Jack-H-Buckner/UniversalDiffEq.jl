@@ -963,7 +963,9 @@ function EasyNODE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_w
         nothing, nothing, weights, nothing)
 
 
-    return gradient_descent!(untrainedNODE, step_size = step_size, maxiter = maxiter, verbose = verbose)
+    gradient_descent!(untrainedNODE, step_size = step_size, maxiter = maxiter, verbose = verbose)
+
+    return untrainedNODE
 end
 
 """
@@ -1019,7 +1021,9 @@ function EasyNODE(data,X;time_column_name = "time",variable_column_name = nothin
 
     untrainedNODE = UDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
         observation_loss,process_regularization,observation_regularization,constructor,time_column_name, weights,variable_column_name,value_column_name, nothing)
-        return gradient_descent!(untrainedNODE, step_size = step_size, maxiter = maxiter, verbose = verbose)
+    gradient_descent!(untrainedNODE, step_size = step_size, maxiter = maxiter, verbose = verbose)
+
+    return untrainedNODE
 end
 
 """
@@ -1086,7 +1090,9 @@ function EasyUDE(data,known_dynamics!,initial_parameters;time_column_name = "tim
 
     untrainedUDE = UDE(times,data,0,dataframe,0,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name, weights,nothing,nothing,nothing)
-    return gradient_descent!(untrainedUDE, step_size = step_size, maxiter = maxiter, verbose = verbose)
+    gradient_descent!(untrainedUDE, step_size = step_size, maxiter = maxiter, verbose = verbose)
+
+    return untrainedUDE
 end
 
 """
@@ -1156,7 +1162,9 @@ function EasyUDE(data::DataFrame,X,known_dynamics!::Function,initial_parameters;
 
     untrainedUDE = UDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name,weights,variable_column_name,value_column_name, nothing)
-    return gradient_descent!(untrainedUDE, step_size = step_size, maxiter = maxiter, verbose = verbose)
+    gradient_descent!(untrainedUDE, step_size = step_size, maxiter = maxiter, verbose = verbose)
+
+    return untrainedUDE
 end
 
 
