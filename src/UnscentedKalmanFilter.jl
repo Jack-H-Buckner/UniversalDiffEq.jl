@@ -36,7 +36,8 @@ function ukf_update(y,x̄,Px,t,dt,f,p,H,Pν,Pη,L,α,β,κ)
         fx = xminus[i]
         Px1 = Px1 .+ Wi*(fx.-x̄1).*(fx.-x̄1)'
     end 
-    
+    Px1 = Px1 .+ Pν
+
     ŷ = H*x̄1
     S = H*Px1*H'.+Pη
 
@@ -49,7 +50,7 @@ function ukf_update(y,x̄,Px,t,dt,f,p,H,Pν,Pη,L,α,β,κ)
     # loglik 
     ll = -1/2 * (y.-ŷ)' * Sinv * (y.-ŷ) - 1/2 * log(det(S))  - L/2*log(2*3.14159)
     
-    return x̂, Px.+ Pν , ll
+    return x̂, Px , ll
 end 
 
 

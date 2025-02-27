@@ -6,7 +6,7 @@ makedocs(
     sitename="UniversalDiffEq.jl",
     modules  = [UniversalDiffEq],
     format   = Documenter.HTML(; prettyurls = get(ENV, "CI", nothing) == "true"),
-    pages = ["index.md","Models.md","EasyModels.md","ModelTesting.md","NutsAndBolts.md","MultipleTimeSeries.md","modelanalysis.md","BayesianModels.md","examples.md","API.md"]
+    pages = ["index.md","Models.md","TrainingRoutines.md","ModelTesting.md","NutsAndBolts.md","MultipleTimeSeries.md","modelanalysis.md","examples.md","API.md"]
 )
 
 deploydocs(

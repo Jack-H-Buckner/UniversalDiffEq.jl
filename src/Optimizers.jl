@@ -359,9 +359,15 @@ function train!(UDE::UDE;
   uhat = 0
   if loss_function == "conditional likelihood"
 
+    # new_options = ComponentArray(loss_options)
+    # options = ComponentArray((observation_error = 0.025, process_error = 0.025))
+    # options[keys(new_options)] .= new_options
+
     new_options = ComponentArray(loss_options)
     options = ComponentArray((observation_error = 0.025, process_error = 0.025))
-    options[keys(new_options)] .= new_options
+    inds  = broadcast(i -> !(keys(new_options)[i] in [:process_error,:observation_error]), 1:length(keys(new_options)))
+    keys_ = keys(new_options)[inds]
+    options[keys_] .= new_options[keys_]
 
     loss, params, _  = conditional_likelihood(UDE,regularization_weight,  options.observation_error, options.process_error)
 
@@ -388,7 +394,7 @@ function train!(UDE::UDE;
 
     loss, params, uhat = marginal_likelihood(UDE,regularization_weight,Pν,Pη,options.α,options.β,options.κ)
 
-  elseif loss_function == "derivative matching"
+  elseif (loss_function == "derivative matching") | (loss_function == "gradient matching")
     if UDE.solvers == nothing
       throw("This method does not work with discrete time models (i.e., CustomDifference), please select from 'conditional likelihood' or 'marginal likelihood'.")
     end
@@ -416,7 +422,7 @@ function train!(UDE::UDE;
     loss, params, _  = multiple_shooting_loss(UDE,regularization_weight,options.pred_length)
     uhat = UDE.data
   else
-    throw("Select a valid loss function. Choose from 'conditional likelihood', 'marginal likelihood', 'derivative matching', 'shooting', or 'multiple shooting'.")
+    throw("Select a valid loss function. Choose from 'conditional likelihood', 'marginal likelihood', 'gradient matching', 'shooting', or 'multiple shooting'.")
 
   end
 
@@ -474,7 +480,7 @@ function train!(UDE::UDE;
 
   # states
   out = nothing
-  if loss_function == "derivative matching"
+  if (loss_function == "derivative matching") | (loss_function == "gradient matching")
       UDE.parameters.uhat .= uhat
 
     elseif loss_function == "shooting"
@@ -518,11 +524,17 @@ function train!(UDE::MultiUDE;
   loss = x -> 0
   params = UDE.parameters
   uhat = 0
-  if loss_function == "conditional likelihood"
+  if loss_function =="conditional likelihood" 
+
+    # new_options = ComponentArray(loss_options)
+    # options = ComponentArray((observation_error = 0.025, process_error = 0.025))
+    # options[keys(new_options)] .= new_options
 
     new_options = ComponentArray(loss_options)
     options = ComponentArray((observation_error = 0.025, process_error = 0.025))
-    options[keys(new_options)] .= new_options
+    inds  = broadcast(i -> !(keys(new_options)[i] in [:process_error,:observation_error]), 1:length(keys(new_options)))
+    keys_ = keys(new_options)[inds]
+    options[keys_] .= new_options[keys_]
 
     loss, params, _  = conditional_likelihood(UDE,regularization_weight,  options.observation_error, options.process_error)
 
@@ -549,7 +561,7 @@ function train!(UDE::MultiUDE;
 
     loss, params, uhat = marginal_likelihood(UDE,regularization_weight,Pν,Pη,options.α,options.β,options.κ)
 
-  elseif loss_function == "derivative matching"
+  elseif (loss_function == "derivative matching") | (loss_function == "gradient matching")
     if UDE.solvers == nothing
       throw("This method does not work with discrete time models (i.e., CustomDifference), please select from 'conditional likelihood' or 'marginal likelihood'.")
     end
@@ -577,7 +589,7 @@ function train!(UDE::MultiUDE;
     loss, params, _  = multiple_shooting_loss(UDE,regularization_weight,options.pred_length)
     uhat = UDE.data
   else
-    throw("Select a valid loss function. Choose from 'conditional likelihood', 'marginal likelihood', 'derivative matching', 'shooting', or 'multiple shooting'. ")
+    throw("Select a valid loss function. Choose from 'conditional likelihood', 'marginal likelihood', 'gradient matching', 'shooting', or 'multiple shooting'. ")
   end
 
   # optimize loss function
@@ -633,7 +645,7 @@ function train!(UDE::MultiUDE;
 
   # states
   out = nothing
-  if loss_function == "derivative matching"
+  if (loss_function == "derivative matching") | (loss_function == "gradient matching")
       UDE.parameters.uhat .= uhat
 
     elseif loss_function == "shooting"
