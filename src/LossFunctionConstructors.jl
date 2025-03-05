@@ -58,9 +58,9 @@ end
 function conditional_likelihood(UDE::UDE, t_skip, regularization_weight, observation_error, process_error)
 
     # process training dat
-    N, dims, T, times, data, dataframe = process_data(training,UDE.time_column_name)
-
     # set up error matrices
+    dims = size(UDE.data)[1]
+
     Σobs = errors_to_matrix(observation_error, dims)
     Σproc = errors_to_matrix(process_error, dims)
     Σobsinv = inv(Σobs)
@@ -70,19 +70,19 @@ function conditional_likelihood(UDE::UDE, t_skip, regularization_weight, observa
         # observation loss
         L_obs = 0.0 
         
-        for t in 1:(size(data)[2])
-            yt = data[:,t]
+        for t in 1:(size(UDE.data)[2])
+            yt = UDE.data[:,t]
             yhat = UDE.observation_model.link(parameters.uhat[:,t],parameters.observation_model)
             L_obs += (yt .- yhat)' * Σobsinv * (yt .- yhat)
         end
 
         # dynamics loss 
         L_proc = 0
-        for t in 2:(size(training)[2])
+        for t in 2:(size(UDE.data)[2])
             if t != t_skip
                 u0 = parameters.uhat[:,t-1]
                 u1 = parameters.uhat[:,t]
-                dt = times[t]-times[t-1]
+                dt = UDE.times[t]-UDE.times[t-1]
                 u1hat, epsilon =UDE.process_model.predict(u0,UDE.times[t-1],dt,parameters.process_model) 
                 L_proc += (u1 .- u1hat)' * Σprocinv * (u1 .- u1hat)
             end 
