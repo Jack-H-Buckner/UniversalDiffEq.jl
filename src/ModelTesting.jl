@@ -743,6 +743,15 @@ function plot_forecast(UDE::UDE, test_data::DataFrame)
     return plot(plots...), plots
 end
 
+function forecast(UDE::UDE, test_data::DataFrame)
+    check_test_data_names(UDE.data_frame, test_data)
+    u0 = UDE.parameters.uhat[:,end]
+    N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
+    df = forecast(UDE, u0, UDE.times[end], times)
+    return df
+end
+
+
 """
     plot_forecast(UDE::BayesianUDE, test_data::DataFrame)
 
