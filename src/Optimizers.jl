@@ -346,6 +346,7 @@ The user can specify the maximum number of iterations `maxiter` for each algorit
 For ADAM the `optim_options` can be used to specify the step size `step_size` and for BFGS you can specify the initial step norm `initial_step_norm`.
 """
 function train!(UDE::UDE;
+  t_skip = NaN,
   loss_function = "derivative matching",
   optimizer = "ADAM",
   regularization_weight = 0.0,
@@ -359,18 +360,21 @@ function train!(UDE::UDE;
   uhat = 0
   if loss_function == "conditional likelihood"
 
-    # new_options = ComponentArray(loss_options)
-    # options = ComponentArray((observation_error = 0.025, process_error = 0.025))
-    # options[keys(new_options)] .= new_options
-
     new_options = ComponentArray(loss_options)
     options = ComponentArray((observation_error = 0.025, process_error = 0.025))
     inds  = broadcast(i -> !(keys(new_options)[i] in [:process_error,:observation_error]), 1:length(keys(new_options)))
     keys_ = keys(new_options)[inds]
+
     options[keys_] .= new_options[keys_]
 
-    loss, params, _  = conditional_likelihood(UDE,regularization_weight,  options.observation_error, options.process_error)
+    loss, params, _  = (0,0,0)
 
+    if isnan(t_skip)
+      loss, params, _  = conditional_likelihood(UDE,regularization_weight,  options.observation_error, options.process_error)
+    else
+      loss, params, _  = conditional_likelihood(UDE,t_skip,regularization_weight,  options.observation_error, options.process_error)
+    end
+    
   elseif loss_function == "marginal likelihood"
 
     L = size(UDE.data)[1]
@@ -392,8 +396,17 @@ function train!(UDE::UDE;
     keys_ = keys(new_options)[inds]
     options[keys_] .= new_options[keys_]
 
-    loss, params, uhat = marginal_likelihood(UDE,regularization_weight,Pν,Pη,options.α,options.β,options.κ)
+    
+    loss, params, uhat  = (0,0,0)
+    
+    if isnan(t_skip)
+      loss, params, uhat = marginal_likelihood(UDE,regularization_weight,Pν,Pη,options.α,options.β,options.κ)
 
+    else
+      loss, params, uhat = marginal_likelihood(UDE,t_skip,regularization_weight,Pν,Pη,options.α,options.β,options.κ)
+
+    end
+    
   elseif (loss_function == "derivative matching") | (loss_function == "gradient matching")
     if UDE.solvers == nothing
       throw("This method does not work with discrete time models (i.e., CustomDifference), please select from 'conditional likelihood' or 'marginal likelihood'.")
@@ -507,6 +520,8 @@ function train!(UDE::UDE;
     return out
 
 end
+
+
 
 
 

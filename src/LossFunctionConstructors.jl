@@ -54,6 +54,52 @@ end
 
 
 
+
+function conditional_likelihood(UDE::UDE, t_skip, regularization_weight, observation_error, process_error)
+
+    # process training dat
+    # set up error matrices
+    dims = size(UDE.data)[1]
+
+    Σobs = errors_to_matrix(observation_error, dims)
+    Σproc = errors_to_matrix(process_error, dims)
+    Σobsinv = inv(Σobs)
+    Σprocinv = inv(Σproc)
+    function loss_function(parameters)
+
+        # observation loss
+        L_obs = 0.0 
+        
+        for t in 1:(size(UDE.data)[2])
+            yt = UDE.data[:,t]
+            yhat = UDE.observation_model.link(parameters.uhat[:,t],parameters.observation_model)
+            L_obs += (yt .- yhat)' * Σobsinv * (yt .- yhat)
+        end
+
+        # dynamics loss 
+        L_proc = 0
+        for t in 2:(size(UDE.data)[2])
+            if t != t_skip
+                u0 = parameters.uhat[:,t-1]
+                u1 = parameters.uhat[:,t]
+                dt = UDE.times[t]-UDE.times[t-1]
+                u1hat, epsilon =UDE.process_model.predict(u0,UDE.times[t-1],dt,parameters.process_model) 
+                L_proc += (u1 .- u1hat)' * Σprocinv * (u1 .- u1hat)
+            end 
+        end
+        
+        # regularization
+        L_reg = regularization_weight *UDE.process_regularization.loss(parameters.process_model,parameters.process_regularization)
+
+        return L_obs + L_proc + L_reg
+    end
+
+    return loss_function,UDE.parameters, []
+end 
+
+
+
+
 function marginal_likelihood(UDE::UDE,regularization_weight,Pν,Pη,α,β,κ)
 
 
@@ -67,7 +113,7 @@ function marginal_likelihood(UDE::UDE,regularization_weight,Pν,Pη,α,β,κ)
 
     function loss(parameters)
         Pν = parameters.Pν * parameters.Pν'
-        ll = -1*ukf_likeihood(y,times,f,parameters.UDE.process_model,H,Pν,Pη,L,α,β,κ)
+        ll = -1*ukf_likelihood(y,times,f,parameters.UDE.process_model,H,Pν,Pη,L,α,β,κ)
         ll += regularization_weight *UDE.process_regularization.loss(parameters.UDE.process_model,parameters.UDE.process_regularization)
         return ll
     end
@@ -78,6 +124,38 @@ function marginal_likelihood(UDE::UDE,regularization_weight,Pν,Pη,α,β,κ)
 
     return loss, params, (H,Pν,Pη,L,α,β,κ)
 end
+
+
+
+
+function marginal_likelihood(UDE::UDE,t_skip,regularization_weight,Pν,Pη,α,β,κ)
+
+    # observaiton model is identity function
+    L = size(UDE.data)[1]
+    H = Matrix(I,L,L)
+
+    y1 = UDE.data[:,1:t_skip]
+    y2 = UDE.data[:,(t_skip+1):end]
+    times1 = UDE.times[:,1:t_skip]
+    times2 = UDE.times[:,(t_skip+1):end]
+    f = (u,t,dt,p) -> UDE.process_model.predict(u,t,dt,p)[1]
+
+    function loss(parameters)
+        Pν = parameters.Pν * parameters.Pν'
+        ll = -1*ukf_likelihood(y1,times1,f,parameters.UDE.process_model,H,Pν,Pη,L,α,β,κ)
+        ll = -1*ukf_likelihood(y2,times2,f,parameters.UDE.process_model,H,Pν,Pη,L,α,β,κ)
+        ll += regularization_weight *UDE.process_regularization.loss(parameters.UDE.process_model,parameters.UDE.process_regularization)
+        return ll
+    end
+    
+    Pνchol = Matrix(cholesky(Pν).L)
+
+    params = ComponentArray((UDE = UDE.parameters, Pν = Pνchol))
+
+    return loss, params, (H,Pν,Pη,L,α,β,κ)
+end
+
+
 
 
 function interpolate_derivs(u,t;d=12,alg = :gcv_svd)
@@ -112,6 +190,7 @@ function derivative_matching_loss(UDE::UDE, regularization_weight; d = 12, alg =
 
     return loss, UDE.parameters ,uhat
 end 
+
 
 
 function shooting_loss(UDE::UDE)
@@ -151,6 +230,8 @@ function shooting_loss(UDE::UDE)
 
     return loss_function,UDE.parameters, []
 end 
+
+
 
 
 function shooting_states(UDE::UDE)
@@ -222,6 +303,7 @@ function multiple_shooting_loss(UDE::UDE,regularization_weight,pred_length)
 
     return loss_function,UDE.parameters, []
 end 
+
 
 
 
@@ -334,7 +416,7 @@ function init_single_marginal_likelihood(UDE::MultiUDE,H,Pη,L,α,β,κ)
 
         Pν = Imat .* parameters.Pν.^2
 
-        nll = -1*ukf_likeihood(y,times,f,parameters.UDE.process_model,H,Pν,Pη,L,α,β,κ)
+        nll = -1*ukf_likelihood(y,times,f,parameters.UDE.process_model,H,Pν,Pη,L,α,β,κ)
         return nll + L_reg
     end
 
@@ -359,7 +441,7 @@ function single_marginal_likelihood(UDE::MultiUDE,regularization_weight,Pη,α,�
         times = UDE.times[starts[series]:(starts[series]+lengths[series]-1)]
         y = UDE.data[:,starts[series]:(starts[series]+lengths[series]-1)]
 
-        ll = -1*ukf_likeihood(y,times,(u,t,dt,p) -> f(u,series,t,dt,p),parameters.UDE.process_model,H,Pν,Pη,L,α,β,κ)
+        ll = -1*ukf_likelihood(y,times,(u,t,dt,p) -> f(u,series,t,dt,p),parameters.UDE.process_model,H,Pν,Pη,L,α,β,κ)
         ll += regularization_weight * UDE.process_regularization.loss(parameters.UDE.process_model,parameters.UDE.process_regularization)
         return ll
     end

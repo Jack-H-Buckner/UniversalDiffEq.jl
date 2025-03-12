@@ -73,7 +73,7 @@ end
 
 
 
-function ukf_likeihood(y,times,f,pf,H,Pν,Pη,L,α,β,κ)
+function ukf_likelihood(y,times,f,pf,H,Pν,Pη,L,α,β,κ)
     T = size(y)[2]
     ll = 0
     x̂ = y[:,1]
@@ -93,7 +93,7 @@ function init_kalman_loss(UDE::UDE,H,Pη,L,α,β,κ)
     f = (u,t,dt,p) -> UDE.process_model.predict(u,t,dt,p)[1]
     function loss(parameters)
         Pν = parameters.Pν * parameters.Pν'
-       -1*ukf_likeihood(y,times,f,parameters.UDE.process_model,H,Pν,Pη,L,α,β,κ)
+       -1*ukf_likelihood(y,times,f,parameters.UDE.process_model,H,Pν,Pη,L,α,β,κ)
     end
     return loss
 end
@@ -122,7 +122,7 @@ function init_single_kalman_loss(UDE::MultiUDE,H,Pη,L,α,β,κ)
 
         Pν = Imat .* parameters.Pν.^2
 
-        nll = -1*ukf_likeihood(y,times,f,parameters.UDE.process_model,H,Pν,Pη,L,α,β,κ)
+        nll = -1*ukf_likelihood(y,times,f,parameters.UDE.process_model,H,Pν,Pη,L,α,β,κ)
 
         # regularization
         L_reg = UDE.process_regularization.loss(parameters.UDE.process_model,parameters.UDE.process_regularization)

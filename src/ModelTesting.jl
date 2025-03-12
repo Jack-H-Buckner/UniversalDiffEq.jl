@@ -211,22 +211,6 @@ function predictions(UDE::CustomUDE)
 end
 
 
-function predictions(UDE::UQ_UDE)
-
-    inits = UDE.parameters.uhat[:,1:(end-1)]
-    obs = UDE.parameters.uhat[:,2:end]
-    preds = UDE.parameters.uhat[:,2:end]
-
-    for t in 1:(size(inits)[2])
-        u0 = inits[:,t]
-        u1 = obs[:,t]
-        dt = UDE.times[t+1] - UDE.times[t]
-        preds[:,t] = UDE.process_model.predict(u0,UDE.times[t],dt,UDE.parameters.process_model)[1]
-    end
-
-    return inits, obs, preds
-end
-
 function predictions(UDE::BayesianUDE;summarize = true,ci = 95)
 
     inits = [UDE.parameters[i].uhat[:,1:(end-1)] for i in 1:length(UDE.parameters)]
@@ -399,38 +383,6 @@ function plot_predictions(UDE::CustomUDE)
     return plot(plots...)
 end
 
-
-function plot_predictions(UDE::UQ_UDE)
-
-    inits, obs, preds = predictions(UDE)
-
-    plots = []
-    for dim in 1:size(obs,1)
-
-        difs = obs[dim,:].-inits[dim,:]
-
-        xmax = difs[argmax(difs)]
-        xmin = difs[argmin(difs)]
-
-        plt = plot([xmin,xmax],[xmin,xmax],color = "grey", linestyle=:dash, label = "1:1", legend_position = :topleft)
-        duhat = preds[dim,:].-inits[dim,:]
-        scatter!(difs,duhat,color = "white", label = "", xlabel = "Observed change", ylabel = "Predicted change")
-
-        N = length(difs)
-        NRMSE = sqrt(sum((difs .- duhat).^2)/N)/std(difs)
-
-        text_x = 0.5*(xmax-xmin)+xmin
-        text_y = 0.1*(xmax-xmin)+xmin
-
-        Plots.annotate!(text_x, text_y, text("NRMSE = $(round(NRMSE, digits=3))", :left, 10))
-
-
-        push!(plots, plt)
-
-    end
-
-    return plot(plots...)
-end
 
 """
     plot_predictions(UDE::BayesianUDE;ci=95)
@@ -742,6 +694,15 @@ function plot_forecast(UDE::UDE, test_data::DataFrame)
     end
     return plot(plots...), plots
 end
+
+function forecast(UDE::UDE, test_data::DataFrame)
+    check_test_data_names(UDE.data_frame, test_data)
+    u0 = UDE.parameters.uhat[:,end]
+    N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
+    df = forecast(UDE, u0, UDE.times[end], times)
+    return df
+end
+
 
 """
     plot_forecast(UDE::BayesianUDE, test_data::DataFrame)
