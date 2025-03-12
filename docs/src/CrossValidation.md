@@ -54,7 +54,7 @@ The other data sets report the mean absolute error and assocaited statnard error
 
 ## doc string
 ```@docs; canonical=false
-leave_future_out(model, training!, k; kwargs...)
+UniversalDiffEq.leave_future_out(model::UDE, training!, k; kwargs... )
 ```
 
 ## Minimal example
