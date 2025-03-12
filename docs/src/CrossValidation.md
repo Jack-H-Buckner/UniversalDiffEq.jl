@@ -54,7 +54,7 @@ The other data sets report the mean absolute error and assocaited statnard error
 
 ## doc string
 ```@docs; canonical=false
-leave_future_out(model, training!, k; path = false)
+leave_future_out(model, training!, k; kwargs...)
 ```
 
 ## Minimal example
@@ -62,26 +62,22 @@ leave_future_out(model, training!, k; path = false)
 ```julia
 using UniversalDiffEq, Random, DataFrames
 
-
 data = DataFrame(time = 1:40,  x = rand(40), y = rand(40), z = rand(40))
-
 
 NN,NNparams = UniversalDiffEq.SimpleNeuralNetwork(3,3)
 function derivs!(u,i,p,t)
    zeros(3)
 end
+
 init_parameters = (NN = NNparams,)
 
-
 model = UniversalDiffEq.CustomDerivatives(training,derivs!,init_parameters)
-
 
 function training_routine_4!(model)
    UniversalDiffEq.train!(model,loss_function = "conditional likelihood",
                                    optim_options = (maxiter = 2, ),
                                    loss_options = (observation_error = 0.25,))
 end
-
 
 cv_summary, cv_details = UniversalDiffEq.leave_future_out(model, training_routine_4!, 10)
 ```

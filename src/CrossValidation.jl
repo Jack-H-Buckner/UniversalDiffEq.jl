@@ -109,7 +109,7 @@ end
 
 
 """
-    leave_future_out(model, training!, k; path = false)
+    leave_future_out(model, training!, k; kwargs...)
 
 Runs a leave future out cross validation on the UDe model `model` using the training routine `train!` with `k`  folds. 
 if a path to a csv file is provided usign the path key word then the raw testing data and forecasts will be saved for each fold.  
