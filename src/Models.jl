@@ -182,7 +182,7 @@ end
 """
 function CustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,priors::Function;
                                 time_column_name = "time",proc_weight=1.0,obs_weight=1.0,
-                                reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2",
+                                reg_weight=10^-6,extrap_rho=0.0,l=10.0^6,reg_type = "L2",
                                 ode_solver = Tsit5(), ad_method = ForwardDiffSensitivity())
     time_column_name = check_column_names(data, time_column_name = time_column_name)[1]
     # convert data
