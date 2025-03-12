@@ -113,7 +113,7 @@ function marginal_likelihood(UDE::UDE,regularization_weight,Pν,Pη,α,β,κ)
 
     function loss(parameters)
         Pν = parameters.Pν * parameters.Pν'
-        ll = -1*ukf_likeihood(y,times,f,parameters.UDE.process_model,H,Pν,Pη,L,α,β,κ)
+        ll = -1*ukf_likelihood(y,times,f,parameters.UDE.process_model,H,Pν,Pη,L,α,β,κ)
         ll += regularization_weight *UDE.process_regularization.loss(parameters.UDE.process_model,parameters.UDE.process_regularization)
         return ll
     end
@@ -142,8 +142,8 @@ function marginal_likelihood(UDE::UDE,t_skip,regularization_weight,Pν,Pη,α,β
 
     function loss(parameters)
         Pν = parameters.Pν * parameters.Pν'
-        ll = -1*ukf_likeihood(y1,times1,f,parameters.UDE.process_model,H,Pν,Pη,L,α,β,κ)
-        ll = -1*ukf_likeihood(y2,times2,f,parameters.UDE.process_model,H,Pν,Pη,L,α,β,κ)
+        ll = -1*ukf_likelihood(y1,times1,f,parameters.UDE.process_model,H,Pν,Pη,L,α,β,κ)
+        ll = -1*ukf_likelihood(y2,times2,f,parameters.UDE.process_model,H,Pν,Pη,L,α,β,κ)
         ll += regularization_weight *UDE.process_regularization.loss(parameters.UDE.process_model,parameters.UDE.process_regularization)
         return ll
     end
@@ -416,7 +416,7 @@ function init_single_marginal_likelihood(UDE::MultiUDE,H,Pη,L,α,β,κ)
 
         Pν = Imat .* parameters.Pν.^2
 
-        nll = -1*ukf_likeihood(y,times,f,parameters.UDE.process_model,H,Pν,Pη,L,α,β,κ)
+        nll = -1*ukf_likelihood(y,times,f,parameters.UDE.process_model,H,Pν,Pη,L,α,β,κ)
         return nll + L_reg
     end
 
@@ -441,7 +441,7 @@ function single_marginal_likelihood(UDE::MultiUDE,regularization_weight,Pη,α,�
         times = UDE.times[starts[series]:(starts[series]+lengths[series]-1)]
         y = UDE.data[:,starts[series]:(starts[series]+lengths[series]-1)]
 
-        ll = -1*ukf_likeihood(y,times,(u,t,dt,p) -> f(u,series,t,dt,p),parameters.UDE.process_model,H,Pν,Pη,L,α,β,κ)
+        ll = -1*ukf_likelihood(y,times,(u,t,dt,p) -> f(u,series,t,dt,p),parameters.UDE.process_model,H,Pν,Pη,L,α,β,κ)
         ll += regularization_weight * UDE.process_regularization.loss(parameters.UDE.process_model,parameters.UDE.process_regularization)
         return ll
     end
