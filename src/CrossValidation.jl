@@ -35,7 +35,7 @@ function leave_future_out_cv(model::UDE, training!, k)
         
         forecast_i = forecast_data(model_i, testing_i)
      
-        forecast_i.horizon .= forecast_i[:,model.time_column_name] .- minimum(forecast_i[:,model.time_column_name]) .+ 1 
+        forecast_i.horizon .= forecast_i[:,model.time_column_name] .- maximum(training_i[:,model.time_column_name])
         forecasts[i] =  forecast_i
     end
     
@@ -115,7 +115,7 @@ Runs a leave future out cross validation on the UDe model `model` using the trai
 if a path to a csv file is provided usign the path key word then the raw testing data and forecasts will be saved for each fold.  
     
 The funtion returns three data frames. The first contains an estimate of the mean aboslue error of the forecasts and assocaited standard error as a fuction of the forecast horizon (1 to k time steps into the future).
-The second and their are returned in a named tuple with two elements `horizon_by_var` and `raw`. The data frame `horizon_by_var` is containds the forecasting errors seperated by variable and the data frame `raw` contains the raw testing and forecasting data. 
+The second and third are returned in a named tuple with two elements `horizon_by_var` and `raw`. The data frame `horizon_by_var` is containds the forecasting errors seperated by variable and the data frame `raw` contains the raw testing and forecasting data. 
 If the model is trained on multiple time series the named tupe will include a third data frame `horizon_by_var_by_series`.
 """
 function leave_future_out(model::UDE, training!, k; path = false)
@@ -154,6 +154,7 @@ function marginal_likelihood(UDE, test_data, Pν, Pη; α = 10^-3, β = 2,κ = 0
 
     return ll
 end
+
 
 function kfold_cv(model::UDE, training!, k)
 
@@ -252,10 +253,11 @@ function leave_future_out_cv(model::MultiUDE, training!, k)
         
         forecast_i = forecast_data(model_i, testing_i)
 
-        forecast_i.horizon .= 0
+        forecast_i.horizon .= 0.0
         for series in unique(forecast_i[:,model.series_column_name])
             inds = forecast_i[:,model.series_column_name] .== series
-            forecast_i.horizon[inds] .= forecast_i[inds,model.time_column_name] .- minimum(forecast_i[inds,model.time_column_name]) .+ 1 
+            inds_training = training_i[:,model.series_column_name] .== series
+            forecast_i.horizon[inds] .= forecast_i[inds,model.time_column_name] .- maximum(training_i[inds_training,model.time_column_name]) 
         end 
         forecasts[i] = forecast_i
     end
