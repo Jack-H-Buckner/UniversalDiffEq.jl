@@ -1,5 +1,5 @@
 
-function forecast(UDE::UDE, test_data::DataFrame)
+function forecast_data(UDE::UDE, test_data::DataFrame)
     #check_test_data_names(UDE.data_frame, test_data)
     u0 = UDE.parameters.uhat[:,end]
     N, dims, T, times, data, dataframe =  process_data(test_data,UDE.time_column_name)
@@ -33,7 +33,7 @@ function leave_future_out_cv(model::UDE, training!, k)
         model_i = model.constructor(training_i)
         training!(model_i)
         
-        forecast_i = forecast(model_i, testing_i)
+        forecast_i = forecast_data(model_i, testing_i)
      
         forecast_i.horizon .= forecast_i[:,model.time_column_name] .- minimum(forecast_i[:,model.time_column_name]) .+ 1 
         forecasts[i] =  forecast_i
@@ -190,7 +190,7 @@ end
 
 
 
-function forecast(UDE::MultiUDE, test_data::DataFrame)
+function forecast_data(UDE::MultiUDE, test_data::DataFrame)
     check_test_data_names(UDE.data_frame, test_data)
     N, T, dims, test_data, test_times,  test_dataframe, test_series, inds, test_starts, test_lengths, labs = process_multi_data(test_data,UDE.time_column_name,UDE.series_column_name)
     N, T, dims, data, times,  dataframe, series, inds, starts, lengths, labs = process_multi_data(UDE.data_frame,UDE.time_column_name,UDE.series_column_name)
@@ -250,7 +250,7 @@ function leave_future_out_cv(model::MultiUDE, training!, k)
         model_i = model.constructor(training_i)
         training!(model_i)
         
-        forecast_i = forecast(model_i, testing_i)
+        forecast_i = forecast_data(model_i, testing_i)
 
         forecast_i.horizon .= 0
         for series in unique(forecast_i[:,model.series_column_name])
