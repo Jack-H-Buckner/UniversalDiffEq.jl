@@ -37,7 +37,7 @@ Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 NonlinearSolveBase = "be0214bd-f91f-a760-ac4e-3421ce2b2da0"
 
 [compat]
-AdvancedHMC = "^0.6.1"
+AdvancedHMC = "0.6.1-0.6.2"
 CategoricalArrays = "^0.10.8"
 ComponentArrays = "^0.15.14"
 DataFrames = "^1.6"
