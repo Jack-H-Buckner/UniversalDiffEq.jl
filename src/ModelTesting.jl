@@ -291,7 +291,7 @@ function predict(UDE::UDE,test_data::DataFrame;df = true)
     if df
         N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
         names = vcat(["t"],[string("x",i) for i in 1:dims])
-        return DataFrame(Array(vcat(times',preds)'),names)
+        return DataFrame(Array(vcat(times[2:end]',preds)'),names)
     else
         return preds
     end
