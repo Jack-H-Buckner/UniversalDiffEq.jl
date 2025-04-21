@@ -145,7 +145,7 @@ end
 function DiscreteProcessModel(difference, parameters, covariates, dims, l, extrap_rho)
     
     function predict(u,t,dt,parameters) 
-        tspan =  t:(t+dt)
+        tspan =  t:(t+dt-1)
         for t in tspan
             u = difference(u,covariates(t),t,parameters)
         end 
@@ -166,7 +166,7 @@ end
 function DiscreteProcessModel(difference, parameters, dims, l, extrap_rho)
     
     function predict(u,t,dt,parameters) 
-        tspan =  1:dt
+        tspan =  t:(t+dt-1)
         for t in tspan
             u = difference(u,t,parameters)
         end 
