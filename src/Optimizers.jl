@@ -360,19 +360,29 @@ function train!(UDE::UDE;
   uhat = 0
   if loss_function == "conditional likelihood"
 
-    new_options = ComponentArray(loss_options)
-    options = ComponentArray((observation_error = 0.025, process_error = 0.025))
-    inds  = broadcast(i -> !(keys(new_options)[i] in [:process_error,:observation_error]), 1:length(keys(new_options)))
-    keys_ = keys(new_options)[inds]
+    # set defualts for process and observaiton errors 
+    observation_error = 0.025
+    process_error = 0.025
 
-    options[keys_] .= new_options[keys_]
+    # if observation errors are provided update with errorts to matrix function 
+    L = size(UDE.data)[1]
+    if any(keys(loss_options) .== :observation_error)
+      observation_error = errors_to_matrix(loss_options.observation_error, L)
+    end 
 
+     # if process errors are provided update with errorts to matrix function 
+     L = size(UDE.data)[1]
+     if any(keys(loss_options) .== :process_error)
+       process_error = errors_to_matrix(loss_options.process_error, L)
+     end 
+
+    # initialize loss and params so they can be updated with in an if else
     loss, params, _  = (0,0,0)
 
     if isnan(t_skip)
-      loss, params, _  = conditional_likelihood(UDE,regularization_weight,  options.observation_error, options.process_error)
+      loss, params, _  = conditional_likelihood(UDE,regularization_weight,  observation_error, process_error)
     else
-      loss, params, _  = conditional_likelihood(UDE,t_skip,regularization_weight,  options.observation_error, options.process_error)
+      loss, params, _  = conditional_likelihood(UDE,t_skip,regularization_weight, observation_error, process_error)
     end
     
   elseif loss_function == "marginal likelihood"
