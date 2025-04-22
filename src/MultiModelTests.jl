@@ -121,12 +121,10 @@ function predictions(UDE::MultiUDE,test_data::DataFrame)
 end
 
 function predict(UDE::MultiUDE,test_data::DataFrame)
-    
+    series_ls =  unique(test_data[:,UDE.series_column_name])
     check_test_data_names(UDE.data_frame, test_data)
-    N, T, dims, data, times,  dataframe, series_ls, inds, starts,
+    N, T, dims, data, times,  dataframe, series_, inds, starts,
     lengths = process_multi_data(test_data, UDE.time_column_name, UDE.series_column_name)
-
-    series_ls =  unique(UDE.data_frame.series)
     dfs = [zeros(l-1,dims+2) for l in lengths]
     for series in eachindex(starts)
         time = times[starts[series]:(starts[series]+lengths[series]-1)]
@@ -138,7 +136,7 @@ function predict(UDE::MultiUDE,test_data::DataFrame)
             u0 = UDE.observation_model.link(u0,UDE.parameters.observation_model)
             u1 = UDE.observation_model.link(u1,UDE.parameters.observation_model)
             u1hat = UDE.observation_model.link(u1hat,UDE.parameters.observation_model)
-            dfs[series][t,:] = vcat([series,time[t+1]],u1hat)
+            dfs[series][t,:] = vcat([series_ls[series],time[t+1]],u1hat)
         end
     end
 
@@ -276,6 +274,34 @@ function forecast(UDE::MultiUDE, u0::AbstractVector{}, t0::Real, times::Abstract
     return df
 end
 
+function forecast(UDE::MultiUDE, test_data::DataFrame)
+
+    series_ls =  unique(test_data[:,UDE.series_column_name])
+    check_test_data_names(UDE.data_frame, test_data)
+    N, T, dims, test_data, test_times,  test_dataframe, test_series, inds, test_starts, test_lengths, labs = process_multi_data(test_data,UDE.time_column_name,UDE.series_column_name)
+    N, T, dims, data, times,  dataframe, series, inds, starts, lengths, labs = process_multi_data(UDE.data_frame,UDE.time_column_name,UDE.series_column_name)
+
+    dfs = []
+    i = 0
+    for series in eachindex(series_ls)
+        i += 1
+        time = times[starts[series]:(starts[series]+lengths[series]-1)]
+        dat = data[:,starts[series]:(starts[series]+lengths[series]-1)]
+        uhat = UDE.parameters.uhat[:,starts[series]:(starts[series]+lengths[series]-1)]
+        times_i = test_dataframe[test_dataframe[:,UDE.series_column_name] .== series, UDE.time_column_name]
+        df = forecast(UDE, uhat[:,end], time[end],times_i, series_ls[series])
+        push!(dfs,df)
+
+    end
+
+
+    df  = dfs[1]
+    for i in 2:length(dfs)
+        df = vcat(df,dfs[i])
+    end
+
+    return df
+end
 
 
 
