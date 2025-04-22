@@ -30,7 +30,7 @@ init_parameters = (NN = init_params ,r = 1.0,m=0.5,theta=0.5)
 
 model = UniversalDiffEq.CustomDerivatives(training_data,derivs!,init_parameters)
 function training!(model)
-    train!(model; loss_function = "derivative matching", optimizer = "ADAM",optim_options = (maxiter = 1,))
+    train!(model; loss_function = "conditional likelihood", optimizer = "ADAM",optim_options = (maxiter = 1,))
 end
 
 leave_future_out(model, training!, 3; path = false)
