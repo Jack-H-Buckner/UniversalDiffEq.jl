@@ -271,7 +271,7 @@ function MultiNODE(data,X;time_column_name = "time", series_column_name = "serie
 
     loss_function = init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,time_column_name,series_column_name,labels_df )
 
-    constructor = (data,X) -> MultiNODE(data,X;time_column_name = time_column_name , series_column_name =  series_column_name, variable_column_name = variable_column_name, value_column_name = value_column_name,
+    constructor = data -> MultiNODE(data,X;time_column_name = time_column_name , series_column_name =  series_column_name, variable_column_name = variable_column_name, value_column_name = value_column_name,
                                         hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type, l=l,extrap_rho=extrap_rho, ode_solver =ode_solver, ad_method = ad_method)
 
     return MultiUDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name, variable_column_name, value_column_name,labels_df,varnames,(ode = ode_solver, ad = ad_method))
@@ -352,7 +352,7 @@ function MultiCustomDerivatives(data,X,derivs!,initial_parameters;time_column_na
     loss_function = init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,time_column_name,series_column_name,labels_df )
 
     # model constructor
-    constructor = (data,X) -> MultiCustomDerivatives(data,X,derivs!,initial_parameters;time_column_name = time_column_name , series_column_name =  series_column_name,
+    constructor = data -> MultiCustomDerivatives(data,X,derivs!,initial_parameters;time_column_name = time_column_name , series_column_name =  series_column_name,
                         variable_column_name = variable_column_name, value_column_name = value_column_name, proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,
                         ode_solver =ode_solver, ad_method = ad_method)
 
@@ -415,7 +415,7 @@ function MultiCustomDifference(data,X,diff,initial_parameters;time_column_name =
     loss_function = init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,time_column_name,series_column_name,labels_df )
 
     # model constructor
-    constructor = (data,X) -> MultiCustomDifference(data,X,diff,initial_parameters;time_column_name = time_column_name , series_column_name =  series_column_name,
+    constructor = data -> MultiCustomDifference(data,X,diff,initial_parameters;time_column_name = time_column_name , series_column_name =  series_column_name,
                         variable_column_name = variable_column_name, value_column_name = value_column_name, proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l)
 
     return MultiUDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
