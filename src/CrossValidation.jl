@@ -126,7 +126,7 @@ function leave_future_out(model::UDE, training!, k; path = false)
 
     training, testing, forecasts = leave_future_out_cv(model, training!, k)
 
-    df_summary2, df_summary, df = summarize_leave_future_out(training, testing, forecasts; time_column_name = "time")
+    df_summary2, df_summary, df = summarize_leave_future_out(training, testing, forecasts; time_column_name = model.time_column_name)
     if !path
         return df_summary2, (horizon_by_var = df_summary, raw = df)
     end
