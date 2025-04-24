@@ -16,9 +16,7 @@ The package provides one specific implementation of universal differential equat
 To install and load UniversalDiffEq.jl, open Julia and type the following code:
 
 ```
-]add LLVM
-add FFMPEG
-add UniversalDiffEq
+]add UniversalDiffEq
 using UniversalDiffEq
 ```
 
