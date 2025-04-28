@@ -9,7 +9,10 @@
 [![Docs](https://img.shields.io/badge/docs-dev-blue)](https://jack-h-buckner.github.io/UniversalDiffEq.jl/dev/)
 [![Preprint](https://img.shields.io/badge/preprint-arXiv-red)](https://arxiv.org/abs/2410.09233)
 
+# Do Not merge this branch into main!!!
+
 ## This is a light weight version of the package that only contains some core functionality to limit potential issues with dependencies when working on an HPC 
+
 
 UniversalDiffEq.jl builds [Universal Differential Equations](https://arxiv.org/abs/2001.04385) (UDEs), dynamic models that combine neural networks with parametric equations to learn nonlinear dynamics from time series data. This package provides functions to build and train UDEs. It includes several training routines designed to work well when the data contain observation error and the underlying process is stochastic. The package uses [Lux.jl](https://lux.csail.mit.edu/stable/) to construct neural networks built into the model and [DiffEqFlux.jl](https://github.com/SciML/DiffEqFlux.jl) for automatic differentiation.
 
