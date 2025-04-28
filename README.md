@@ -9,6 +9,8 @@
 [![Docs](https://img.shields.io/badge/docs-dev-blue)](https://jack-h-buckner.github.io/UniversalDiffEq.jl/dev/)
 [![Preprint](https://img.shields.io/badge/preprint-arXiv-red)](https://arxiv.org/abs/2410.09233)
 
+## This is a light weight version of the package that only contains some core functionality to limit potential issues with dependencies when working on an HPC 
+
 UniversalDiffEq.jl builds [Universal Differential Equations](https://arxiv.org/abs/2001.04385) (UDEs), dynamic models that combine neural networks with parametric equations to learn nonlinear dynamics from time series data. This package provides functions to build and train UDEs. It includes several training routines designed to work well when the data contain observation error and the underlying process is stochastic. The package uses [Lux.jl](https://lux.csail.mit.edu/stable/) to construct neural networks built into the model and [DiffEqFlux.jl](https://github.com/SciML/DiffEqFlux.jl) for automatic differentiation.
 
 The package provides one specific implementation of universal differential equations. If you need to develop highly customized models, please use [DiffEqFlux.jl](https://github.com/SciML/DiffEqFlux.jl) instead.
@@ -40,8 +42,6 @@ As a simple example to get started on UniversalDiffEq.jl, we fit a UDE model to 
 ```julia
 using UniversalDiffEq, DataFrames
 
-data,plt = UniversalDiffEq.LotkaVolterra() # Generate synthetic predator prey data
-
 # Build neural network
 NN,params = UniversalDiffEq.SimpleNeuralNetwork(2,1)
 
@@ -72,26 +72,7 @@ train!(model;  loss_function = "derivative matching",
                loss_options = (d = 10, ),
                optim_options = (maxiter = 1000, step_size = 0.01))
 
-# Compare the estimated values of the state variables to the data set
-plot_state_estimates(model)
 ```
-
-<img alt="Lotka-Volterra Predictions" width = "500px" src="README images/state_plot.png" />
-
-```julia
-# Compare predicted to observed changes
-plot_predictions(model)
-```
-<img alt="Lotka-Volterra States" width = "500px" src="README images/predictions_plot.png" />
-
-```julia
-# plot forecast
-p1, (p2,p3) = UniversalDiffEq.plot_forecast(model, 50)
-p1
-```
-<img alt="Lotka-Volterra States" width = "500px" src="README images/forecast_plot.png" />
-
-Please see the documentation for a detailed tutorial.
 
 # Acknowledgements
 <img alt="NSF Logo" width="200px" src="README images/NSF_logo.png" />
