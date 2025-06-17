@@ -43,6 +43,9 @@ train!(model; loss_function = "shooting", optimizer = "ADAM",optim_options = (ma
 train!(model; loss_function = "multiple shooting", optimizer = "ADAM",optim_options = (maxiter = 1,))
 train!(model; loss_function = "conditional likelihood", optimizer = "ADAM",optim_options = (maxiter = 1,))
 train!(model; loss_function = "marginal likelihood", optimizer = "ADAM",optim_options = (maxiter = 1,), loss_options = (observation_error = 0.01,))
+train!(model; loss_function = "spline gradient matching", optimizer = "ADAM",optim_options = (maxiter = 1,))
+train!(model; loss_function = "neural gradient matching", optimizer = "ADAM",optim_options = (maxiter = 1,))
+
 
 
 # alternative training routines

@@ -35,6 +35,7 @@ StochasticDiffEq = "789caeaf-c7a9-5a7d-9973-96adeb23e2a0"
 Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [weakdeps]
+Enzyme = "7da242da-08ed-463a-9acd-ee780be4f1d9"
 NonlinearSolveBase = "be0214bd-f91f-a760-ac4e-3421ce2b2da0"
 
 [compat]
@@ -46,6 +47,7 @@ DataFrames = "^1.6"
 DataInterpolations = "4.6.0 - 6.6"
 DiffEqFlux = "2.4.0 - 4.3"
 Distributions = "^0.25"
+Enzyme = "^0.13.50"
 FiniteDiff = "^2.22"
 Interpolations = "^0.15"
 JSON = "^0.21"

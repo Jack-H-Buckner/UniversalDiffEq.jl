@@ -754,3 +754,178 @@ function multiple_shooting_states(UDE::MultiUDE,  pred_length)
 
     return uhats
 end 
+
+
+# define neural gradient matching loss
+function interp_loss_2(p, states, t, u, NN)
+    uhat =  Lux.apply(NN,t,p,states)[1]
+    L = sum((u .- uhat).^2)
+    return L
+end
+
+
+function initialize_nn_interpolations(u,t,init_weights_layer_1)
+
+    # initialise neural network and parameters
+    rng = Random.default_rng() 
+    logit(x) = exp(x)/(1+exp(x))
+    NN = Lux.Chain(Lux.Dense(1,length(t),tanh),Lux.Dense(length(t),size(u)[1]))
+
+    pars, states = Lux.setup(rng,NN)
+    pars.layer_1.weight .= init_weights_layer_1 # initlaize weights so one neuron in lined up with each time step 
+    pars.layer_1.bias .= -1*t[1,:].*init_weights_layer_1
+   
+    # Target function 
+    function target(x,_)
+        interp_loss_2(x, states, t, u, NN)
+    end
+
+    # Optimization rutine 
+    adtype = Optimization.AutoZygote()
+    optf = Optimization.OptimizationFunction(target, adtype)
+    optprob = Optimization.OptimizationProblem(optf,ComponentArray(pars))
+    callback = function (p, l; doplot = false)
+      return false
+    end
+
+    # Run optimizer twice with two differnt stpe sizes 
+    sol = Optimization.solve(optprob, OptimizationOptimisers.Adam(0.05), callback = callback, maxiters = 250)
+    optprob = Optimization.OptimizationProblem(optf,ComponentArray(sol.u))
+    sol = Optimization.solve(optprob, OptimizationOptimisers.Adam(0.025), callback = callback, maxiters = 500)
+
+    # return parameters for interpolation
+    interp_params = sol.u
+    return interp_params, NN, states
+end 
+
+function dNNdt(t,pars)
+    derivs(x) = 1 - tanh(x)^2
+    m1 = pars.layer_1.weight .* pars.layer_2.weight' 
+    M = derivs.(pars.layer_1.bias.+pars.layer_1.weight*t )'
+    du = M*m1[:,1]
+    for i in 2:size(m1)[2]
+        du = hcat(du, M*m1[:,i])
+    end
+    return du
+end
+
+function neural_gradient_matching_loss(UDE::UDE, σ, τ, regularization_weight, init_weights_layer_1)
+
+    t = reshape(UDE.times,1,length(UDE.times))
+    interp_params, interpNN, states = initialize_nn_interpolations(UDE.data,t,init_weights_layer_1)
+   
+    parameters = ComponentArray((UDE = UDE.parameters, interp = interp_params))
+    u = UDE.data
+
+    function loss(parameters, σ, τ,regularization_weight) #t,u,params,states,interpNN,gradModel,σ,τ,δ
+
+        # get dimensions 
+        T = size(t)[2]
+        
+        # calculate loss for first dimesion
+        û = Lux.apply(interpNN,t, parameters.interp, states)[1]
+        L = 1/σ^2*sum((u .- û).^2) 
+
+        # calcualte gradients 
+        Δû= dNNdt(t, parameters.interp)'
+
+        for t_ in 1:T
+            Δ̂u = UDE.process_model.rhs(û[:,t_], parameters.UDE.process_model, t[t_])
+            L += 1/τ^2*sum((Δû[:,t_].- Δ̂u).^2 )
+        end
+        L += L2(0.0,regularization_weight,parameters.UDE.process_model)
+
+        return L 
+    end
+
+    loss_ = parameters -> loss(parameters,σ,τ,regularization_weight)
+
+    return loss_, parameters, (interpNN,states)
+
+end 
+
+
+
+############################################
+### Method for training UDEs by matching ###
+### the gradients of the UDE to a linear ###
+### interpolation of the time series.    ###
+### This approximates inference for the  ###
+### stochastic ODEs.                     ###
+############################################    
+struct linear_interp
+    t
+    ts 
+    inds_1
+    inds_2
+    weights_1
+    weights_2
+end 
+
+function linear_interp(t,ts) 
+    println(argmin(abs.(ts .- maximum(ts[ts.<t[end]]))))
+    inds_1 = broadcast(u -> argmin(abs.(ts .- maximum(ts[ts.<u]))), t)
+    inds_2 = broadcast(u -> argmin(abs.(ts .- minimum(ts[ts.>u]))), t)
+    weights_1 = (t.-ts[inds_1])./(ts[inds_2]-ts[inds_1])
+    weights_2 = 1 .- weights_1
+    return linear_interp(t,ts,inds_1,inds_2,weights_1,weights_2)
+end 
+
+function interp_derivs(interp,α)
+    dt = (α[2:(end),:] .- α[1:(end-1),:])./(interp.ts[2:(end)].-interp.ts[1:(end-1)])
+    return interp.ts[1:(end-1)], dt
+end 
+
+function interp_states_spline(uapprox,α)
+    w1, w2 = uapprox.weights_1, uapprox.weights_2
+    α1 = α[uapprox.inds_1,:]
+    α2 = α[uapprox.inds_2,:]
+    û = (α1 .* w1 .+ α2 .* w2)
+    return û[1,:,:]'
+end 
+
+
+function spline_gradient_matching_loss(UDE::UDE, σ, τ, regularization_weight, T)
+
+    # Get time points for interpolations
+    t = reshape(UDE.times,1,length(UDE.times))
+    dt = (t[1,end]-t[1,1]) / T
+    ts = collect((t[1,1]-2*dt):dt:(t[1,end]+2*dt))
+
+    # Get time step of interpolation reletive to the data set
+    average_interval = (t[1,end]-t[1,1])/length(t)
+    Δt = dt/average_interval
+
+    # initialize interpolcation 
+    uapprox = linear_interp(t,ts) 
+    u = UDE.data
+    α = zeros(length(ts),size(u)[1])
+    parameters = ComponentArray((α=α,UDE = UDE.parameters))
+    
+    function loss(u,parameters,uapprox,σ,τ)
+
+        # get dimensions 
+        T = length(uapprox.t)
+
+        # calculate loss for first dimesion
+        û = interp_states_spline(uapprox,parameters.α)
+        Lobs = sum( ((u .- û)./σ).^2 ) 
+
+        # calcualte gradients 
+        û = parameters.α[1:(end-1),:]
+        ts, Δû = interp_derivs(uapprox,parameters.α)
+        T̂ = length(ts)
+        Ldyn = 0
+        for t_ in eachindex(ts)[1:(end-1)]
+            Δ̂u = UDE.process_model.rhs(û[t_,:], parameters.UDE.process_model, ts[t_])
+            Ldyn += sum( ((Δû[t_,:] .- Δ̂u)./(sqrt(Δt)*τ)).^2 )
+        end
+        Lreg = L2(0.0,regularization_weight,parameters.UDE.process_model)
+        return Lobs + Lreg + T/T̂ * Ldyn
+    end
+
+    loss_ = parameters -> loss(u,parameters,uapprox,σ,τ)
+
+    return loss_, parameters, uapprox
+
+end 
