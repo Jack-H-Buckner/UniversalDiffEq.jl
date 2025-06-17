@@ -250,6 +250,10 @@ function default_options(loss_function)
     return(step_size = 0.05, maxiter = 500)
   elseif loss_function == "multiple shooting"
     return (step_size = 0.05, maxiter = 500)
+  elseif loss_function == "neural gradient matching"
+    return (step_size = 0.05, maxiter = 500)
+  elseif loss_function == "spline gradient matching"
+    return (step_size = 0.05, maxiter = 500)
   end
 end
 
@@ -444,6 +448,22 @@ function train!(UDE::UDE;
 
     loss, params, _  = multiple_shooting_loss(UDE,regularization_weight,options.pred_length)
     uhat = UDE.data
+
+  elseif loss_function == "neural gradient matching"
+
+    new_options = ComponentArray(loss_options)
+    options = ComponentArray((σ=0.1, τ = 0.5, init_weights_layer_1 = 5.0))
+    options[keys(new_options)] .= new_options
+    loss, params, interp  = neural_gradient_matching_loss(UDE, options.σ, options.τ, regularization_weight, options.init_weights_layer_1)
+    interpNN, interp_states = interp
+
+  elseif loss_function == "spline gradient matching"
+
+    new_options = ComponentArray(loss_options)
+    options = ComponentArray((σ=0.05^2, τ = 0.025^2,  T = 100))
+    options[keys(new_options)] .= new_options
+    loss, params, interp  = spline_gradient_matching_loss(UDE, options.σ, options.τ, regularization_weight, options.T)
+
   else
     throw("Select a valid loss function. Choose from 'conditional likelihood', 'marginal likelihood', 'gradient matching', 'shooting', or 'multiple shooting'.")
 
@@ -479,6 +499,10 @@ function train!(UDE::UDE;
     sol = Optimization.solve(optprob, OptimizationOptimisers.Adam(options.step_size), callback = callback, maxiters = options.maxiter)
     if loss_function == "marginal likelihood"
       Pν = sol.u.Pν
+      UDE.parameters = sol.u.UDE
+    elseif loss_function == "neural gradient matching"
+      UDE.parameters = sol.u.UDE
+    elseif loss_function == "spline gradient matching"
       UDE.parameters = sol.u.UDE
     else
       UDE.parameters = sol.u
@@ -525,6 +549,12 @@ function train!(UDE::UDE;
       out = (Pν = Pν, Px = Px)
       UDE.parameters.uhat = x
 
+    elseif loss_function == "neural gradient matching"
+      t = reshape(UDE.times,1,length(UDE.times))
+      UDE.parameters.uhat .= Lux.apply(interpNN, t, sol.u.interp, interp_states)[1]
+
+    elseif loss_function == "spline gradient matching"
+      UDE.parameters.uhat .= interp_states_spline(interp,sol.u.α)
     end
 
     return out
