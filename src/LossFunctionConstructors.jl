@@ -887,12 +887,18 @@ end
 
 function spline_gradient_matching_loss(UDE::UDE, σ, τ, regularization_weight, T)
 
+    # Get time points for interpolations
     t = reshape(UDE.times,1,length(UDE.times))
-    Δt = (t[1,end]-t[1,1]) / T
-    ts = collect((t[1,1]-2*Δt):Δt:(t[1,end]+2*Δt))
+    dt = (t[1,end]-t[1,1]) / T
+    ts = collect((t[1,1]-2*dt):dt:(t[1,end]+2*dt))
+
+    # Get time step of interpolation reletive to the data set
+    average_interval = (t[1,end]-t[1,1])/length(t)
+    Δt = dt/average_interval
+
+    # initialize interpolcation 
     uapprox = linear_interp(t,ts) 
     u = UDE.data
-
     α = zeros(length(ts),size(u)[1])
     parameters = ComponentArray((α=α,UDE = UDE.parameters))
     
