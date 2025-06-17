@@ -351,7 +351,7 @@ For ADAM the `optim_options` can be used to specify the step size `step_size` an
 """
 function train!(UDE::UDE;
   t_skip = NaN,
-  loss_function = "derivative matching",
+  loss_function = "spline gradient matching",
   optimizer = "ADAM",
   regularization_weight = 0.0,
   verbose = true,
@@ -421,7 +421,7 @@ function train!(UDE::UDE;
 
     end
     
-  elseif (loss_function == "derivative matching") | (loss_function == "gradient matching")
+  elseif (loss_function == "derivative matching") | ((loss_function == "gradient matching") | (loss_function == "smooth gradient matching"))
     if UDE.solvers == nothing
       throw("This method does not work with discrete time models (i.e., CustomDifference), please select from 'conditional likelihood' or 'marginal likelihood'.")
     end
@@ -465,7 +465,7 @@ function train!(UDE::UDE;
     loss, params, interp  = spline_gradient_matching_loss(UDE, options.σ, options.τ, regularization_weight, options.T)
 
   else
-    throw("Select a valid loss function. Choose from 'conditional likelihood', 'marginal likelihood', 'gradient matching', 'shooting', or 'multiple shooting'.")
+    throw("Select a valid loss function. Choose from 'conditional likelihood', 'marginal likelihood', 'shooting',  'multiple shooting' 'smooth gradient matching', 'neural gradient matching', or 'spline gradient matching'  .")
 
   end
 
