@@ -298,7 +298,7 @@ Builds a UDE model that can be trianed on multiple time series simultaniously. T
 - `ode_solver`: method to aproximate solutions to the differntail equation. Defaul is `Tsit5()`.
 - `ad_method`:method to evalaute derivatives of the ODE solver. Default is `ForwardDiffSensitivity()`.
 """
-function MultiCustomDerivatives(data,derivs!,initial_parameters;time_column_name = "time", series_column_name = "series",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25, ode_solver = Tsit5(), ad_method = ForwardDiffSensitivity())
+function MultiCustomDerivatives(data,derivs!,initial_parameters;time_column_name = "time", series_column_name = "series",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,reg_type="L2",extrap_rho = 0.1,l = 0.25, ode_solver = Tsit5(), ad_method = ForwardDiffSensitivity())
 
     time_column_name, series_column_name = check_column_names(data, time_column_name = time_column_name, series_column_name = series_column_name)
 
@@ -330,7 +330,7 @@ function MultiCustomDerivatives(data,derivs!,initial_parameters;time_column_name
 end
 
 
-function MultiCustomDerivatives(data,X,derivs!,initial_parameters;time_column_name = "time", series_column_name = "series", variable_column_name = nothing, value_column_name = nothing,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25, ode_solver = Tsit5(), ad_method = ForwardDiffSensitivity())
+function MultiCustomDerivatives(data,X,derivs!,initial_parameters;time_column_name = "time", series_column_name = "series", variable_column_name = nothing, value_column_name = nothing,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,reg_type="L2",extrap_rho = 0.1,l = 0.25, ode_solver = Tsit5(), ad_method = ForwardDiffSensitivity())
     X_data_frame = X
     time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name, series_column_name = series_column_name, value_column_name = value_column_name, variable_column_name = variable_column_name)
     # convert data
