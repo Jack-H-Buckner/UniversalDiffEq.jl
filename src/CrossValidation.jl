@@ -18,9 +18,12 @@ function leave_future_out_cv(model::UDE, training!, k)
     training_data = []
     testing_data = []
     data = model.data_frame
+    T = floor(Int,length(model.times)/k)
+    t = T
     for i in 1:k
-        push!(training_data, data[1:(end-i),:])
-        push!(testing_data, data[(end-i+1):end,:])
+        push!(testing_data, data[(t+1):end,:])
+        push!(training_data, data[1:t,:])
+        t += T
     end
 
     forecasts = Array{Any}(nothing, k)
