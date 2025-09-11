@@ -601,11 +601,11 @@ function train!(UDE::MultiUDE;
       Pν = errors_to_matrix(loss_options.process_error, L)
     end
 
-    Pη = 0
+    Pη = errors_to_matrix(0.1, L)
     if :observation_error in keys(loss_options)
       Pη = errors_to_matrix(loss_options.observation_error, L)
     else
-      throw("Marginal likelihood requires observation errors. \n Use `loss_options = (observation_error = ...,)` to specify its value.")
+      println("Using the defualt observation error (0.1)for training,  which may be inapropreate for your data \n, please see the documentation for guidance of these model parameters . \n You can wse `loss_options = (observation_error = ...,)` to specify their value.")
     end
 
     new_options = ComponentArray(loss_options)
@@ -675,6 +675,7 @@ function train!(UDE::MultiUDE;
 
     # run optimizer
     sol = Optimization.solve(optprob, OptimizationOptimisers.Adam(options.step_size), callback = callback, maxiters = options.maxiter)
+    # assign parameters to model
     if loss_function == "marginal likelihood"
       Pν = sol.u.Pν * sol.u.Pν'
       UDE.parameters = sol.u.UDE
@@ -691,6 +692,12 @@ function train!(UDE::MultiUDE;
         callback, allow_f_increases = false)
 
     # assign parameters to model
+    if loss_function == "marginal likelihood"
+      Pν = sol.u.Pν * sol.u.Pν'
+      UDE.parameters = sol.u.UDE
+    else
+      UDE.parameters = sol.u
+    end
   else
     throw("Select a valid optimization algorithm. Choose from 'ADAM' or 'BFGS'.")
   end
