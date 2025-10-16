@@ -209,7 +209,7 @@ function MultiNODE(data;time_column_name = "time", series_column_name = "series"
 
     loss_function = init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,time_column_name,series_column_name,labels_df )
 
-    constructor = (data) -> MultiNODE(data;time_column_name = time_column_name , series_column_name = time_column_name ,hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type, l=l,extrap_rho=extrap_rho,ode_solver =ode_solver, ad_method = ad_method)
+    constructor = (data) -> MultiNODE(data;time_column_name = time_column_name , series_column_name = series_column_name ,hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type, l=l,extrap_rho=extrap_rho,ode_solver =ode_solver, ad_method = ad_method)
 
     return MultiUDE(times,data,0,dataframe,0,parameters,loss_function,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name,nothing,nothing,labels_df,varnames,(ode = ode_solver, ad = ad_method))
 

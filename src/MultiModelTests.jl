@@ -247,6 +247,8 @@ end
 
 function forecast(UDE::MultiUDE, u0::AbstractVector{}, t0::Real, times::AbstractVector{}, series)
 
+    println(series," ")
+
     ind = UDE.series_labels.index[UDE.series_labels.label .== series][1]
 
     estimated_map = (x,t,dt) -> UDE.process_model.predict(x,ind,t,dt,UDE.parameters.process_model)[1]
