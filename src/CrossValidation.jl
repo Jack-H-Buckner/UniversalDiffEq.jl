@@ -13,12 +13,13 @@ function forecast_data(UDE::UDE, test_data::DataFrame)
 end
 
 
-function leave_future_out_cv(model::UDE, training!, k)
+function leave_future_out_cv(model::UDE, training!, k, skip )
 
     training_data = []
     testing_data = []
     data = model.data_frame
-    for i in 1:k
+    skip = round(Int,skip)
+    for i in skip:skip:(skip*k)
         push!(training_data, data[1:(end-i),:])
         push!(testing_data, data[(end-i+1):end,:])
     end
@@ -121,10 +122,11 @@ If the model is trained on multiple time series the named tupe will include a th
     # kwargs
 
 - `path`: the path to a directory to save the output dataframes, defaults to Null
+- `skip`: the number of observations to skip in each fold, defaults to 1
 """
-function leave_future_out(model::UDE, training!, k; path = false)
+function leave_future_out(model::UDE, training!, k; skip = 1,path = false)
 
-    training, testing, forecasts = leave_future_out_cv(model, training!, k)
+    training, testing, forecasts = leave_future_out_cv(model, training!, k, skip)
 
     df_summary2, df_summary, df = summarize_leave_future_out(training, testing, forecasts; time_column_name = model.time_column_name)
     println(typeof(path))
@@ -207,6 +209,8 @@ function forecast_data(UDE::MultiUDE, test_data::DataFrame)
     uhat = UDE.parameters.uhat[:,starts[series]:(starts[series]+lengths[series]-1)]
     series_ls = unique(test_dataframe[:,UDE.series_column_name])
     
+    println(UDE.series_column_name," ")
+
     df = forecast(UDE, uhat[:,end], time[end], test_dataframe[test_dataframe[:,UDE.series_column_name] .== series_ls[1], UDE.time_column_name], series_ls[1])
 
     for series in 2:length(series_ls)
@@ -226,13 +230,15 @@ function forecast_data(UDE::MultiUDE, test_data::DataFrame)
 end
 
 
-function leave_future_out_cv(model::MultiUDE, training!, k)
+function leave_future_out_cv(model::MultiUDE, training!, k, skip)
 
     training_data = []
     testing_data = []
     data = model.data_frame
     series = unique(data.series)
-    for i in 1:k
+    skip = round(Int,skip)
+
+    for i in skip:skip:(skip*k)
         data_series = data[data.series .== series[1],:]
         train = data_series[1:(end-i),:]
         test = data_series[(end-i+1):(end),:]
@@ -344,9 +350,9 @@ function summarize_leave_future_out_multi(training, testing, forecasts; time_col
 end 
 
 
-function leave_future_out(model::MultiUDE, training!, k; path = false)
+function leave_future_out(model::MultiUDE, training!, k ; skip = 1, path = false)
 
-    training, testing, forecasts = leave_future_out_cv(model, training!, k)
+    training, testing, forecasts = leave_future_out_cv(model, training!, k, skip)
 
     df_summary3, detailed_summaries = summarize_leave_future_out_multi(training, testing, forecasts; time_column_name = model.time_column_name, series_column_name=model.series_column_name)
     if !path
