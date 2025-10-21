@@ -90,6 +90,7 @@ function predictions(UDE::MultiUDE)
 end
 
 function predictions(UDE::MultiUDE,test_data::DataFrame)
+
     check_test_data_names(UDE.data_frame, test_data)
     N, T, dims, data, times,  dataframe, series_ls, inds, starts, lengths, labs = process_multi_data(test_data,UDE.time_column_name,UDE.series_column_name)
     series_ls =  unique(UDE.data_frame[:,"series"])
@@ -121,11 +122,14 @@ function predictions(UDE::MultiUDE,test_data::DataFrame)
 end
 
 function predict(UDE::MultiUDE,test_data::DataFrame)
+
     series_ls =  unique(test_data[:,UDE.series_column_name])
     check_test_data_names(UDE.data_frame, test_data)
-    N, T, dims, data, times,  dataframe, series_, inds, starts,
-    lengths = process_multi_data(test_data, UDE.time_column_name, UDE.series_column_name)
+
+    N, T, dims, data, times,  dataframe, series_ls, inds, starts, lengths, labs = process_multi_data(test_data, UDE.time_column_name, UDE.series_column_name)
+
     dfs = [zeros(l-1,dims+2) for l in lengths]
+    
     for series in eachindex(starts)
         time = times[starts[series]:(starts[series]+lengths[series]-1)]
         dat = data[:,starts[series]:(starts[series]+lengths[series]-1)]
@@ -144,7 +148,7 @@ function predict(UDE::MultiUDE,test_data::DataFrame)
     for i in 2:length(starts)
         df = vcat(df,dfs[i])
     end
-    names = vcat(["series","t"], [string("x",i) for i in 1:dims])
+    names = vcat([UDE.series_column_name,UDE.time_column_name], [string("x",i) for i in 1:dims])
     return DataFrame(df,names)
 end 
 

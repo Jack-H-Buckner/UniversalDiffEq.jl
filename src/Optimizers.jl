@@ -588,12 +588,12 @@ function train!(UDE::MultiUDE;
   uhat = 0
   if loss_function =="conditional likelihood" 
 
-    # new_options = ComponentArray(loss_options)
-    # options = ComponentArray((observation_error = 0.025, process_error = 0.025))
-    # options[keys(new_options)] .= new_options
-
     new_options = ComponentArray(loss_options)
     options = ComponentArray((observation_error = 0.025, process_error = 0.025))
+    options[keys(new_options)] .= new_options
+
+    # new_options = ComponentArray(loss_options)
+    # options = ComponentArray((observation_error = 0.025, process_error = 0.025))
     inds  = broadcast(i -> !(keys(new_options)[i] in [:process_error,:observation_error]), 1:length(keys(new_options)))
     keys_ = keys(new_options)[inds]
     options[keys_] .= new_options[keys_]

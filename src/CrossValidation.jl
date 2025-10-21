@@ -363,3 +363,112 @@ function leave_future_out(model::MultiUDE, training!, k ; skip = 1, path = false
 
     return df_summary3, detailed_summaries
 end 
+
+
+### leave sites out 
+# CRPS
+# 1/M sum(abs(xi-y)) - 1/2M^2 sum(sum(abs(xi-xj)))
+# energy score?
+
+# CRQS
+# 1/M sum((xi-y)^2) - 1/2M^2 sum(sum((xi-xj)^2))
+
+# Train model
+# forecast with the model for each sites
+# calcualte CRPS / CRQS using each forecast as a sample
+# smooth using obs and proc errors from training?
+function leave_site_out_i(model::MultiUDE, training!,i)
+
+    training_inds = model.data_frame[:,model.series_column_name] .== i 
+    testing_inds = model.data_frame[:,model.series_column_name]  .!= i
+
+    training_i = model.data_frame[training_inds,:]
+    testing_i = model.data_frame[testing_inds,:]
+
+    model_i = model.constructor(training_i)
+    training!(model_i)
+
+    
+end 
+
+
+function leave_site_out_sample(model, training!,i)
+
+    training_inds = model.data_frame[:,model.series_column_name] .!= i 
+    testing_inds = model.data_frame[:,model.series_column_name]  .== i
+
+    training_i = model.data_frame[training_inds,:]
+    testing_i = model.data_frame[testing_inds,:]
+
+    model_i = model.constructor(training_i)
+    training!(model_i)
+    inds =  unique(model_i.data_frame[:,model.series_column_name])
+
+    preds = []
+    for j in inds
+        testing_i[:,model.series_column_name] .= j
+        push!(preds,UniversalDiffEq.predict(model_i,testing_i))
+    end
+    tmin = minimum(testing_i[:,model.time_column_name])
+    testing_i = testing_i[testing_i[:,model.time_column_name] .> tmin,:]
+
+    return testing_i, training_i, preds 
+end 
+
+
+function energy_score(testing,preds,model)
+
+    M = length(preds)
+    T = length(testing[:,1])
+
+    # remove time and sereis column names 
+    testing = testing[:,names(testing).!=model.time_column_name]
+    testing = testing[:,names(testing).!=model.series_column_name]
+    for i in 1:M
+        preds[i] = preds[i][:,names(preds[i]).!=model.time_column_name]
+        preds[i] = preds[i][:,names(preds[i]).!=model.series_column_name]
+    end 
+    score = 0
+    for t in 1:T
+        for i in 1:M
+            pred_i = Vector(preds[i][t,1:end])
+            test_i = Vector(testing[t,1:end])
+            score += 1/M * sum(sqrt.((pred_i .- test_i).^2))
+            for j in 1:M
+                pred_j = Vector(preds[j][t,1:end])
+                score += -1/(2*M^2) * sum(sqrt.((pred_i - pred_j).^2))
+            end
+        end
+    end 
+
+    return score/T
+end 
+
+using StatsBase
+"""
+    leave_site_out(model, training!; kwargs...)
+
+Calcualtes the average forecasting accuracy of the model's one-step-ahead predictions leaving the full time series for
+one site out at a time. Each time step in the testing data set is forecast using the model paramters for each of the 
+sites in the training data set. The pserfoance of these forecasts is quantified using the energy score which is a 
+multivariate extension of the continuous rank probability score (CRPS). This metric reduces to the mean absolue 
+forecasting error when an identical model is fit to each site in the training data set. 
+
+...
+
+# Keyword Arguments
+- `sites`: the number of sites to leave out, defualts to the number of sites in the training data set.  
+"""
+function leave_site_out(model, training!; sites = length(unique(model.data_frame[:,model.series_column_name])))
+    
+    site_ls = sample(unique(model.data_frame[:,model.series_column_name]),sites,replace=false)
+    scores = zeros(length(site_ls))
+
+    Threads.@threads for i in site_ls
+        testing, training, preds  =  leave_site_out_sample(model, training!,i)
+        scores[i] = energy_score(testing,preds,model)
+    end
+
+    return sum(scores)/length(scores)
+end
+

@@ -153,7 +153,7 @@ end
 function MultiDiscreteProcessModel(difference,parameters,covariates,dims,l,extrap_rho)
     
     function predict(u,i,t,dt,parameters) 
-        tspan =  t:(t+dt)
+        tspan =  t:(t+dt-1)
         for t in tspan
             u = difference(u,i,covariates(t,i),parameters,t)
         end 
@@ -172,7 +172,7 @@ end
 function MultiDiscreteProcessModel(difference,parameters,dims,l,extrap_rho)
     
     function predict(u,i,t,dt,parameters) 
-        tspan =  t:(t+dt)
+        tspan =  t:(t+dt-1)
         for t in tspan
             u = difference(u,i,parameters,t)
         end 
