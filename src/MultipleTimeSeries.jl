@@ -352,7 +352,7 @@ function MultiCustomDerivatives(data,X,derivs!,initial_parameters;time_column_na
     loss_function = init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,time_column_name,series_column_name,labels_df )
 
     # model constructor
-    constructor = data -> MultiCustomDerivatives(data,X,derivs!,initial_parameters;time_column_name = time_column_name , series_column_name =  series_column_name,
+    constructor = data -> MultiCustomDifference(data,X,derivs!,initial_parameters;time_column_name = time_column_name , series_column_name =  series_column_name,
                         variable_column_name = variable_column_name, value_column_name = value_column_name, proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,
                         ode_solver =ode_solver, ad_method = ad_method)
 
@@ -363,7 +363,7 @@ end
 
 
 
-function MultiCustomDifference(data,diff,initial_parameters;time_column_name = "time", series_column_name = "series",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
+function MultiCustomDifference(data,diff,initial_parameters;time_column_name = "time", series_column_name = "series",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 1000)
 
     time_column_name, series_column_name = check_column_names(data, time_column_name = time_column_name, series_column_name = series_column_name)
 
@@ -385,7 +385,7 @@ function MultiCustomDifference(data,diff,initial_parameters;time_column_name = "
     loss_function = init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,time_column_name,series_column_name,labels_df )
 
     # model constructor
-    constructor = (data) -> MultiCustomDerivatives(data,diff,initial_parameters;time_column_name = time_column_name , series_column_name =  series_column_name,
+    constructor = (data) -> MultiCustomDifference(data,diff,initial_parameters;time_column_name = time_column_name , series_column_name =  series_column_name,
                     proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l)
 
     return MultiUDE(times,data,0,dataframe,0,parameters,loss_function,process_model,process_loss,observation_model,
@@ -393,7 +393,7 @@ function MultiCustomDifference(data,diff,initial_parameters;time_column_name = "
 
 end
 
-function MultiCustomDifference(data,X,diff,initial_parameters;time_column_name = "time", series_column_name = "series", variable_column_name = nothing, value_column_name = nothing,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
+function MultiCustomDifference(data,X,diff,initial_parameters;time_column_name = "time", series_column_name = "series", variable_column_name = nothing, value_column_name = nothing,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 1000)
     X_data_frame = X
     time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name, series_column_name = series_column_name, value_column_name = value_column_name, variable_column_name = variable_column_name)
     # convert data
