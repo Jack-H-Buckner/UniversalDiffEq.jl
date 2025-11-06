@@ -253,7 +253,7 @@ function predictions(UDE::UDE,test_data::DataFrame)
         u0 = inits[:,t]
         u1 = obs[:,t]
         dt = times[t+1] - times[t]
-        preds[:,t] = UDE.process_model.predict(u0,UDE.times[t],dt,UDE.parameters.process_model)[1]
+        preds[:,t] = UDE.process_model.predict(u0,times[t],dt,UDE.parameters.process_model)[1]
     end
 
     return inits, obs, preds
@@ -271,8 +271,8 @@ function predictions(UDE::BayesianUDE,test_data::DataFrame;summarize = true,ci =
         for t in 1:(size(inits)[2])
             u0 = inits[:,t]
             u1 = obs[:,t]
-            dt = UDE.times[t+1] - UDE.times[t]
-            preds[i][:,t] = UDE.process_model.predict(u0,UDE.times[t],dt,UDE.parameters[i].process_model)[1]
+            dt = times[t+1] - times[t]
+            preds[i][:,t] = UDE.process_model.predict(u0,times[t],dt,UDE.parameters[i].process_model)[1]
         end
     end
 
