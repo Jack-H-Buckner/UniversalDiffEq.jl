@@ -253,7 +253,7 @@ function predictions(UDE::UDE,test_data::DataFrame)
         u0 = inits[:,t]
         u1 = obs[:,t]
         dt = times[t+1] - times[t]
-        preds[:,t] = UDE.process_model.predict(u0,UDE.times[t],dt,UDE.parameters.process_model)[1]
+        preds[:,t] = UDE.process_model.predict(u0,times[t],dt,UDE.parameters.process_model)[1]
     end
 
     return inits, obs, preds
