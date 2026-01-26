@@ -13,6 +13,7 @@ function forecast_data(UDE::UDE, test_data::DataFrame)
 end
 
 
+
 function leave_future_out_cv(model::UDE, training!, k, skip )
 
     training_data = []
@@ -472,3 +473,198 @@ function leave_site_out(model, training!; sites = length(unique(model.data_frame
     return sum(scores)/length(scores)
 end
 
+
+### Leave blocks of future data out. 
+
+function filter_data(UDE::UDE, test_data::DataFrame,H, Pν, Pη,L,α,β,κ)
+
+    #check_test_data_names(UDE.data_frame, test_data)
+    u0 = UDE.parameters.uhat[:,end]
+    N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
+    ll = ukf_likelihood(y,u0,times,f,parameters.UDE.process_model,H,Pν,Pη,L,α,β,κ)
+
+    return ll
+end
+
+function update_filter_options!(options, UDE)
+    # set up observaiton and error matrices 
+    L = size(UDE.data)[1]
+    H = Matrix(1.0I, L, L)
+    Pν = errors_to_matrix(0.1, L)
+    if :process_error in keys(options)
+      Pν = errors_to_matrix(options.process_error, L)
+    end
+
+    Pη = errors_to_matrix(0.1, L)
+    if :observation_error in keys(options)
+      Pη = errors_to_matrix(options.observation_error, L)
+    else
+      println("Using the default observation error (0.1) for training, which may be inappropriate for your data. \n Please see the documentation for guidance of these model parameters. \n You can use `loss_options = (observation_error = ...,)` to specify their values.")
+    end
+
+    # add scalar values to options
+    new_options = ComponentArray(options)
+    options = ComponentArray((α = 10^-3, β = 2,κ = 0))
+    inds  = broadcast(i -> !(keys(new_options)[i] in [:process_error,:observation_error]), 1:length(keys(new_options)))
+    keys_ = keys(new_options)[inds]
+    options[keys_] .= new_options[keys_]
+
+    # add matrices to options 
+    options.H = H
+    options.Pν = Pν
+    options.Pη = Pη
+    return options
+end 
+
+# used to get SEs for model skill metrics 
+function standard_error(x)
+    std(x)/sqrt(length(x))
+end
+
+# Summarizes cross validation results
+function summarize_cv_results(model,preds,obs,times)
+
+    # bind together resutls form each fold 
+    preds_cat = reduce(hcat, preds)
+    obs_cat = reduce(hcat, obs)
+    times_cat = reduce(vcat, times)
+
+    # get variable names from the model object
+    nms = names(model.data_frame)
+    nms = nms[nms .!= model.time_column_name]
+
+    # build data frames from predictions
+    df_preds = DataFrame(preds_cat', nms)
+    df_preds[:,model.time_column_name] = times_cat
+    df_preds = stack(df_preds, nms, value_name = "predicted")
+
+    # build data frame from observations
+    df_obs = DataFrame(obs_cat', nms)
+    df_obs[:,model.time_column_name] = times_cat
+    df_obs = stack(df_obs, nms, value_name = "observed")
+
+    # join predictions and observations calcualte errors 
+    df = innerjoin(df_obs,df_preds,on = [model.time_column_name,"variable"])
+    df.AE=abs.(df.observed.-df.predicted)
+    df.SE=(df.observed.-df.predicted).^2
+
+    # group by variable and summarize
+    gdf = groupby(df, :variable)
+    summary = combine(gdf, 
+        :SE => mean => :MSE,
+        :SE => standard_error => :MSE_SE,
+        :AE => mean => :MAE,
+        :AE => standard_error => :MAE_SE,
+        [:observed,:predicted] => cor => :correlation,
+        nrow => :count
+    )
+
+    # return summary and raw data for user defined summaries 
+    return summary, df
+end 
+
+"""
+    leave_future_out_predict(model, training!, n_per_fold, k_folds)
+
+This method performs leave future out cross validation, by leaving blocks of data off of the 
+end of the training data set for each fold. The folds contain `n_per_fold` data points which
+are used to evaluate the models predictive skill by predicting one-step-ahead between each 
+observation in the testing fold.  The model predictive skill is evaluated by comparine the 
+observed chagnes between data points to the change forecast by the UDE. The UDE's predicting skill 
+is evaluated by calcaulteing the mean suared error (MSE), the mean absolute error (MAE), and the 
+correlation between observed and predicted values. The standard errors are also estiamted for MSE 
+(MSE_SE) and MAE (MAE_SE). The model skill in qunatified seperately for each state variable incuded
+in the model. The summarized model performacne is reture din a data frame along with the raw observed
+and predicted values used to calcualte the performance metrics. 
+
+### Arguments 
+- model: A UDE model object 
+- training!: A function that implemnet the UDE training process, updating the model in place.
+- n_per_fold: The number of data points in each fold.
+- k_folds: The number of folds.
+
+### Value
+1. A data frame with summarized model preformance 
+
+| variable | MSE | MSE_SE |	MAE	| MAE_SE | correlation | count |
+|----------|-----|--------|-----|--------|-------------|-------|
+| X1       | *   | *      | *   | *      | *           | *     |
+| X2       | *   | *      | *   | *      | *           | *     |
+
+2. A data frame with the raw observed and predicted values 
+
+| time     | variable | observed | predicted | AE | SE |
+|----------|----------|----------|-----------|----|----|
+| T        | X1       | *        | *         | *  | *  |
+| T-1      | X1       | *        | *         | *  | *  |
+| T-2      | X1       | *        | *         | *  | *  |
+|...       | ...      | ...      | ...       |... |... |
+| T        | X2       | *        | *         | *  | *  |
+| T-1      | X2       | *        | *         | *  | *  |
+| T-2      | X2       | *        | *         | *  | *  |
+| ...      | ...      | ...      | ...       |... |... |
+
+"""
+function leave_future_out_predict(model::UDE, training!, n_per_fold::Int, k_folds::Int )
+
+    training_data = []
+    testing_data = []
+    data = model.data_frame
+    for i in n_per_fold:n_per_fold:(n_per_fold*k_folds)
+        push!(training_data, data[1:(end-i),:])
+        push!(testing_data, data[(end-i):(end-i+n_per_fold),:]) # including the last data point for one step ahead predictions
+    end
+
+    predictions = Array{Any}(nothing, k_folds)
+    observations = Array{Any}(nothing, k_folds)
+    times = Array{Any}(nothing, k_folds)
+
+    Threads.@threads for i in 1:k_folds
+        
+        training_i = training_data[i]
+        testing_i = testing_data[i]
+
+        model_i = model.constructor(training_i)
+        training!(model_i)
+
+        # include first over lapping data point to use for first prediction 
+        inits,obs_i,preds_i = UniversalDiffEq.predictions(model_i, testing_i)
+        delta_obs = obs_i .- inits
+        delta_pred = preds_i .- inits
+        predictions[i] =  delta_pred 
+        observations[i] =  delta_obs
+        times[i] = testing_i[2:end,model.time_column_name]
+    end
+    
+    return summarize_cv_results(model,predictions,observations,times)
+end 
+
+
+
+function leave_future_out_filter(model::UDE, training!, method, n_per_fold::Int, k_folds::Int,  options  = NamedTuple() )
+
+    training_data = []
+    testing_data = []
+    data = model.data_frame
+    for i in n_per_fold:n_per_fold:(n_per_fold*k)
+        push!(training_data, data[1:(end-i),:])
+        push!(testing_data, data[(end-i):(end-i+n_per_fold),:]) # including the last data point for one step ahead predictions
+    end
+
+    predictions = Array{Any}(nothing, k)
+
+    Threads.@threads for i in 1:k
+        
+        training_i = training_data[i]
+        testing_i = testing_data[i]
+        model_i = model.constructor(training_i)
+        Pν, Pη = training!(model_i)
+
+        # omit first overlapping data point IC come for the model 
+        options = update_filter_options!(options, model_i)
+        ll_i = filter_data(model_i, testing_i[2:end,:], options.H, Pν, Pη, options.L, options.α, options.β, options.κ)
+        predictions[i] =  ll_i
+    end
+    
+    return sum(predictions)/length(predictions)
+end 
