@@ -615,11 +615,11 @@ function leave_future_out_predict(model::UDE, training!, n_per_fold::Int, k_fold
         push!(testing_data, data[(end-i):(end-i+n_per_fold),:]) # including the last data point for one step ahead predictions
     end
 
-    predictions = Array{Any}(nothing, k_folds)
-    observations = Array{Any}(nothing, k_folds)
+    preds = Array{Any}(nothing, k_folds)
+    obs = Array{Any}(nothing, k_folds)
     times = Array{Any}(nothing, k_folds)
 
-    Threads.@threads for i in 1:k_folds
+    for i in 1:k_folds #Threads.@threads 
         
         training_i = training_data[i]
         testing_i = testing_data[i]
@@ -628,15 +628,15 @@ function leave_future_out_predict(model::UDE, training!, n_per_fold::Int, k_fold
         training!(model_i)
 
         # include first over lapping data point to use for first prediction 
-        inits,obs_i,preds_i = UniversalDiffEq.predictions(model_i, testing_i)
+        inits,obs_i,preds_i = predictions(model_i, testing_i)
         delta_obs = obs_i .- inits
         delta_pred = preds_i .- inits
-        predictions[i] =  delta_pred 
-        observations[i] =  delta_obs
+        preds[i] =  delta_pred 
+        obs[i] =  delta_obs
         times[i] = testing_i[2:end,model.time_column_name]
     end
     
-    return summarize_cv_results(model,predictions,observations,times)
+    return summarize_cv_results(model,preds,obs,times)
 end 
 
 

@@ -231,3 +231,38 @@ function kalman_filter!(UDE::MultiUDE, σ2; H = -999, Pν = -999, Pη = -999, α
     return Pν, Px
 
 end
+
+
+################################
+## smoothing function with x0 ##
+################################
+
+function ukf_smoothing(y,x0,times,f,pf,H,Pν,Pη,L,α,β,κ)
+    T = size(y)[2]
+    xls = zeros(size(y))
+    Pxls = zeros(size(y)[1],size(y)[1],size(y)[2])
+    x̂ = x0
+    Px = Pη
+    for t in 1:T
+        dt = times[t]-times[t-1]
+        x̂, Px, llt = ukf_update(y[:,t],x̂,Px,times[t],dt,f,pf,H,Pν,Pη,L,α,β,κ)
+        xls[:,t] = x̂
+        Pxls[:,:,t] = Px 
+    end
+    return xls,Pxls   
+end
+
+
+
+function ukf_likelihood(y,x0,times,f,pf,H,Pν,Pη,L,α,β,κ)
+    T = size(y)[2]
+    ll = 0
+    x̂ = x0
+    Px = Pη
+    for t in 1:T 
+        dt = times[t]-times[t-1]
+        x̂, Px, llt = ukf_update(y[:,t],x̂,Px,times[t],dt,f,pf,H,Pν,Pη,L,α,β,κ)
+        ll += llt
+    end
+    return ll   
+end
