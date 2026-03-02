@@ -392,6 +392,7 @@ function train!(UDE::UDE;
   elseif loss_function == "marginal likelihood"
 
     L = size(UDE.data)[1]
+    
     Pν = errors_to_matrix(0.1, L)
     if :process_error in keys(loss_options)
       Pν = errors_to_matrix(loss_options.process_error, L)
