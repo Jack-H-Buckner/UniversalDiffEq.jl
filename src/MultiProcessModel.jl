@@ -197,6 +197,7 @@ mutable struct MultiNODE_process
     forecast
     covariates
     right_hand_side
+    rhs
 end 
 
 
@@ -236,7 +237,7 @@ function MultiNODE_process(dims,hidden,covariates,seed,l,extrap_rho; ode_solver 
     end 
 
     
-    return MultiNODE_process(dims,IVP,derivs!,parameters,predict,forecast,covariates,right_hand_side)
+    return MultiNODE_process(dims,IVP,derivs!,parameters,predict,forecast,covariates,right_hand_side,right_hand_side)
     
 end 
 
@@ -274,7 +275,7 @@ function MultiNODE_process(dims,hidden,seed,l,extrap_rho; ode_solver = Tsit5(), 
         return du
     end 
     
-    return MultiNODE_process(dims,IVP,derivs!,parameters,predict,forecast,0,right_hand_side)
+    return MultiNODE_process(dims,IVP,derivs!,parameters,predict,forecast,0,right_hand_side,right_hand_side)
     
 end 
 
