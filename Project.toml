@@ -31,12 +31,13 @@ Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 RegularizationTools = "29dad682-9a27-4bc3-9c72-016788665182"
 Roots = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+StochasticDiffEq = "789caeaf-c7a9-5a7d-9973-96adeb23e2a0"
 Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [weakdeps]
 Enzyme = "7da242da-08ed-463a-9acd-ee780be4f1d9"
 NonlinearSolveBase = "be0214bd-f91f-a760-ac4e-3421ce2b2da0"
-StochasticDiffEq = "789caeaf-c7a9-5a7d-9973-96adeb23e2a0"
+
 
 [compat]
 AdvancedHMC = "^0.8.0, ^0.7.0"
