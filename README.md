@@ -2,7 +2,7 @@
 
 
 | Minimum V-1.10 | V-1.13 | Nightly |
-|-----------------|---------------------|---------------------|-------------------------|
+|-----------------|---------------------|---------------------|
 | [![Build Status](https://github.com/jarroyoe/UniversalDiffEq.jl/actions/workflows/CI-V1-10.yml/badge.svg)](https://github.com/jarroyoe/UniversalDiffEq.jl/actions/workflows/CI-V1-10.yml) | [![Build Status](https://github.com/jarroyoe/UniversalDiffEq.jl/actions/workflows/CI-V1-13.yml/badge.svg)](https://github.com/jarroyoe/UniversalDiffEq.jl/actions/workflows/CI-V1-13.yml) | [![Build Status](https://github.com/jarroyoe/UniversalDiffEq.jl/actions/workflows/CI-Nightly.yml/badge.svg)](https://github.com/jarroyoe/UniversalDiffEq.jl/actions/workflows/CI-Nightly.yml)|
 
 
