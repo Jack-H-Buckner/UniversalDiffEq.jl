@@ -1,4 +1,4 @@
-name: CI-V1-11
+name: CI-V1-12
 on:
   push:
     branches:
@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.11'
+          - '1.13'
         os:
           - ubuntu-latest
         arch:
