@@ -1,7 +1,7 @@
 name = "UniversalDiffEq"
 uuid = "791b002b-939e-4b08-8060-ecf413fcb155"
 authors = ["Jack Buckner <bucknejo@oregonstate.edu>"]
-version = "1.2.1"
+version = "2.0.0"
 
 [deps]
 AdvancedHMC = "0bf59076-c3b1-5ca4-86bd-e02cd72cde3d"
@@ -26,7 +26,6 @@ Optimization = "7f7a1694-90dd-40f0-9382-eb1efda571ba"
 OptimizationOptimJL = "36348300-93cb-4f02-beb5-3c3902f8871e"
 OptimizationOptimisers = "42dfb2eb-d2b4-4451-abcd-913932933ac1"
 OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
-Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 RegularizationTools = "29dad682-9a27-4bc3-9c72-016788665182"
 Roots = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
@@ -37,7 +36,10 @@ Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 [weakdeps]
 Enzyme = "7da242da-08ed-463a-9acd-ee780be4f1d9"
 NonlinearSolveBase = "be0214bd-f91f-a760-ac4e-3421ce2b2da0"
+Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 
+[extensions]
+UniversalDiffEqPlots = "Plots"
 
 [compat]
 AdvancedHMC = "^0.8.0, ^0.7.0"

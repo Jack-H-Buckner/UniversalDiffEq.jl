@@ -12,13 +12,12 @@ Create a sample dataset using the Lotka-Volterra predator-prey model as its proc
 and an observation error following a normal distribution with mean 0 and standard deviation σ.
 
     # kwargs
-    - `plot`: Does the function return a plot? Default is `true`.
     - `seed`: Seed for observation error to create repeatable examples. Default is `123`.
     - `datasize`: Number of time steps generated. Default is `60`.
     - `T`: Maximum timespan. Default is `3.0`.
     - `sigma`: Standard deviation of observation error. Default is `0.075`.
 """
-function LotkaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,sigma = 0.075)
+function LotkaVolterra(; seed = 123,datasize = 60,T = 3.0,sigma = 0.075)
     # set seed 
     Random.seed!(seed)
 
@@ -42,12 +41,6 @@ function LotkaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,sigma = 0.
 
     # add observation noise 
     ode_data .+= ode_data .* rand(Normal(0.0,sigma), size(ode_data))
-        
-    if plot
-        plt = Plots.scatter(tsteps,transpose(ode_data), xlabel = "Time", ylabel = "Abundance", label = "")
-        data = DataFrame(time = tsteps, x1 = ode_data[1,:], x2 = ode_data[2,:])
-        return data, plt
-    end
     
     data = DataFrame(time = tsteps, x1 = ode_data[1,:], x2 = ode_data[2,:])
     
@@ -71,13 +64,12 @@ Create a sample dataset using the Lorenz Lotka-Volterra model as its process mod
 and an observation error following a normal distribution with mean 0 and standard deviation σ_{obs}.
 
     # kwargs
-    - `plot`: Does the function return a plot? Default is `true`.
     - `seed`: Seed for observation error to create repeatable examples. Default is `123`.
     - `datasize`: Number of time steps generated. Default is `60`.
     - `T`: Maximum timespan. Default is `3.0`.
     - `sigma`: Standard deviation of observation error. Default is `0.075`.
 """
-function LorenzLotkaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,sigma = 0.075)
+function LorenzLotkaVolterra(; seed = 123,datasize = 60,T = 3.0,sigma = 0.075)
     # set seed 
     Random.seed!(seed)
 
@@ -104,13 +96,6 @@ function LorenzLotkaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,sigm
 
     # add observation noise 
     ode_data .+= ode_data .* rand(Normal(0.0,sigma), size(ode_data))
-        
-    if plot
-        plt = Plots.scatter(tsteps,transpose(ode_data[1:2,:]), xlabel = "Time", ylabel = "Abundance", label = "")
-        data = DataFrame(time = tsteps, x1 = ode_data[1,:], x2 = ode_data[2,:])
-        X = DataFrame(time = tsteps, X = ode_data[3,:])
-        return data, X, plt
-    end
     
     data = DataFrame(time = tsteps, x1 = ode_data[1,:], x2 = ode_data[2,:])
     X = DataFrame(time = tsteps, X = ode_data[3,:])
@@ -119,7 +104,7 @@ end
 
 
 
-function StochasticLotkaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,σ = 0.075, τ = 1.0)
+function StochasticLotkaVolterra(; seed = 123,datasize = 60,T = 3.0,σ = 0.075, τ = 1.0)
     # set seed 
     Random.seed!(seed)
 
@@ -157,13 +142,6 @@ function StochasticLotkaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,
 
     # add observation noise 
     ode_data .+= ode_data .* rand(Normal(0.0,σ), size(ode_data))
-        
-    if plot
-        plt = Plots.scatter(tsteps,transpose(ode_data[1:2,:]), xlabel = "Time", ylabel = "Abundance", label = "")
-        data = DataFrame(time = tsteps, y1 = ode_data[1,:], y2 = ode_data[2,:])
-        X = DataFrame(time = tsteps, X1 = ode_data[3,:], X2 = ode_data[4,:], X3 = ode_data[5,:])
-        return data, X, plt
-    end
     
     data = DataFrame(time = tsteps, x1 = ode_data[1,:], x2 = ode_data[2,:])
     X = DataFrame(time = tsteps, X = ode_data[3,:])
@@ -171,7 +149,7 @@ function StochasticLotkaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,
 end 
 
 
-function LogisticLorenz(;plot = true, seed = 123, datasize = 100,T = 30.0,sigma = 0.0125,p = (r=0.5,sigma = 10, rho = 28, beta = 8/3))
+function LogisticLorenz(; seed = 123, datasize = 100,T = 30.0,sigma = 0.0125,p = (r=0.5,sigma = 10, rho = 28, beta = 8/3))
     
     # set seed 
     Random.seed!(seed)
@@ -198,19 +176,13 @@ function LogisticLorenz(;plot = true, seed = 123, datasize = 100,T = 30.0,sigma 
     # add observation noise 
     ode_data .+= ode_data .* rand(Normal(0.0,sigma), size(ode_data))
     
-    if plot
-        data = DataFrame(time = tsteps, x1 = ode_data[4,:])
-        plt = Plots.plot(data.time,data.x1, xlabel = "Time", ylabel = "Abundance")
-        return data, plt
-    end
-    
     data = DataFrame(time = tsteps, x1 = ode_data[4,:])
     return data
     
 end 
 
 
-function LogisticMap(;plot = true, seed=123,datasize = 100,sigma = 0.05, r = 3.7)
+function LogisticMap(; seed=123,datasize = 100,sigma = 0.05, r = 3.7)
     
     # set seed 
     Random.seed!(seed)
@@ -225,11 +197,6 @@ function LogisticMap(;plot = true, seed=123,datasize = 100,sigma = 0.05, r = 3.7
         x = map(x).+sigma*x*(rand()-0.5)
     end
     
-    if plot
-        data = DataFrame(time = collect(1:T), x = xls .+ rand(Distributions.Normal(0,sigma), length(xls)))
-        plt = Plots.plot(data.t,data.x, xlabel = "Time", ylabel = "Abundance")
-        return data, plt
-    end 
     data = DataFrame(time = collect(1:T), x = xls .+ rand(Distributions.Normal(0,sigma), length(xls)))
     return data
     
