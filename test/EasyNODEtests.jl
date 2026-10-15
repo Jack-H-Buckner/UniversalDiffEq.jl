@@ -1,6 +1,6 @@
 using UniversalDiffEq, DataFrames
 
-data,plt = LotkaVolterra()
+data = LotkaVolterra()
 training_data = data[1:(end-6),:]
 
 # test Bayesian NODEs
