@@ -1,4 +1,4 @@
-using UniversalDiffEq, DataFrames
+using UniversalDiffEq, DataFrames, Plots
 
 data = LotkaVolterra()
 training_data = data[1:(end-6),:]

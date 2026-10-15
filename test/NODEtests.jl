@@ -1,4 +1,4 @@
-using UniversalDiffEq, DataFrames
+using UniversalDiffEq, DataFrames, Plots
 
 # test NODE and gradient decent 
 data = LotkaVolterra()
