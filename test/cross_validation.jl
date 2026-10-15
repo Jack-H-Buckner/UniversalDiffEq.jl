@@ -3,7 +3,7 @@ using UniversalDiffEq, DataFrames, Random, Lux
 # No covariates
 
 # test NODE and gradient decent 
-data,plt = LotkaVolterra()
+data = LotkaVolterra()
 training_data = data[1:(end-6),:]
 
 # neural network 
