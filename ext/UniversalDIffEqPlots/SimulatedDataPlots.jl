@@ -18,7 +18,7 @@ and an observation error following a normal distribution with mean 0 and standar
     - `T`: Maximum timespan. Default is `3.0`.
     - `sigma`: Standard deviation of observation error. Default is `0.075`.
 """
-function PlotLotkaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,sigma = 0.075)
+function UniversalDiffEq.PlotLotkaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,sigma = 0.075)
     # set seed 
     Random.seed!(seed)
 
@@ -77,7 +77,7 @@ and an observation error following a normal distribution with mean 0 and standar
     - `T`: Maximum timespan. Default is `3.0`.
     - `sigma`: Standard deviation of observation error. Default is `0.075`.
 """
-function PlotLorenzLotkaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,sigma = 0.075)
+function UniversalDiffEq.PlotLorenzLotkaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,sigma = 0.075)
     # set seed 
     Random.seed!(seed)
 
@@ -119,7 +119,7 @@ end
 
 
 
-function PlotStochasticLotkaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,σ = 0.075, τ = 1.0)
+function UniversalDiffEq.PlotStochasticLotkaVolterra(;plot = true, seed = 123,datasize = 60,T = 3.0,σ = 0.075, τ = 1.0)
     # set seed 
     Random.seed!(seed)
 
@@ -171,7 +171,7 @@ function PlotStochasticLotkaVolterra(;plot = true, seed = 123,datasize = 60,T = 
 end 
 
 
-function PlotLogisticLorenz(;plot = true, seed = 123, datasize = 100,T = 30.0,sigma = 0.0125,p = (r=0.5,sigma = 10, rho = 28, beta = 8/3))
+function UniversalDiffEq.PlotLogisticLorenz(;plot = true, seed = 123, datasize = 100,T = 30.0,sigma = 0.0125,p = (r=0.5,sigma = 10, rho = 28, beta = 8/3))
     
     # set seed 
     Random.seed!(seed)
@@ -210,7 +210,7 @@ function PlotLogisticLorenz(;plot = true, seed = 123, datasize = 100,T = 30.0,si
 end 
 
 
-function PlotLogisticMap(;plot = true, seed=123,datasize = 100,sigma = 0.05, r = 3.7)
+function UniversalDiffEq.PlotLogisticMap(;plot = true, seed=123,datasize = 100,sigma = 0.05, r = 3.7)
     
     # set seed 
     Random.seed!(seed)

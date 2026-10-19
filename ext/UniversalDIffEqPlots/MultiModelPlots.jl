@@ -1,4 +1,4 @@
-function plot_predictions(UDE::MultiUDE)
+function UniversalDiffEq.plot_predictions(UDE::MultiUDE)
 
     inits, obs, preds = predictions(UDE)
 
@@ -27,7 +27,7 @@ function plot_predictions(UDE::MultiUDE)
 end
 
 
-function plot_predictions(UDE::MultiUDE,test_data::DataFrame)
+function UniversalDiffEq.plot_predictions(UDE::MultiUDE,test_data::DataFrame)
     check_test_data_names(UDE.data_frame, test_data)
     inits, obs, preds = predictions(UDE,test_data)
     plots = []
@@ -51,7 +51,7 @@ function plot_predictions(UDE::MultiUDE,test_data::DataFrame)
 end
 
 
-function plot_state_estimates(UDE::MultiUDE; show_legend = true)
+function UniversalDiffEq.plot_state_estimates(UDE::MultiUDE; show_legend = true)
 
 
     plots = []
@@ -93,7 +93,7 @@ function plot_state_estimates(UDE::MultiUDE; show_legend = true)
 end
 
 
-function plot_forecast(UDE::MultiUDE, test_data::DataFrame; show_legend = true)
+function UniversalDiffEq.plot_forecast(UDE::MultiUDE, test_data::DataFrame; show_legend = true)
     check_test_data_names(UDE.data_frame, test_data)
     N, T, dims, test_data, test_times,  test_dataframe, test_series, inds, test_starts, test_lengths, labs = process_multi_data(test_data,UDE.time_column_name,UDE.series_column_name)
     N, T, dims, data, times,  dataframe, series, inds, starts, lengths, labs = process_multi_data(UDE.data_frame,UDE.time_column_name,UDE.series_column_name)
@@ -144,7 +144,7 @@ function plot_forecast(UDE::MultiUDE, test_data::DataFrame; show_legend = true)
 end
 
 
-function phase_plane(UDE::MultiUDE;idx = [1,2],u1s=-5:0.25:5, u2s=-5:0.25:5,u3s = 0,T = 100)
+function UniversalDiffEq.phase_plane(UDE::MultiUDE;idx = [1,2],u1s=-5:0.25:5, u2s=-5:0.25:5,u3s = 0,T = 100)
 
     # caclaute time to evaluate
     lengths = [sum(UDE.data_frame.series .== i) for i in unique(UDE.data_frame.series)]
@@ -175,7 +175,7 @@ function phase_plane(UDE::MultiUDE;idx = [1,2],u1s=-5:0.25:5, u2s=-5:0.25:5,u3s 
 end
 
 
-function phase_plane(UDE::MultiUDE, u0s::AbstractArray;idx = [1,2],T = 100)
+function UniversalDiffEq.phase_plane(UDE::MultiUDE, u0s::AbstractArray;idx = [1,2],T = 100)
 
     # caclaute time to evaluate
     lengths = [sum(UDE.data_frame.series .== i) for i in unique(UDE.data_frame.series)]
@@ -199,7 +199,7 @@ function phase_plane(UDE::MultiUDE, u0s::AbstractArray;idx = [1,2],T = 100)
 
 end
 
-function phase_plane_3d(UDE::MultiUDE;idx = [1,2,3],u1s=0:0.1:1, u2s=-0:0.1:1,u3s = 0:0.1:1.0,T = 50)
+function UniversalDiffEq.phase_plane_3d(UDE::MultiUDE;idx = [1,2,3],u1s=0:0.1:1, u2s=-0:0.1:1,u3s = 0:0.1:1.0,T = 50)
 
     # caclaute time to evaluate
     lengths = [sum(UDE.data_frame.series .== i) for i in unique(UDE.data_frame.series)]
@@ -229,7 +229,7 @@ function phase_plane_3d(UDE::MultiUDE;idx = [1,2,3],u1s=0:0.1:1, u2s=-0:0.1:1,u3
 
 end
 
-function phase_plane_3d(UDE::MultiUDE, u0s::AbstractArray;idx = [1,2,3],T = 100)
+function UniversalDiffEq.phase_plane_3d(UDE::MultiUDE, u0s::AbstractArray;idx = [1,2,3],T = 100)
 
     # caclaute time to evaluate
     lengths = [sum(UDE.data_frame.series .== i) for i in unique(UDE.data_frame.series)]

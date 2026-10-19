@@ -3,7 +3,7 @@
 
 Plots the values of the state variables estimated by the UDE model.
 """
-function plot_state_estimates(UDE::UniversalDiffEq.UDE)
+function UniversalDiffEq.plot_state_estimates(UDE::UniversalDiffEq.UDE)
 
     plots = []
 
@@ -36,7 +36,7 @@ function plot_state_estimates(UDE::UniversalDiffEq.UDE)
 end
 
 
-function plot_state_estimates(UDE::UniversalDiffEq.CustomUDE)
+function UniversalDiffEq.plot_state_estimates(UDE::UniversalDiffEq.CustomUDE)
 
     plots = []
 
@@ -76,7 +76,7 @@ end
 Plots the correspondence between the observed state transitions and the predictions from the UDE model.
 
 """
-function plot_predictions(UDE::UniversalDiffEq.UDE)
+function UniversalDiffEq.plot_predictions(UDE::UniversalDiffEq.UDE)
 
     inits, obs, preds = predictions(UDE)
 
@@ -108,7 +108,7 @@ function plot_predictions(UDE::UniversalDiffEq.UDE)
     return plot(plots...)
 end
 
-function plot_predictions(UDE::UniversalDiffEq.CustomUDE)
+function UniversalDiffEq.plot_predictions(UDE::UniversalDiffEq.CustomUDE)
 
     inits, obs, preds = predictions(UDE)
 
@@ -138,7 +138,7 @@ end
 Plots the correspondence between the observed state transitons and the predicitons for the model `UDE` with a confidence interval `ci`.
 
 """
-function plot_predictions(UDE::UniversalDiffEq.BayesianUDE;ci=95)
+function UniversalDiffEq.plot_predictions(UDE::UniversalDiffEq.BayesianUDE;ci=95)
 
     inits, obs, preds = predictions(UDE,summarize = true,ci=ci)
 
@@ -163,7 +163,7 @@ end
 
 Plots the correspondence between the observed state transitions in test data and the predictions from the UDE model.
 """
-function plot_predictions(UDE::UniversalDiffEq.UDE,test_data::DataFrame)
+function UniversalDiffEq.plot_predictions(UDE::UniversalDiffEq.UDE,test_data::DataFrame)
     check_test_data_names(UDE.data_frame, test_data)
     inits, obs, preds = predictions(UDE,test_data)
 
@@ -190,7 +190,7 @@ function plot_predictions(UDE::UniversalDiffEq.UDE,test_data::DataFrame)
     return plot(plots...)
 end
 
-function plot_predictions(UDE::UniversalDiffEq.BayesianUDE,test_data::DataFrame;ci=95)
+function UniversalDiffEq.plot_predictions(UDE::UniversalDiffEq.BayesianUDE,test_data::DataFrame;ci=95)
     check_test_data_names(UDE.data_frame, test_data)
     inits, obs, preds = predictions(UDE,test_data,summarize = true,ci=ci)
 
@@ -215,7 +215,7 @@ end
 
 Plots the model's forecast up to T time steps into the future from the last observation.
 """
-function plot_forecast(UDE::UniversalDiffEq.UDE, T::Int)
+function UniversalDiffEq.plot_forecast(UDE::UniversalDiffEq.UDE, T::Int)
     u0 = UDE.parameters.uhat[:,end]
     dts = UDE.times[2:end] .- UDE.times[1:(end-1)]
     dt = sum(dts)/length(dts)
@@ -237,7 +237,7 @@ end
 
 Plots the models forecast up to T time steps into the future from the last observation including the median prediction as well as the `ci`% lower and upper confidence intervals.
 """
-function plot_forecast(UDE::UniversalDiffEq.BayesianUDE, T::Int;ci = 95)
+function UniversalDiffEq.plot_forecast(UDE::UniversalDiffEq.BayesianUDE, T::Int;ci = 95)
     u0 = reduce((x,y) -> cat(x,y,dims = 3),[UDE.parameters[i].uhat[:,end] for i in 1:length(UDE.parameters)])
     u0 = mean(u0,dims = 3)
     u0 = vec(u0[:,:,1])
@@ -269,7 +269,7 @@ end
 
 Plots the model's forecast over the range of the test data along with the value of the test data.
 """
-function plot_forecast(UDE::UniversalDiffEq.UDE, test_data::DataFrame)
+function UniversalDiffEq.plot_forecast(UDE::UniversalDiffEq.UDE, test_data::DataFrame)
     check_test_data_names(UDE.data_frame, test_data)
     u0 = UDE.parameters.uhat[:,end]
     N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
@@ -291,7 +291,7 @@ end
 
 Plots the model's forecast over the range of the `test_data` along with the value of the test data including the median prediction as well as the `ci`% lower and upper confidence intervals.
 """
-function plot_forecast(UDE::UniversalDiffEq.BayesianUDE, test_data::DataFrame;ci = 95)
+function UniversalDiffEq.plot_forecast(UDE::UniversalDiffEq.BayesianUDE, test_data::DataFrame;ci = 95)
     check_test_data_names(UDE.data_frame, test_data)
     u0 = reduce((x,y) -> cat(x,y,dims = 3),[UDE.parameters[i].uhat[:,end] for i in 1:length(UDE.parameters)])
     u0 = mean(u0,dims = 3)
@@ -323,7 +323,7 @@ end
 Plots the trajectory of state variables as forecasted by the model. Runs a forecast for each permutation of u1 and u2 out to T timesteps.
 Change the state variables that are plotted by changing `idx` such that it equals the indexes of the desired state variables as they appear in the data.
 """
-function phase_plane(UDE::UniversalDiffEq.UDE;idx = [1,2],u1s=-5:0.25:5, u2s=-5:0.25:5,u3s = 0,T = 100)
+function UniversalDiffEq.phase_plane(UDE::UniversalDiffEq.UDE;idx = [1,2],u1s=-5:0.25:5, u2s=-5:0.25:5,u3s = 0,T = 100)
 
     # calculate time to evaluate
     lengths = size(UDE.data_frame,1)
@@ -353,7 +353,7 @@ end
 
 Plots the trajectory of state variables as forecasted by the model. Runs a forecast for each provided initial condition out to `T` timesteps. Change the state variables that are plotted by changing `idx` such that it equals the indexes of the desired state variables as they appear in the data.
 """
-function phase_plane(UDE::UniversalDiffEq.UDE, u0s::AbstractArray ;idx = [1,2],T = 100)
+function UniversalDiffEq.phase_plane(UDE::UniversalDiffEq.UDE, u0s::AbstractArray ;idx = [1,2],T = 100)
 
     # calculate time to evaluate
     lengths = size(UDE.data_frame,1)
@@ -378,7 +378,7 @@ end
 
 The same as phase_plane(), but displays three dimensions/state variables instead of two.
 """
-function phase_plane_3d(UDE::UniversalDiffEq.UDE;idx = [1,2,3],u1s=-5:0.25:5, u2s=-5:0.25:5,u3s=-5:0.25:5,T = 100)
+function UniversalDiffEq.phase_plane_3d(UDE::UniversalDiffEq.UDE;idx = [1,2,3],u1s=-5:0.25:5, u2s=-5:0.25:5,u3s=-5:0.25:5,T = 100)
 
     # calculate time to evaluate
     lengths = [sum(UDE.data_frame.series .== i) for i in unique(UDE.data_frame.series)]
@@ -402,7 +402,7 @@ function phase_plane_3d(UDE::UniversalDiffEq.UDE;idx = [1,2,3],u1s=-5:0.25:5, u2
 
 end
 
-function phase_plane_3d(UDE::UniversalDiffEq.UDE, u0s::AbstractArray;idx = [1,2,3],T = 100)
+function UniversalDiffEq.phase_plane_3d(UDE::UniversalDiffEq.UDE, u0s::AbstractArray;idx = [1,2,3],T = 100)
 
     # calculate time to evaluate
     lengths = [sum(UDE.data_frame.series .== i) for i in unique(UDE.data_frame.series)]
@@ -427,7 +427,7 @@ end
 
 The first differnce plot of the observation errors ``\epsilon_t``. This allows the user to check for autocorrelation in the observation errors.   
 """
-function observation_error_correlations(UDE;fig_size = (600,500))
+function UniversalDiffEq.observation_error_correlations(UDE;fig_size = (600,500))
     proc_resids, obs_resids = get_residuals(UDE)
     plts = []
     for i in 1:size(obs_resids)[1]
