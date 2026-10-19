@@ -270,9 +270,9 @@ end
 Plots the model's forecast over the range of the test data along with the value of the test data.
 """
 function UniversalDiffEq.plot_forecast(UDE::UniversalDiffEq.UDE, test_data::DataFrame)
-    check_test_data_names(UDE.data_frame, test_data)
+    UniversalDiffEq.check_test_data_names(UDE.data_frame, test_data)
     u0 = UDE.parameters.uhat[:,end]
-    N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
+    N, dims, T, times, data, dataframe = UniversalDiffEq.process_data(test_data,UDE.time_column_name)
     df = UniversalDiffEq.forecast(UDE, u0, UDE.times[end], times)
     plots = []
     for dim in 2:size(df)[2]
@@ -292,14 +292,14 @@ end
 Plots the model's forecast over the range of the `test_data` along with the value of the test data including the median prediction as well as the `ci`% lower and upper confidence intervals.
 """
 function UniversalDiffEq.plot_forecast(UDE::UniversalDiffEq.BayesianUDE, test_data::DataFrame;ci = 95)
-    check_test_data_names(UDE.data_frame, test_data)
+    UniversalDiffEq.check_test_data_names(UDE.data_frame, test_data)
     u0 = reduce((x,y) -> cat(x,y,dims = 3),[UDE.parameters[i].uhat[:,end] for i in 1:length(UDE.parameters)])
     u0 = mean(u0,dims = 3)
     u0 = vec(u0[:,:,1])
-    N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
+    N, dims, T, times, data, dataframe = UniversalDiffEq.process_data(test_data,UDE.time_column_name)
     df = UniversalDiffEq.forecast(UDE, u0, UDE.times[end], times,summarize = true, ci = ci)
     u0 = vec(u0[:,:,1])
-    N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
+    N, dims, T, times, data, dataframe = UniversalDiffEq.process_data(test_data,UDE.time_column_name)
     df = UniversalDiffEq.forecast(UDE, u0, UDE.times[end], times,summarize = true, ci = ci)
     meanForecast = [df[i,j][2] for i in 1:size(df,1), j in 1:size(df,2)]
     lowerForecast = [df[i,j][1] for i in 1:size(df,1), j in 1:size(df,2)]
@@ -428,7 +428,7 @@ end
 The first differnce plot of the observation errors ``\epsilon_t``. This allows the user to check for autocorrelation in the observation errors.   
 """
 function UniversalDiffEq.observation_error_correlations(UDE;fig_size = (600,500))
-    proc_resids, obs_resids = get_residuals(UDE)
+    proc_resids, obs_resids = UniversalDiffEq.get_residuals(UDE)
     plts = []
     for i in 1:size(obs_resids)[1]
         for j in 1:size(obs_resids)[1]

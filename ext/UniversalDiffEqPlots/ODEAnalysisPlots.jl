@@ -61,7 +61,7 @@ function UniversalDiffEq.plot_bifurcation_diagram(model::UDE, xvariable; N = 25,
     data = bifurcation_data(model;N=N)
 
     # transform data frame
-    nms,xnms = get_variable_names(model)
+    nms,xnms = UniversalDiffEq.get_variable_names(model)
     data = melt(data, id_vars = vcat(xnms,["eigen"]))
 
     conditional_levels = [0]
@@ -136,7 +136,7 @@ function UniversalDiffEq.plot_bifurcation_diagram(model::MultiUDE, xvariable; N=
     data = bifurcation_data(model;N=N)
 
     # transform data frame
-    nms,xnms = get_variable_names(model)
+    nms,xnms = UniversalDiffEq.get_variable_names(model)
     data = melt(data, id_vars = vcat(xnms,[model.series_column_name,"eigen"]))
 
     conditional_levels = [0]

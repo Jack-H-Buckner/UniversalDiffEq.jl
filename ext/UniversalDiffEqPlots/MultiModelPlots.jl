@@ -28,7 +28,7 @@ end
 
 
 function UniversalDiffEq.plot_predictions(UDE::MultiUDE,test_data::DataFrame)
-    check_test_data_names(UDE.data_frame, test_data)
+    UniversalDiffEq.check_test_data_names(UDE.data_frame, test_data)
     inits, obs, preds = UniversalDiffEq.predictions(UDE,test_data)
     plots = []
     for dim in 1:size(obs)[1]
@@ -56,7 +56,7 @@ function UniversalDiffEq.plot_state_estimates(UDE::MultiUDE; show_legend = true)
 
     plots = []
 
-    N, T, dims, data, times,  dataframe, series, inds, starts, lengths, labs= process_multi_data(UDE.data_frame,UDE.time_column_name,UDE.series_column_name)
+    N, T, dims, data, times,  dataframe, series, inds, starts, lengths, labs= UniversalDiffEq.process_multi_data(UDE.data_frame,UDE.time_column_name,UDE.series_column_name)
 
     for d in 1:dims
         plt = plot(); NRMSE = 0
@@ -94,9 +94,9 @@ end
 
 
 function UniversalDiffEq.plot_forecast(UDE::MultiUDE, test_data::DataFrame; show_legend = true)
-    check_test_data_names(UDE.data_frame, test_data)
-    N, T, dims, test_data, test_times,  test_dataframe, test_series, inds, test_starts, test_lengths, labs = process_multi_data(test_data,UDE.time_column_name,UDE.series_column_name)
-    N, T, dims, data, times,  dataframe, series, inds, starts, lengths, labs = process_multi_data(UDE.data_frame,UDE.time_column_name,UDE.series_column_name)
+    UniversalDiffEq.check_test_data_names(UDE.data_frame, test_data)
+    N, T, dims, test_data, test_times,  test_dataframe, test_series, inds, test_starts, test_lengths, labs = UniversalDiffEq.process_multi_data(test_data,UDE.time_column_name,UDE.series_column_name)
+    N, T, dims, data, times,  dataframe, series, inds, starts, lengths, labs = UniversalDiffEq.process_multi_data(UDE.data_frame,UDE.time_column_name,UDE.series_column_name)
 
     series_ls = unique(test_dataframe[:,UDE.series_column_name])
     plots = []
