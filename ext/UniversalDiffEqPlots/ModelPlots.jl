@@ -164,7 +164,7 @@ end
 Plots the correspondence between the observed state transitions in test data and the predictions from the UDE model.
 """
 function UniversalDiffEq.plot_predictions(UDE::UniversalDiffEq.UDE,test_data::DataFrame)
-    check_test_data_names(UDE.data_frame, test_data)
+    UniversalDiffEq.check_test_data_names(UDE.data_frame, test_data)
     inits, obs, preds = UniversalDiffEq.predictions(UDE,test_data)
 
     plots = []
@@ -191,7 +191,7 @@ function UniversalDiffEq.plot_predictions(UDE::UniversalDiffEq.UDE,test_data::Da
 end
 
 function UniversalDiffEq.plot_predictions(UDE::UniversalDiffEq.BayesianUDE,test_data::DataFrame;ci=95)
-    check_test_data_names(UDE.data_frame, test_data)
+    UniversalDiffEq.check_test_data_names(UDE.data_frame, test_data)
     inits, obs, preds = UniversalDiffEq.predictions(UDE,test_data,summarize = true,ci=ci)
 
     plots = []
