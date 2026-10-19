@@ -1,6 +1,6 @@
 function UniversalDiffEq.plot_predictions(UDE::MultiUDE)
 
-    inits, obs, preds = predictions(UDE)
+    inits, obs, preds = UniversalDiffEq.predictions(UDE)
 
     plots = []
     for dim in 1:size(obs)[1]
@@ -29,7 +29,7 @@ end
 
 function UniversalDiffEq.plot_predictions(UDE::MultiUDE,test_data::DataFrame)
     check_test_data_names(UDE.data_frame, test_data)
-    inits, obs, preds = predictions(UDE,test_data)
+    inits, obs, preds = UniversalDiffEq.predictions(UDE,test_data)
     plots = []
     for dim in 1:size(obs)[1]
         difs = obs[dim,:].-inits[dim,:]
@@ -112,7 +112,7 @@ function UniversalDiffEq.plot_forecast(UDE::MultiUDE, test_data::DataFrame; show
             test_time = test_times[test_starts[series]:(test_starts[series]+test_lengths[series]-1)]
             test_dat = test_data[:,test_starts[series]:(test_starts[series]+test_lengths[series]-1)]
 
-            df = forecast(UDE, uhat[:,end], time[end], test_dataframe[test_dataframe[:,UDE.series_column_name] .== series_ls[series], UDE.time_column_name], series_ls[series])
+            df = UniversalDiffEq.forecast(UDE, uhat[:,end], time[end], test_dataframe[test_dataframe[:,UDE.series_column_name] .== series_ls[series], UDE.time_column_name], series_ls[series])
 
             if d == 1
                 plt = plot!(df[:,2],df[:,d+2],c=i, linestyle=:dash, width = 2, label = string(series_ls[series]),xlabel = "Time", ylabel = string("x", dim))
@@ -163,7 +163,7 @@ function UniversalDiffEq.phase_plane(UDE::MultiUDE;idx = [1,2],u1s=-5:0.25:5, u2
 
         plt = plot()
         for u0 in u0s
-            data = forecast(UDE, u0, 0.0, times, series)
+            data = UniversalDiffEq.forecast(UDE, u0, 0.0, times, series)
             Plots.plot!(plt,data[:,(idx[1]+2)],data[:,(idx[2]+2)], label = "",
                                 line_z = log.(data[:,2]), c = :roma)
         end
@@ -188,7 +188,7 @@ function UniversalDiffEq.phase_plane(UDE::MultiUDE, u0s::AbstractArray;idx = [1,
     for series in UDE.series_labels.label
         plt = plot()
         for u0 in u0s
-            data = forecast(UDE, u0, 0.0, times, series)
+            data = UniversalDiffEq.forecast(UDE, u0, 0.0, times, series)
             Plots.plot!(plt,data[:,(idx[1]+2)],data[:,(idx[2]+2)], label = "",
                                 line_z = log.(data[:,2]), c = :roma)
         end

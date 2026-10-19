@@ -78,7 +78,7 @@ Plots the correspondence between the observed state transitions and the predicti
 """
 function UniversalDiffEq.plot_predictions(UDE::UniversalDiffEq.UDE)
 
-    inits, obs, preds = predictions(UDE)
+    inits, obs, preds = UniversalDiffEq.predictions(UDE)
 
     plots = []
     for dim in 1:size(obs,1)
@@ -110,7 +110,7 @@ end
 
 function UniversalDiffEq.plot_predictions(UDE::UniversalDiffEq.CustomUDE)
 
-    inits, obs, preds = predictions(UDE)
+    inits, obs, preds = UniversalDiffEq.predictions(UDE)
 
     plots = []
     for dim in 1:size(obs,1)
@@ -140,7 +140,7 @@ Plots the correspondence between the observed state transitons and the predicito
 """
 function UniversalDiffEq.plot_predictions(UDE::UniversalDiffEq.BayesianUDE;ci=95)
 
-    inits, obs, preds = predictions(UDE,summarize = true,ci=ci)
+    inits, obs, preds = UniversalDiffEq.predictions(UDE,summarize = true,ci=ci)
 
     plots = []
     for dim in 1:size(obs[1],1)
@@ -165,7 +165,7 @@ Plots the correspondence between the observed state transitions in test data and
 """
 function UniversalDiffEq.plot_predictions(UDE::UniversalDiffEq.UDE,test_data::DataFrame)
     check_test_data_names(UDE.data_frame, test_data)
-    inits, obs, preds = predictions(UDE,test_data)
+    inits, obs, preds = UniversalDiffEq.predictions(UDE,test_data)
 
     plots = []
     for dim in 1:size(obs,1)
@@ -192,7 +192,7 @@ end
 
 function UniversalDiffEq.plot_predictions(UDE::UniversalDiffEq.BayesianUDE,test_data::DataFrame;ci=95)
     check_test_data_names(UDE.data_frame, test_data)
-    inits, obs, preds = predictions(UDE,test_data,summarize = true,ci=ci)
+    inits, obs, preds = UniversalDiffEq.predictions(UDE,test_data,summarize = true,ci=ci)
 
     plots = []
     for dim in 1:size(obs[1],1)
@@ -220,7 +220,7 @@ function UniversalDiffEq.plot_forecast(UDE::UniversalDiffEq.UDE, T::Int)
     dts = UDE.times[2:end] .- UDE.times[1:(end-1)]
     dt = sum(dts)/length(dts)
     times = UDE.times[end]:dt:(UDE.times[end] + T*dt )
-    df = forecast(UDE, u0, times)
+    df = UniversalDiffEq.forecast(UDE, u0, times)
     plots = []
     for dim in 2:size(df,2)
         plt = plot(df[:,1],df[:,dim],color = "grey", linestyle=:dash, label = "forecast",
@@ -245,8 +245,8 @@ function UniversalDiffEq.plot_forecast(UDE::UniversalDiffEq.BayesianUDE, T::Int;
     dts = UDE.times[2:end] .- UDE.times[1:(end-1)]
     dt = sum(dts)/length(dts)
     times = UDE.times[end]:dt:(UDE.times[end] + T*dt )
-    df = forecast(UDE, u0, times,summarize = true, ci = ci)
-    df = forecast(UDE, u0, times,summarize = true, ci = ci)
+    df = UniversalDiffEq.forecast(UDE, u0, times,summarize = true, ci = ci)
+    df = UniversalDiffEq.forecast(UDE, u0, times,summarize = true, ci = ci)
     meanForecast = [df[i,j][2] for i in 1:size(df,1), j in 1:size(df,2)]
     lowerForecast = [df[i,j][1] for i in 1:size(df,1), j in 1:size(df,2)]
     upperForecast = [df[i,j][3] for i in 1:size(df,1), j in 1:size(df,2)]
@@ -273,7 +273,7 @@ function UniversalDiffEq.plot_forecast(UDE::UniversalDiffEq.UDE, test_data::Data
     check_test_data_names(UDE.data_frame, test_data)
     u0 = UDE.parameters.uhat[:,end]
     N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
-    df = forecast(UDE, u0, UDE.times[end], times)
+    df = UniversalDiffEq.forecast(UDE, u0, UDE.times[end], times)
     plots = []
     for dim in 2:size(df)[2]
         plt = plot(df[:,1], df[:,dim], color = "grey", linestyle=:dash, label = "forecast",
@@ -297,10 +297,10 @@ function UniversalDiffEq.plot_forecast(UDE::UniversalDiffEq.BayesianUDE, test_da
     u0 = mean(u0,dims = 3)
     u0 = vec(u0[:,:,1])
     N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
-    df = forecast(UDE, u0, UDE.times[end], times,summarize = true, ci = ci)
+    df = UniversalDiffEq.forecast(UDE, u0, UDE.times[end], times,summarize = true, ci = ci)
     u0 = vec(u0[:,:,1])
     N, dims, T, times, data, dataframe = process_data(test_data,UDE.time_column_name)
-    df = forecast(UDE, u0, UDE.times[end], times,summarize = true, ci = ci)
+    df = UniversalDiffEq.forecast(UDE, u0, UDE.times[end], times,summarize = true, ci = ci)
     meanForecast = [df[i,j][2] for i in 1:size(df,1), j in 1:size(df,2)]
     lowerForecast = [df[i,j][1] for i in 1:size(df,1), j in 1:size(df,2)]
     upperForecast = [df[i,j][3] for i in 1:size(df,1), j in 1:size(df,2)]
@@ -338,7 +338,7 @@ function UniversalDiffEq.phase_plane(UDE::UniversalDiffEq.UDE;idx = [1,2],u1s=-5
 
     plt = plot()
     for u0 in u0s
-        data = forecast(UDE, u0, times)
+        data = UniversalDiffEq.forecast(UDE, u0, times)
         Plots.plot!(plt,data[:,(idx[1]+1)],data[:,(idx[2]+1)], label = "",
                             line_z = log.(data[:,1]), c = :roma)
     end
@@ -363,7 +363,7 @@ function UniversalDiffEq.phase_plane(UDE::UniversalDiffEq.UDE, u0s::AbstractArra
 
     plt = plot()
     for u0 in u0s
-        data = forecast(UDE, u0, times)
+        data = UniversalDiffEq.forecast(UDE, u0, times)
         Plots.plot!(plt,data[:,(idx[1]+1)],data[:,(idx[2]+1)], label = "",
                             line_z = log.(data[:,1]), c = :roma)
     end
