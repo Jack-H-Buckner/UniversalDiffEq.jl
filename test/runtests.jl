@@ -1,5 +1,6 @@
 using UniversalDiffEq
 using Test
+using Plots
 
 @testset "UniversalDiffEq.jl" begin 
     include("UDETests.jl")
