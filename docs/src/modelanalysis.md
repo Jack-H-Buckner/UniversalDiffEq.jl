@@ -1,5 +1,7 @@
 # Model analysis
 
+### Please note that all plotting functions are provided through the `UniversalDiffEqPlots` extension, which requires `Plots` to be loaded as a dependency.
+
 UniversalDiffEq.jl provides several functions to analyze the characteristics of the fitted models. The most basic of these is the `get_right_hand_side` function. This function takes a UDE model as an argument and returns the right-hand side of the fitted differential or difference equation. This function can then be treated like any dynamic model and analyzed for equilibrium points, stability, tipping points, and other dynamics of interest.
 
 ```@docs; canonical=false

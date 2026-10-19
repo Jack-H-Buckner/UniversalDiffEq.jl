@@ -1,7 +1,7 @@
-using UniversalDiffEq, DataFrames
+using UniversalDiffEq, DataFrames, Plots
 
 # test NODE and gradient decent 
-data,plt = LotkaVolterra()
+data = LotkaVolterra()
 training_data = data[1:(end-6),:]
 model = NODE(training_data;hidden_units=20,seed=123,proc_weight=2.0,obs_weight=1.0,reg_weight=10^-3.5,l = 0.5,extrap_rho = 0.0,reg_type = "L2")
 train!(model; loss_function = "derivative matching", optimizer = "ADAM",optim_options = (maxiter = 1,))

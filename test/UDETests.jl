@@ -3,7 +3,7 @@ using UniversalDiffEq, DataFrames, Random, Lux
 # No covariates
 
 # test NODE and gradient decent 
-data,plt = LotkaVolterra()
+data = LotkaVolterra()
 training_data = data[1:(end-6),:]
 
 # neural network 
@@ -89,7 +89,7 @@ end
 
 init_parameters = (NN = NNparameters,r = 1.0,m=0.5,theta=0.5, beta = [0,0])
 
-data,X,plt = LorenzLotkaVolterra(T = 7.0, datasize = 120)
+data,X = LorenzLotkaVolterra(T = 7.0, datasize = 120)
 
 model = CustomDerivatives(data,X,derivs_X!,init_parameters,priors;proc_weight=2.0,obs_weight=0.5,reg_weight=10^-4)
 train!(model; loss_function = "conditional likelihood", optimizer = "ADAM",optim_options = (maxiter = 1,))
