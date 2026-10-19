@@ -2,6 +2,8 @@ push!(LOAD_PATH,"../src/")
 using Pkg; Pkg.add("DataFrames")
 using Documenter, UniversalDiffEq, DataFrames, Plots
 
+const UniversalDiffEqPlots = Base.get_extension(UniversalDiffEq, :UniversalDiffEqPlots)
+
 makedocs(
     sitename="UniversalDiffEq.jl",
     modules  = [UniversalDiffEq, UniversalDiffEqPlots],
