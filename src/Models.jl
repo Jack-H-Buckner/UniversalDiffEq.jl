@@ -661,7 +661,7 @@ Constructs a nonparametric discrete-time model for the data set `data` using a s
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
 """
-function NNDE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
+function NNDE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type = "L2")
     time_column_name = check_column_names(data, time_column_name = time_column_name)[1]
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name)
@@ -672,6 +672,11 @@ function NNDE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_weigh
     observation_model = Identity()
     observation_loss = ObservationMSE(N,obs_weight)
     process_regularization = L2(weight=reg_weight)
+    if reg_type == "L1"
+        process_regularization = L1(weight=reg_weight)
+    elseif reg_type != "L2"
+        println("Invalid regularization type - defaulting to L2")
+    end
     observation_regularization = no_reg()
 
 
@@ -681,7 +686,7 @@ function NNDE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_weigh
     # loss function
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
 
-    constructor = data -> NNDE(data;time_column_name=time_column_name,hidden_units=hidden_units,seed = seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho = 0.1,l = 0.25)
+    constructor = data -> NNDE(data;time_column_name=time_column_name,hidden_units=hidden_units,seed = seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho = 0.1,l = 0.25,reg_type = reg_type)
 
     weights = (regularization =  reg_weight, process = proc_weight, observation = obs_weight)
 
@@ -693,7 +698,7 @@ end
 
 
 
-function NNDE(data, X;time_column_name = "time",variable_column_name = nothing ,value_column_name = nothing,hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
+function NNDE(data, X;time_column_name = "time",variable_column_name = nothing ,value_column_name = nothing,hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type = "L2")
     X_data_frame = X
     time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
     # convert data
@@ -705,6 +710,11 @@ function NNDE(data, X;time_column_name = "time",variable_column_name = nothing ,
     observation_model = Identity()
     observation_loss = ObservationMSE(N,obs_weight)
     process_regularization = L2(weight=reg_weight)
+    if reg_type == "L1"
+        process_regularization = L1(weight=reg_weight)
+    elseif reg_type != "L2"
+        println("Invalid regularization type - defaulting to L2")
+    end
     observation_regularization = no_reg()
 
 
@@ -714,7 +724,7 @@ function NNDE(data, X;time_column_name = "time",variable_column_name = nothing ,
     # loss function
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
 
-    constructor = (data, X) -> NNDE(data, X; time_column_name=time_column_name,variable_column_name=variable_column_name,value_column_name=value_column_name,hidden_units=hidden_units,seed = seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho = 0.1,l = 0.25)
+    constructor = (data, X) -> NNDE(data, X; time_column_name=time_column_name,variable_column_name=variable_column_name,value_column_name=value_column_name,hidden_units=hidden_units,seed = seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho = 0.1,l = 0.25,reg_type = reg_type)
 
     return UDE(times,data,0,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name,

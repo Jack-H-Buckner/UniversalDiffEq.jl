@@ -68,3 +68,16 @@ model = UniversalDiffEq.MultiCustomDifference(training_data,training_X,diff2,ini
 
 UniversalDiffEq.train!(model; loss_function = "conditional likelihood", optimizer = "ADAM",optim_options = (maxiter = 1,))
 UniversalDiffEq.train!(model; loss_function = "marginal likelihood", optimizer = "ADAM",optim_options = (maxiter = 1,),loss_options = (observation_error = 0.1,))
+
+
+# test MultiNNDE
+
+model = MultiNNDE(training_data;time_column_name = "time", series_column_name = "series")
+
+UniversalDiffEq.train!(model; loss_function = "conditional likelihood", optimizer = "ADAM",optim_options = (maxiter = 1,))
+UniversalDiffEq.train!(model; loss_function = "marginal likelihood", optimizer = "ADAM",optim_options = (maxiter = 1,),loss_options = (observation_error = 0.1,))
+
+model = MultiNNDE(training_data,training_X;time_column_name = "time", series_column_name = "series")
+
+UniversalDiffEq.train!(model; loss_function = "conditional likelihood", optimizer = "ADAM",optim_options = (maxiter = 1,))
+UniversalDiffEq.train!(model; loss_function = "marginal likelihood", optimizer = "ADAM",optim_options = (maxiter = 1,),loss_options = (observation_error = 0.1,))
