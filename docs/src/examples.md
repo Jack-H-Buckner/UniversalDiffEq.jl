@@ -57,9 +57,10 @@ gradient_descent!(model, verbose = true, maxiter = 500, step_size = 0.01)
 nothing
 ```
 
-We can use the `plot_state_estimates` and `plot_predictions` functions to test the fit of the model to the training data.
+If we load the `Plots` package, we can use the `plot_state_estimates` and `plot_predictions` functions located in the `UniversalDiffEqPlots` extension to visualize the fit of the model to the training data.
 
 ```julia
+using Plots
 UniversalDiffEq.plot_state_estimates(model)
 ```
 ![](figures/regiem_changes_state_estiamtes.png)
@@ -79,7 +80,6 @@ To identify regime shifts, we can extract the right-hand side of the ODE from th
 
 
 ```julia
-using Plots
 p1 = vectorfield_and_nullclines(model,[0.0];t = 0, n = 15, lower = [-2.0,-2.0], upper = [2.0,2.0])
 p2 = vectorfield_and_nullclines(model,[0.0];t = 70, n = 15, lower = [-2.0,-2.0], upper = [2.0,2.0])
 p3 = vectorfield_and_nullclines(model,[0.0];t = 100, n = 15, lower = [-2.0,-2.0], upper = [2.0,2.0])
@@ -180,7 +180,7 @@ gradient_descent!(model,verbose = true)
 BFGS!(model,verbos = true)
 nothing
 ```
-We can evaluate the model fit using `plot_state_estimates` and `plot_predictions` functions to compare the estimated state variables to the data and the predicted changes in state variables to the observed changes between time steps. The fitted model performs well by visual inspection on both metrics.
+Since we have loaded the `Plots` package, we can evaluate the model fit using `plot_state_estimates` and `plot_predictions` functions from the `UniversalDiffEqPlots` extension to compare the estimated state variables to the data and the predicted changes in state variables to the observed changes between time steps. The fitted model performs well by visual inspection on both metrics.
 
 ```julia
 p1 = plot_state_estimates(model)
