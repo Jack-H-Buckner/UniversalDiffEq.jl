@@ -16,7 +16,7 @@ dims_out = 1
 
 NN, init_params = UniversalDiffEq.SimpleNeuralNetwork(dims_in,dims_out)
 
-# model derivitives
+# model derivatives
 function derivs!(u,i,p,t)
     NN(u,p.NN)[1] .- p.m*u[1]
 end
