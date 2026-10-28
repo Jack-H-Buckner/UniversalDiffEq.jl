@@ -57,7 +57,7 @@ end
 function predictions(UDE::MultiUDE)
 
 
-    N, T, dims, data, times,  dataframe, series_ls, inds, starts, lengths, labels = process_multi_data(UDE.data_frame,UDE.time_column_name,UDE.series_column_name)
+    N, T, dims, data, times, dataframe, series_ls, inds, starts, lengths, labels = process_multi_data(UDE.data_frame,UDE.time_column_name,UDE.series_column_name)
 
     series_ls =  unique(UDE.data_frame[:,"series"])
 
@@ -126,8 +126,8 @@ function predict(UDE::MultiUDE,test_data::DataFrame)
     series_ls =  unique(test_data[:,UDE.series_column_name])
     check_test_data_names(UDE.data_frame, test_data)
 
-    N, T, dims, data, times,  dataframe, series_ls, inds, starts, lengths, labs = process_multi_data(test_data, UDE.time_column_name, UDE.series_column_name)
-
+    N, T, dims, data, times, dataframe, series, inds, starts, lengths, varnames, labels_df = process_multi_data(test_data, UDE.time_column_name, UDE.series_column_name)
+    
     dfs = [zeros(l-1,dims+2) for l in lengths]
     
     for series in eachindex(starts)

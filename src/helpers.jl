@@ -552,7 +552,7 @@ function process_multi_data(data, time_column_name, series_column_name)
 
     series, inds, starts, lengths, times_ls= series_indexes(dataframe,series_column_name,time_column_name)
     dims = size(data)[1]
-    return N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames, labels_df
+    return N, T, dims, data, times, dataframe, series, inds, starts, lengths, varnames, labels_df
 end 
 
 
