@@ -276,6 +276,77 @@ function MultiNODE_process(dims,hidden,seed,l,extrap_rho; ode_solver = Tsit5(), 
     end 
     
     return MultiNODE_process(dims,IVP,derivs!,parameters,predict,forecast,0,right_hand_side,right_hand_side)
-    
-end 
+
+end
+
+
+mutable struct MultiNeuralNetwork
+    dims::Int # number of state variables
+    NN # lux neural network object
+    parameters #::ComponentArray of neural network parameters
+    predict::Function # neural network
+    forecast
+    covariates
+    right_hand_side
+end
+
+
+function MultiNeuralNetwork(dims,hidden,covariates,seed,l,extrap_rho)
+
+    # initial neural network
+    NN = Lux.Chain(Lux.Dense(dims+length(covariates(0,1)),hidden,tanh), Lux.Dense(hidden,dims))
+
+    # parameters
+    Random.seed!(seed)  # set seed for reproducibility
+    rng = Random.default_rng()
+    parameters, states = Lux.setup(rng,NN)
+    parameters = (NN = parameters, )
+
+    function predict(u,i,t,dt,parameters)
+        tspan = t:(t+dt-1)
+        for t in tspan
+            u = u .+ NN(vcat(u,covariates(t,i)),parameters.NN,states)[1]
+        end
+        return (u, 0)
+    end
+
+    forecast = init_Multiforecast(predict,l,extrap_rho)
+
+    function right_hand_side(u,i,X,t,parameters)
+        return NN(vcat(u,X),parameters.NN,states)[1]
+    end
+
+    return MultiNeuralNetwork(dims,NN,parameters,predict,forecast,covariates,right_hand_side)
+
+end
+
+
+function MultiNeuralNetwork(dims,hidden,seed,l,extrap_rho)
+
+    # initial neural network
+    NN = Lux.Chain(Lux.Dense(dims,hidden,tanh), Lux.Dense(hidden,dims))
+
+    # parameters
+    Random.seed!(seed)  # set seed for reproducibility
+    rng = Random.default_rng()
+    parameters, states = Lux.setup(rng,NN)
+    parameters = (NN = parameters, )
+
+    function predict(u,i,t,dt,parameters)
+        tspan = t:(t+dt-1)
+        for t in tspan
+            u = u .+ NN(u,parameters.NN,states)[1]
+        end
+        return (u, 0)
+    end
+
+    forecast = init_Multiforecast(predict,l,extrap_rho)
+
+    function right_hand_side(u,i,t,parameters)
+        return NN(u,parameters.NN,states)[1]
+    end
+
+    return MultiNeuralNetwork(dims,NN,parameters,predict,forecast,0,right_hand_side)
+
+end
 

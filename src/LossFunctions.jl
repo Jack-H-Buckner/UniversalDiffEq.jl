@@ -52,7 +52,7 @@ function MSE_and_errors_sd(dims;N = 1, MSE_weight = 1.0, errors_weight = 1.0)
     return LossFunction(parameters,loss)
 end
 
-function FixedMvNoraml(Σ)
+function FixedMvNormal(Σ)
 
     parameters = NamedTuple()
     invΣ = inv(Σ)
@@ -66,7 +66,7 @@ function FixedMvNoraml(Σ)
 end
 
 
-function DiagonalNoraml(dims;σ0 = 1.0)
+function DiagonalNormal(dims;σ0 = 1.0)
 
     parameters = (log_σ = repeat([log(σ0)],dims),)
 

@@ -108,8 +108,8 @@ Constructs a UDE model for the data set `data`  based on user-defined derivative
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
-- `ode_solver`: method to aproximate solutions to the differntail equation. Defaul is `Tsit5()`
-- `ad_method`:method to evalaute derivatives of the ODE solver. Default is `ForwardDiffSensitivity()`
+- `ode_solver`: method to approximate solutions to the differential equation. Default is `Tsit5()`
+- `ad_method`:method to evaluate derivatives of the ODE solver. Default is `ForwardDiffSensitivity()`
 ...
 """
 function CustomDerivatives(data,derivs!,initial_parameters;time_column_name = "time",proc_weight=1.0,obs_weight=1.0,reg_weight=10^-6,extrap_rho=0.1,l=0.25,reg_type = "L2", 
@@ -156,7 +156,7 @@ end
 """
     CustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,priors::Function;kwargs ... )
 
-When a function's priors is supplied its value will be added to the loss function as a penalty term for user specified parameters. It should take the a single NamedTuple `p` as an argument penalties for each paramter should be calculated by accessing `p` with the period operator.
+When a function's priors is supplied its value will be added to the loss function as a penalty term for user specified parameters. It should take the a single NamedTuple `p` as an argument penalties for each parameter should be calculated by accessing `p` with the period operator.
 
 The prior function can be used to nudge the fitted model toward prior expectations for a parameter value. For example, the following function increases the loss when a parameter `p.r` has a value other than 1.5, nad a second parameter `p.beta` is greater than zeros.
 
@@ -177,8 +177,8 @@ end
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
-- `ode_solver`: method to aproximate solutions to the differntail equation. Defaul is `Tsit5()`
-- `ad_method`:method to evalaute derivatives of the ODE solver. Default is `ForwardDiffSensitivity()`
+- `ode_solver`: method to approximate solutions to the differential equation. Default is `Tsit5()`
+- `ad_method`:method to evaluate derivatives of the ODE solver. Default is `ForwardDiffSensitivity()`
 """
 function CustomDerivatives(data::DataFrame,derivs!::Function,initial_parameters,priors::Function;
                                 time_column_name = "time",proc_weight=1.0,obs_weight=1.0,
@@ -242,8 +242,8 @@ When `X` is provided the derivs function must have the form `derivs!(du,u,x,p,t)
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
-- `ode_solver`: method to aproximate solutions to the differntail equation. Defaul is `Tsit5()`.
-- `ad_method`:method to evalaute derivatives of the ODE solver. Default is `ForwardDiffSensitivity()`.
+- `ode_solver`: method to approximate solutions to the differential equation. Default is `Tsit5()`.
+- `ad_method`:method to evaluate derivatives of the ODE solver. Default is `ForwardDiffSensitivity()`.
 """
 function CustomDerivatives(data::DataFrame,X::DataFrame,derivs!::Function,initial_parameters;time_column_name = "time",
                             variable_column_name = nothing ,value_column_name = nothing,
@@ -435,7 +435,7 @@ function CustomDerivatives(data::DataFrame,X,derivs!::Function,initial_parameter
 end
 
 """
-    CustomDifference(data,step,initial_parameters;kwrags...)
+    CustomDifference(data,step,initial_parameters;kwargs...)
 
 Constructs a UDE model for the data set `data` based on user defined difference equation `step`. An initial guess of model parameters are supplied with the initial_parameters argument.
 ...
@@ -493,7 +493,7 @@ end
 """
     CustomDifference(data::DataFrame,step,initial_parameters,priors::Function;kwargs ... )
 
-When a function's priors is supplied its value will be added to the loss function as a penalty term for user-specified parameters. It should take the a single NamedTuple `p` as an argument penalties for each parameter should be calcualted by accessing `p` with the period operator.
+When a function's priors is supplied its value will be added to the loss function as a penalty term for user-specified parameters. It should take the a single NamedTuple `p` as an argument penalties for each parameter should be calculated by accessing `p` with the period operator.
 
 ```julia
 function priors(p)
@@ -661,7 +661,7 @@ Constructs a nonparametric discrete-time model for the data set `data` using a s
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
 """
-function NNDE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
+function NNDE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type = "L2")
     time_column_name = check_column_names(data, time_column_name = time_column_name)[1]
     # convert data
     N, dims, T, times, data, dataframe = process_data(data,time_column_name)
@@ -672,6 +672,11 @@ function NNDE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_weigh
     observation_model = Identity()
     observation_loss = ObservationMSE(N,obs_weight)
     process_regularization = L2(weight=reg_weight)
+    if reg_type == "L1"
+        process_regularization = L1(weight=reg_weight)
+    elseif reg_type != "L2"
+        println("Invalid regularization type - defaulting to L2")
+    end
     observation_regularization = no_reg()
 
 
@@ -681,7 +686,7 @@ function NNDE(data;time_column_name = "time",hidden_units=10,seed = 1,proc_weigh
     # loss function
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
 
-    constructor = data -> NNDE(data;time_column_name=time_column_name,hidden_units=hidden_units,seed = seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho = 0.1,l = 0.25)
+    constructor = data -> NNDE(data;time_column_name=time_column_name,hidden_units=hidden_units,seed = seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho = 0.1,l = 0.25,reg_type = reg_type)
 
     weights = (regularization =  reg_weight, process = proc_weight, observation = obs_weight)
 
@@ -693,7 +698,7 @@ end
 
 
 
-function NNDE(data, X;time_column_name = "time",variable_column_name = nothing ,value_column_name = nothing,hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25)
+function NNDE(data, X;time_column_name = "time",variable_column_name = nothing ,value_column_name = nothing,hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 0.25,reg_type = "L2")
     X_data_frame = X
     time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name,value_column_name = value_column_name, variable_column_name = variable_column_name)
     # convert data
@@ -705,6 +710,11 @@ function NNDE(data, X;time_column_name = "time",variable_column_name = nothing ,
     observation_model = Identity()
     observation_loss = ObservationMSE(N,obs_weight)
     process_regularization = L2(weight=reg_weight)
+    if reg_type == "L1"
+        process_regularization = L1(weight=reg_weight)
+    elseif reg_type != "L2"
+        println("Invalid regularization type - defaulting to L2")
+    end
     observation_regularization = no_reg()
 
 
@@ -714,7 +724,7 @@ function NNDE(data, X;time_column_name = "time",variable_column_name = nothing ,
     # loss function
     loss_function = init_loss(data,times,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
 
-    constructor = (data, X) -> NNDE(data, X; time_column_name=time_column_name,variable_column_name=variable_column_name,value_column_name=value_column_name,hidden_units=hidden_units,seed = seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho = 0.1,l = 0.25)
+    constructor = (data, X) -> NNDE(data, X; time_column_name=time_column_name,variable_column_name=variable_column_name,value_column_name=value_column_name,hidden_units=hidden_units,seed = seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho = 0.1,l = 0.25,reg_type = reg_type)
 
     return UDE(times,data,0,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name,
@@ -740,8 +750,8 @@ Constructs a nonparametric continuous-time model for the data set `data` using a
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
-- `ode_solver`: method to aproximate solutions to the differntail equation. Defaul is `Tsit5()`.
-- `ad_method`:method to evalaute derivatives of the ODE solver. Default is `ForwardDiffSensitivity()`.
+- `ode_solver`: method to approximate solutions to the differential equation. Default is `Tsit5()`.
+- `ad_method`:method to evaluate derivatives of the ODE solver. Default is `ForwardDiffSensitivity()`.
 """
 function NODE(data;time_column_name = "time",hidden_units=10,seed = 1,
                 proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", 
@@ -797,8 +807,8 @@ When a data frame `X` is supplied the model will run with covariates. The argume
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
-- `ode_solver`: method to aproximate solutions to the differntail equation. Defaul is `Tsit5()`.
-- `ad_method`:method to evalaute derivatives of the ODE solver. Default is `ForwardDiffSensitivity()`.
+- `ode_solver`: method to approximate solutions to the differential equation. Default is `Tsit5()`.
+- `ad_method`:method to evaluate derivatives of the ODE solver. Default is `ForwardDiffSensitivity()`.
 """
 function NODE(data,X;time_column_name = "time", variable_column_name = nothing ,value_column_name = nothing, hidden_units=10,seed = 1,
                 proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6, reg_type = "L2", 
@@ -850,9 +860,9 @@ function NODE_wth_ARD(data,X,Σ,λ,α,β;time_column_name = "time", variable_col
 
     # submodels
     process_model = NODEWithARD(dims,covariates; hidden = hidden_units, nonlinearity = nonlinearity)
-    process_loss = DiagonalNoraml(dims;σ0 = 1.0)
+    process_loss = DiagonalNormal(dims;σ0 = 1.0)
     observation_model = Identity()
-    observation_loss = FixedMvNoraml(Σ)
+    observation_loss = FixedMvNormal(Σ)
     process_regularization = no_reg()
     observation_regularization = no_reg()
 
@@ -887,9 +897,9 @@ function GP(data,X,Σ,α,β;time_column_name = "time", variable_column_name = no
 
     # submodels
     process_model = GP_process_model(dims,inducing_points,covariates)
-    process_loss = DiagonalNoraml(dims;σ0 = 1.0)
+    process_loss = DiagonalNormal(dims;σ0 = 1.0)
     observation_model = Identity()
-    observation_loss = FixedMvNoraml(Σ)
+    observation_loss = FixedMvNormal(Σ)
     process_regularization = no_reg()
     observation_regularization = no_reg()
 
@@ -902,7 +912,7 @@ function GP(data,X,Σ,α,β;time_column_name = "time", variable_column_name = no
 
     constructor = data -> GP(data,X,Σ,α,β;time_column_name = time_column_name, variable_column_name = variable_column_name ,value_column_name = value_column_name)
 
-    weights = "Gausian Process with Automatic Relevance Determination"
+    weights = "Gaussian Process with Automatic Relevance Determination"
 
     return UDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name,weights,
@@ -1487,8 +1497,8 @@ function CustomModel(data::DataFrame,
     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
 
     # loss function
-    log_likeihood = init_loss(data,times, state_variable_transform,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
-    loss_function = parameters -> log_likeihood(parameters) + log_priors(parameters)
+    log_likelihood = init_loss(data,times, state_variable_transform,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+    loss_function = parameters -> log_likelihood(parameters) + log_priors(parameters)
 
     # model constructor
     constructor = data -> CustomModel(data,derivs,initial_parameters;link=link,link_params=link_params,
@@ -1501,7 +1511,7 @@ function CustomModel(data::DataFrame,
     weights = (regularization =  reg_weight, )
 
     return CustomUDE(times,data,0,dataframe,0,parameters, state_variable_transform,loss_function,
-                log_likeihood,log_priors,process_model,process_loss,observation_model,observation_loss,
+                log_likelihood,log_priors,process_model,process_loss,observation_model,observation_loss,
                 process_regularization,observation_regularization,constructor,time_column_name,weights,
                 nothing, nothing)
 
@@ -1511,24 +1521,24 @@ end
 """
     CustomModel(data::DataFrame,X::DataFrame, derivs!::Function, initial_parameters; kwargs ...)
 
-Constructs a UDE model from a DataFrame `data` a DataFrame with covariates `X` a function `derivs` and an initial guess of the paramter values `inital_parameters`.
-The modle strucutre can be further modified by the key word arguments to specify the relationship between the state variables and observations and the loss function. 
-These areguments are discussed individuals below. 
+Constructs a UDE model from a DataFrame `data` a DataFrame with covariates `X` a function `derivs` and an initial guess of the parameter values `initial_parameters`.
+The model structure can be further modified by the key word arguments to specify the relationship between the state variables and observations and the loss function. 
+These arguments are discussed individuals below. 
 
 # kwargs
-link - A function that takes the value of the state variable `u` and paramters `p` and retuns and estiamte of the obseration `y`
-link_params - parameters for the link function, can be an empty NamedTuple if no paramters are used
-observation_loss - loss function that describes the distance betwen the observed and estimated states
-observation_params - parameters for the obseraiton loss function - can be an empty named tuple of no paramters are needed
-process_loss - loss funciton that describes the distance betwen the observed and predicted state tranistions. 
+link - A function that takes the value of the state variable `u` and parameters `p` and returns and estimate of the observation `y`
+link_params - parameters for the link function, can be an empty NamedTuple if no parameters are used
+observation_loss - loss function that describes the distance between the observed and estimated states
+observation_params - parameters for the observation loss function; can be an empty named tuple if no parameters are needed
+process_loss - loss function that describes the distance between the observed and predicted state transitions. 
 process_loss_params - parameters for the process loss. 
-state_variable_transform - a function that maps from the variables used in the optimizer to states variables used by the observaiton and prediction funitons. 
-log_priors - prior probabilities for the model paramters + nerual network regularization 
+state_variable_transform - a function that maps from the variables used in the optimizer to states variables used by the observation and prediction functions. 
+log_priors - prior probabilities for the model parameters + neural network regularization 
 time_column_name - column that indexes time in the data frames
-value_column_name - the column that indicates the variabe in  long formate covariates data sets 
+value_column_name - the column that indicates the variable in  long formate covariates data sets 
 variable_column_name = the column that indicates the value of the variables in long formate covariates data sets 
-reg_weight -  weight given to regualrizing the neural network 
-reg_type - funcrional form of regualrization "L1" or "L2"
+reg_weight -  weight given to regularizing the neural network 
+reg_type - functional form of regularization "L1" or "L2"
 """
 function CustomModel(data::DataFrame,
                         X::DataFrame,
@@ -1573,8 +1583,8 @@ function CustomModel(data::DataFrame,
     parameters = init_parameters(data,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
 
     # loss function
-    log_likeihood = init_loss(data,times, state_variable_transform,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
-    loss_function = parameters -> log_likeihood(parameters) + log_priors(parameters)
+    log_likelihood = init_loss(data,times, state_variable_transform,observation_model,observation_loss,process_model,process_loss,process_regularization,observation_regularization)
+    loss_function = parameters -> log_likelihood(parameters) + log_priors(parameters)
 
     # model constructor
     constructor = (data, X)  -> CustomModel(data,X,derivs,initial_parameters;link=link,link_params=link_params,
@@ -1587,7 +1597,7 @@ function CustomModel(data::DataFrame,
     weights = (regularization =  reg_weight, )
 
     return CustomUDE(times,data,X,dataframe,X_data_frame,parameters, state_variable_transform,loss_function,
-                    log_likeihood,log_priors,process_model,process_loss,observation_model,observation_loss,
+                    log_likelihood,log_priors,process_model,process_loss,observation_model,observation_loss,
                     process_regularization,observation_regularization,constructor,time_column_name,weights,
                     nothing, nothing)
 

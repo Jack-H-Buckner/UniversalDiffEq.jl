@@ -278,6 +278,124 @@ function MultiNODE(data,X;time_column_name = "time", series_column_name = "serie
 
 end
 
+
+"""
+    MultiNNDE(data;kwargs...)
+
+builds a nonparametric discrete-time model to fit to the data using a single layer neural network to represent the system's dynamics. `data` is a DataFrame object with time arguments placed in a column labed `t` and a second column with a unique index for each time series. The remaining columns have observations of the state variables at each point in time and for each time series.
+
+# kwargs
+
+- `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
+- `series_column_name`: Name of column in `data` that corresponds to series. Default is `"series"`.
+- `hidden_units`: Number of neurons in hidden layer. Default is `10`.
+- `seed`: Fixed random seed for repeatable results. Default is `1`.
+- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
+- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
+- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
+- `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
+- `l`: Extrapolation parameter for forecasting. Default is `0.25`.
+- `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.1`.
+"""
+function MultiNNDE(data;time_column_name = "time", series_column_name = "series",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,reg_type="L2",extrap_rho=0.1,l=0.25)
+
+    time_column_name, series_column_name = check_column_names(data, time_column_name = time_column_name, series_column_name = series_column_name)
+    # convert data
+    N, T, dims, data, times,  dataframe, series, inds, starts, lengths, varnames, labels_df = process_multi_data(data, time_column_name, series_column_name)
+
+    process_model =  MultiNeuralNetwork(dims,hidden_units,seed,l,extrap_rho)
+    process_loss = ProcessMSE(N,T,proc_weight)
+    observation_model = Identity()
+    observation_loss = ObservationMSE(T,obs_weight)
+    process_regularization = L2(weight=reg_weight)
+    if reg_type == "L1"
+        process_regularization = L1(weight=reg_weight)
+    elseif reg_type != "L2"
+        println("Invalid regularization type - defaulting to L2")
+    end
+    observation_regularization = no_reg()
+
+    # parameters
+    parameters = (uhat = zeros(size(data)),
+                    process_model = process_model.parameters,
+                    process_loss = process_loss.parameters,
+                    observation_model = observation_model.parameters,
+                    observation_loss = observation_loss.parameters,
+                    process_regularization = process_regularization.reg_parameters,
+                    observation_regularization = observation_regularization.reg_parameters)
+
+    parameters = ComponentArray(parameters)
+
+    loss_function = init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,time_column_name,series_column_name,labels_df )
+
+    constructor = (data) -> MultiNNDE(data;time_column_name = time_column_name , series_column_name = series_column_name ,hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type,extrap_rho=extrap_rho,l=l)
+
+    return MultiUDE(times,data,0,dataframe,0,parameters,loss_function,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name,nothing,nothing,labels_df,varnames,())
+
+end
+
+
+"""
+    MultiNNDE(data,X;kwargs...)
+
+When a dataframe `X` is supplied the model will run with covariates. the argument `X` should have a column for time `t` with the value for time in the remaining columns. The values in `X` will be interpolated with a linear spline for values of time not included in the data frame.
+
+# kwargs
+
+- `time_column_name`: Name of column in `data` that corresponds to time. Default is `"time"`.
+- `series_column_name`: Name of column in `data` that corresponds to time. Default is `"series"`.
+- `variable_column_name`: Name of column in `data` that corresponds to the covariates. Default is `"variable"`.
+- `value_column_name`: Name of column in `data` that corresponds to the covariates. Default is `"value"`.
+- `hidden_units`: Number of neurons in hidden layer. Default is `10`.
+- `seed`: Fixed random seed for repeatable results. Default is `1`.
+- `proc_weight`: Weight of process error `omega_{proc}`. Default is `1.0`.
+- `obs_weight`: Weight of observation error `omega_{obs}`. Default is `1.0`.
+- `reg_weight`: Weight of regularization error `omega_{reg}`. Default is `10^-6`.
+- `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
+- `l`: Extrapolation parameter for forecasting. Default is `0.25`.
+- `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.1`.
+"""
+function MultiNNDE(data,X;time_column_name = "time", series_column_name = "series", variable_column_name = nothing, value_column_name = nothing,hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,reg_type="L2",extrap_rho=0.1,l=0.25)
+    X_data_frame = X
+    time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name, series_column_name = series_column_name, value_column_name = value_column_name, variable_column_name = variable_column_name)
+
+    N, T, dims, data, times,  dataframe, series, inds, starts, lengths,varnames, labels_df = process_multi_data(data, time_column_name, series_column_name)
+    covariates, variables = interpolate_covariates(X, time_column_name, series_column_name,  variable_column_name, value_column_name)
+
+
+    process_model = MultiNeuralNetwork(dims,hidden_units,covariates,seed,l,extrap_rho)
+    process_loss = ProcessMSE(N,T,proc_weight)
+    observation_model = Identity()
+    observation_loss = ObservationMSE(T,obs_weight)
+    process_regularization = L2(weight=reg_weight)
+    if reg_type == "L1"
+        process_regularization = L1(weight=reg_weight)
+    elseif reg_type != "L2"
+        println("Invalid regularization type - defaulting to L2")
+    end
+    observation_regularization = no_reg()
+
+    # parameters
+    parameters = (uhat = zeros(size(data)),
+                    process_model = process_model.parameters,
+                    process_loss = process_loss.parameters,
+                    observation_model = observation_model.parameters,
+                    observation_loss = observation_loss.parameters,
+                    process_regularization = process_regularization.reg_parameters,
+                    observation_regularization = observation_regularization.reg_parameters)
+
+    parameters = ComponentArray(parameters)
+
+    loss_function = init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,time_column_name,series_column_name,labels_df )
+
+    constructor = data -> MultiNNDE(data,X;time_column_name = time_column_name , series_column_name =  series_column_name, variable_column_name = variable_column_name, value_column_name = value_column_name,
+                                        hidden_units=hidden_units,seed=seed,proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type,extrap_rho=extrap_rho,l=l)
+
+    return MultiUDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name, variable_column_name, value_column_name,labels_df,varnames,())
+
+end
+
+
 """
     MultiCustomDerivatives(data,derivs!,initial_parameters;kwargs...)
 
@@ -311,6 +429,11 @@ function MultiCustomDerivatives(data,derivs!,initial_parameters;time_column_name
     observation_model = Identity()
     observation_loss = ObservationMSE(N,obs_weight)
     process_regularization = L2(initial_parameters,weight=reg_weight)
+    if reg_type == "L1"
+        process_regularization = L1(initial_parameters,weight=reg_weight)
+    elseif reg_type != "L2"
+        println("Invalid regularization type - defaulting to L2")
+    end
     observation_regularization = no_reg()
 
     # parameters vector
@@ -321,7 +444,7 @@ function MultiCustomDerivatives(data,derivs!,initial_parameters;time_column_name
 
     # model constructor
     constructor = (data) -> MultiCustomDerivatives(data,derivs!,initial_parameters;time_column_name = time_column_name , series_column_name =  series_column_name,
-                    proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,
+                    proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type,extrap_rho=extrap_rho,l=l,
                     ode_solver =ode_solver, ad_method = ad_method)
 
     return MultiUDE(times,data,0,dataframe,0,parameters,loss_function,process_model,process_loss,observation_model,
@@ -343,6 +466,11 @@ function MultiCustomDerivatives(data,X,derivs!,initial_parameters;time_column_na
     observation_model = Identity()
     observation_loss = ObservationMSE(N,obs_weight)
     process_regularization = L2(initial_parameters,weight=reg_weight)
+    if reg_type == "L1"
+        process_regularization = L1(initial_parameters,weight=reg_weight)
+    elseif reg_type != "L2"
+        println("Invalid regularization type - defaulting to L2")
+    end
     observation_regularization = no_reg()
 
     # parameters vector
@@ -352,8 +480,8 @@ function MultiCustomDerivatives(data,X,derivs!,initial_parameters;time_column_na
     loss_function = init_multi_loss_function(data,times,starts,lengths,process_model,process_loss,observation_model,observation_loss,process_regularization,observation_regularization,time_column_name,series_column_name,labels_df )
 
     # model constructor
-    constructor = data -> MultiCustomDifference(data,X,derivs!,initial_parameters;time_column_name = time_column_name , series_column_name =  series_column_name,
-                        variable_column_name = variable_column_name, value_column_name = value_column_name, proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l,
+    constructor = data -> MultiCustomDerivatives(data,X,derivs!,initial_parameters;time_column_name = time_column_name , series_column_name =  series_column_name,
+                        variable_column_name = variable_column_name, value_column_name = value_column_name, proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type,extrap_rho=extrap_rho,l=l,
                         ode_solver =ode_solver, ad_method = ad_method)
 
     return MultiUDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
@@ -363,7 +491,7 @@ end
 
 
 
-function MultiCustomDifference(data,diff,initial_parameters;time_column_name = "time", series_column_name = "series",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 1000)
+function MultiCustomDifference(data,diff,initial_parameters;time_column_name = "time", series_column_name = "series",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,reg_type="L2",extrap_rho = 0.1,l = 1000)
 
     time_column_name, series_column_name = check_column_names(data, time_column_name = time_column_name, series_column_name = series_column_name)
 
@@ -376,6 +504,11 @@ function MultiCustomDifference(data,diff,initial_parameters;time_column_name = "
     observation_model = Identity()
     observation_loss = ObservationMSE(N,obs_weight)
     process_regularization = L2(initial_parameters,weight=reg_weight)
+    if reg_type == "L1"
+        process_regularization = L1(initial_parameters,weight=reg_weight)
+    elseif reg_type != "L2"
+        println("Invalid regularization type - defaulting to L2")
+    end
     observation_regularization = no_reg()
 
     # parameters vector
@@ -386,14 +519,14 @@ function MultiCustomDifference(data,diff,initial_parameters;time_column_name = "
 
     # model constructor
     constructor = (data) -> MultiCustomDifference(data,diff,initial_parameters;time_column_name = time_column_name , series_column_name =  series_column_name,
-                    proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l)
+                    proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type,extrap_rho=extrap_rho,l=l)
 
     return MultiUDE(times,data,0,dataframe,0,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name,nothing,nothing,labels_df,varnames,())
 
 end
 
-function MultiCustomDifference(data,X,diff,initial_parameters;time_column_name = "time", series_column_name = "series", variable_column_name = nothing, value_column_name = nothing,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,extrap_rho = 0.1,l = 1000)
+function MultiCustomDifference(data,X,diff,initial_parameters;time_column_name = "time", series_column_name = "series", variable_column_name = nothing, value_column_name = nothing,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,reg_type="L2",extrap_rho = 0.1,l = 1000)
     X_data_frame = X
     time_column_name, series_column_name, value_column_name, variable_column_name = check_column_names(data, X, time_column_name = time_column_name, series_column_name = series_column_name, value_column_name = value_column_name, variable_column_name = variable_column_name)
     # convert data
@@ -406,6 +539,11 @@ function MultiCustomDifference(data,X,diff,initial_parameters;time_column_name =
     observation_model = Identity()
     observation_loss = ObservationMSE(N,obs_weight)
     process_regularization = L2(initial_parameters,weight=reg_weight)
+    if reg_type == "L1"
+        process_regularization = L1(initial_parameters,weight=reg_weight)
+    elseif reg_type != "L2"
+        println("Invalid regularization type - defaulting to L2")
+    end
     observation_regularization = no_reg()
 
     # parameters vector
@@ -416,7 +554,7 @@ function MultiCustomDifference(data,X,diff,initial_parameters;time_column_name =
 
     # model constructor
     constructor = data -> MultiCustomDifference(data,X,diff,initial_parameters;time_column_name = time_column_name , series_column_name =  series_column_name,
-                        variable_column_name = variable_column_name, value_column_name = value_column_name, proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,extrap_rho=extrap_rho,l=l)
+                        variable_column_name = variable_column_name, value_column_name = value_column_name, proc_weight=proc_weight,obs_weight=obs_weight,reg_weight=reg_weight,reg_type=reg_type,extrap_rho=extrap_rho,l=l)
 
     return MultiUDE(times,data,X,dataframe,X_data_frame,parameters,loss_function,process_model,process_loss,observation_model,
                 observation_loss,process_regularization,observation_regularization,constructor,time_column_name, series_column_name,variable_column_name,value_column_name, labels_df,varnames,())
