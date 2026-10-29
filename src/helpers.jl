@@ -528,8 +528,8 @@ end
 
 function process_multi_data(data, time_column_name, series_column_name)
 
-    time_alias_ = time_column_name
-    series_alias_ = series_column_name
+    time_alias_ = string(time_column_name)
+    series_alias_ = string(series_column_name)
 
     # collect series index names 
     labels_df = DataFrame(label = unique(data[:,series_alias_]),
@@ -558,8 +558,8 @@ end
 
 function process_multi_data2(data,time_column_name,series_column_name)
     
-    time_alias_ = time_column_name
-    series_alias_ = series_column_name
+    time_alias_ = string(time_column_name)
+    series_alias_ = string(series_column_name)
 
     inds = levelcode.(CategoricalArray(data[:,series_alias_]))
     data.series = inds
