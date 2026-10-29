@@ -6,8 +6,8 @@ using CSV, DataFrames
 ## Two time series troubleshooting, splitting training and testing by time
 # load data
 multi_series = CSV.read("Two logistic growth series.csv", DataFrame)
-training_data = multi_series[multi_series.t .<= 75, :]
-testing_data = multi_series[multi_series.t .> 75, :]
+training_data = multi_series[multi_series."2" .<= 75, :]
+testing_data = multi_series[multi_series."2" .> 75, :]
 
 # set up neural network
 dims_in = 1
@@ -27,7 +27,7 @@ end
 init_parameters = (NN = init_params, K=[100.0, 200.0])
 
 model = UniversalDiffEq.MultiCustomDerivatives(training_data,multi_logistic,init_parameters, 
-                                time_column_name = "t", series_column_name = "series")
+                                time_column_name = "2", series_column_name = "series")
 
 UniversalDiffEq.train!(model; loss_function = "derivative matching", optimizer = "ADAM",
                                 optim_options = (maxiter = 1,), loss_options = (d = 8,))
@@ -41,8 +41,8 @@ forecasts   = UniversalDiffEq.forecast(model, testing_data)
 ## Three time series troubleshooting, splitting training and testing by series
 # load data
 multi_series = CSV.read("Three logistic growth series.csv", DataFrame)
-training_data = multi_series[multi_series.series .<= 2, :]
-testing_data = multi_series[multi_series.series .> 2, :]
+training_data = multi_series[multi_series.series .!= "A", :]
+testing_data = multi_series[multi_series.series .== "A", :]
 
 # set up neural network
 dims_in = 1
@@ -59,7 +59,7 @@ function multi_logistic(u, i, p, t)
 end
 
 # set up and train model
-init_parameters = (NN = init_params, K=[150.0,100.0,200.0])
+init_parameters = (NN = init_params, K=[150.0,200.0])
 
 model = UniversalDiffEq.MultiCustomDerivatives(training_data,multi_logistic,init_parameters, 
                                 time_column_name = "t", series_column_name = "series")
