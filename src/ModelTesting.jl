@@ -442,3 +442,42 @@ function forecast_simulation_SE(simulator,model,seed;train_fraction=0.9,step_siz
 
     return abs.(Matrix(predicted_data[:,2:end]) .- Matrix(test_data[:,2:end]))
 end
+
+"""
+    state_estimates(UDE::UDE)
+
+Returns the values of the state variables estimated by the UDE model.
+"""
+function state_estimates(UDE::UDE)
+
+    outs = []
+
+    for dim in 1:size(UDE.data)[1]
+
+        output = DataFrame(times = UDE.times, data = UDE.data[dim,:], estimates = UDE.parameters.uhat[dim,:]) 
+
+        
+        push!(outs, output)
+    end
+
+    return outs
+end
+
+
+function state_estimates(UDE::CustomUDE)
+
+    outs = []
+
+    for dim in 1:size(UDE.data)[1]
+
+        output = DataFrame(
+            times = UDE.times, 
+            data = UDE.data[dim,:], 
+            estimates = mapslices(UDE.state_variable_transform,UDE.parameters.uhat',dims = 2)[:,dim]
+        )
+         
+        push!(outs, output)
+    end
+
+    return plot(outs)
+end
