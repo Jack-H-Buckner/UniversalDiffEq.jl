@@ -1526,7 +1526,7 @@ The model structure can be further modified by the key word arguments to specify
 These arguments are discussed individuals below. 
 
 # kwargs
-link - A function that takes the value of the state variable `u` and parameters `p` and returns and estimate of the observation `y`
+link - A function that takes the value of the state variable `u` and parameters `p` and returns an estimate of the observation `y`
 link_params - parameters for the link function, can be an empty NamedTuple if no parameters are used
 observation_loss - loss function that describes the distance between the observed and estimated states
 observation_params - parameters for the observation loss function; can be an empty named tuple if no parameters are needed
