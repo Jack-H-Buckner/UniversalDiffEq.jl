@@ -495,7 +495,7 @@ function process_data(data,time_column_name)
     dataframe = sort!(data,[time_alias_])
     times = dataframe[:,time_alias_]
 
-    times = dataframe[:,time_alias_] # time in colum 1
+    times = dataframe[:,time_alias_] # time in column 1
     N = length(times); dims = size(dataframe)[2] - 1; T = times[end] - times[1]
     varnames = names(dataframe)[names(dataframe).!=time_alias_]
     data = transpose(Matrix(dataframe[:,varnames]))
@@ -525,37 +525,44 @@ function series_indexes(dataframe,series_column_name,time_column_name)
     return series, inds, starts, lengths, times
 end 
 
-
 function process_multi_data(data, time_column_name, series_column_name)
 
-    time_alias_ = string(time_column_name)
+    time_alias_   = string(time_column_name)
     series_alias_ = string(series_column_name)
 
-    # collect series index names 
-    labels_df = DataFrame(label = unique(data[:,series_alias_]),
-                         index = levelcode.(CategoricalArray(unique(data[:,series_alias_])))
-                        )
-    
-    inds = levelcode.(CategoricalArray(data[:,series_alias_]))
-    data.series .= inds
+    # Copy DataFrame without adding or mutating columns
+    dataframe = copy(data)
 
-    dataframe = sort!(data,["series",time_alias_])
-    times = dataframe[:,time_alias_]
-    series =dataframe.series
+    # Identify state variable columns (all columns except time and series)
+    inds_time   = names(dataframe) .!= time_alias_
+    inds_series = names(dataframe) .!= series_alias_
+    varnames    = names(dataframe)[inds_time .& inds_series]
+
+    # Sort using Vector{String} selector
+    sort!(dataframe, [series_alias_, time_alias_])
+
+    # Extract time vector and integer categorical indices for series
+    times = dataframe[:, time_alias_]
+    series_inds = levelcode.(CategoricalArray(dataframe[:, series_alias_]))
     T = times[argmax(times)]
-    
-    N = length(times); dims = size(dataframe)[2] - 2
-    inds_time = names(dataframe).!=time_alias_ 
-    inds_series = (names(dataframe).!=series_alias_) .& (names(dataframe).!= "series")
-    varnames = names(dataframe)[inds_time .& inds_series]
-    data = transpose(Matrix(dataframe[:,varnames]))
 
-    series, inds, starts, lengths, times_ls= series_indexes(dataframe,series_column_name,time_column_name)
-    dims = size(data)[1]
-    return N, T, dims, data, times, dataframe, series, inds, starts, lengths, varnames, labels_df
-end 
+    N = length(times)
+    data_mat = transpose(Matrix(dataframe[:, varnames]))
 
+    # Extract series indices, starts, and lengths
+    series, inds, starts, lengths, times_ls = series_indexes(dataframe, series_column_name, time_column_name)
+    dims = size(data_mat)[1]
 
+    # Map unique raw labels to categorical integer indices
+    raw_labels = unique(data[:, series_alias_])
+    labels_df  = DataFrame(
+        label = raw_labels,
+        index = levelcode.(CategoricalArray(raw_labels))
+    )
+
+    return N, T, dims, data_mat, times, dataframe, series_inds, inds, starts, lengths, varnames, labels_df
+end
+     
 function process_multi_data2(data,time_column_name,series_column_name)
     
     time_alias_ = string(time_column_name)
