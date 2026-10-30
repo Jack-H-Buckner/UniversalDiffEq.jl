@@ -161,7 +161,7 @@ end
 """
     MultiNODE(data;kwargs...)
 
-builds a NODE model to fit to the data. `data` is a DataFrame object with time arguments placed in a column labed `t` and a second column with a unique index for each time series. The remaining columns have observations of the state variables at each point in time and for each time series.
+builds a NODE model to fit to the data. `data` is a DataFrame object with time arguments placed in a column labeled `t` and a second column with a unique index for each time series. The remaining columns have observations of the state variables at each point in time and for each time series.
 
 # kwargs
 
@@ -175,8 +175,8 @@ builds a NODE model to fit to the data. `data` is a DataFrame object with time a
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
-- `ode_solver`: method to aproximate solutions to the differntail equation. Defaul is `Tsit5()`.
-- `ad_method`:method to evalaute derivatives of the ODE solver. Default is `ForwardDiffSensitivity()`.
+- `ode_solver`: method to approximate solutions to the differential equation. Default is `Tsit5()`.
+- `ad_method`:method to evaluate derivatives of the ODE solver. Default is `ForwardDiffSensitivity()`.
 """
 function MultiNODE(data;time_column_name = "time", series_column_name = "series",hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,reg_type="L2",l=0.5,extrap_rho=0.0, ode_solver = Tsit5(), ad_method = ForwardDiffSensitivity())
 
@@ -235,8 +235,8 @@ When a dataframe `X` is supplied the model will run with covariates. the argumen
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
-- `ode_solver`: method to aproximate solutions to the differntail equation. Defaul is `Tsit5()`.
-- `ad_method`:method to evalaute derivatives of the ODE solver. Default is `ForwardDiffSensitivity()`.
+- `ode_solver`: method to approximate solutions to the differential equation. Default is `Tsit5()`.
+- `ad_method`:method to evaluate derivatives of the ODE solver. Default is `ForwardDiffSensitivity()`.
 """
 function MultiNODE(data,X;time_column_name = "time", series_column_name = "series", variable_column_name = nothing, value_column_name = nothing,hidden_units=10,seed = 1,proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,reg_type="L2",l=0.5,extrap_rho=0.0, ode_solver = Tsit5(), ad_method = ForwardDiffSensitivity())
     X_data_frame = X
@@ -282,7 +282,7 @@ end
 """
     MultiNNDE(data;kwargs...)
 
-builds a nonparametric discrete-time model to fit to the data using a single layer neural network to represent the system's dynamics. `data` is a DataFrame object with time arguments placed in a column labed `t` and a second column with a unique index for each time series. The remaining columns have observations of the state variables at each point in time and for each time series.
+builds a nonparametric discrete-time model to fit to the data using a single layer neural network to represent the system's dynamics. `data` is a DataFrame object with time arguments placed in a column labeled `t` and a second column with a unique index for each time series. The remaining columns have observations of the state variables at each point in time and for each time series.
 
 # kwargs
 
@@ -399,7 +399,7 @@ end
 """
     MultiCustomDerivatives(data,derivs!,initial_parameters;kwargs...)
 
-Builds a UDE model that can be trianed on multiple time series simultaniously. The user defined derivatives functions must allow for an extra argument `i` that indexes over the time series in the data set (e.g. `derivs!(du,u,i,)`). `data` is a DataFrame object with time arguments placed in a column labeled `t` and a second column with a unique index for each time series. The remaining columns have observations of the state variables at each point in time and for each time series.
+Builds a UDE model that can be trained on multiple time series simultaneously. The user defined derivatives functions must allow for an extra argument `i` that indexes over the time series in the data set (e.g. `derivs!(du,u,i,)`). `data` is a DataFrame object with time arguments placed in a column labeled `t` and a second column with a unique index for each time series. The remaining columns have observations of the state variables at each point in time and for each time series.
 
 # kwargs
 
@@ -413,8 +413,8 @@ Builds a UDE model that can be trianed on multiple time series simultaniously. T
 - `reg_type`: Type of regularization, whether `"L1"` or `"L2"` regularization. Default is `"L2"`.
 - `l`: Extrapolation parameter for forecasting. Default is `0.25`.
 - `extrap_rho`: Extrapolation parameter for forecasting. Default is `0.0`.
-- `ode_solver`: method to aproximate solutions to the differntail equation. Defaul is `Tsit5()`.
-- `ad_method`:method to evalaute derivatives of the ODE solver. Default is `ForwardDiffSensitivity()`.
+- `ode_solver`: method to approximate solutions to the differential equation. Default is `Tsit5()`.
+- `ad_method`:method to evaluate derivatives of the ODE solver. Default is `ForwardDiffSensitivity()`.
 """
 function MultiCustomDerivatives(data,derivs!,initial_parameters;time_column_name = "time", series_column_name = "series",proc_weight=1.0,obs_weight=1.0,reg_weight = 10^-6,reg_type="L2",extrap_rho = 0.1,l = 0.25, ode_solver = Tsit5(), ad_method = ForwardDiffSensitivity())
 
