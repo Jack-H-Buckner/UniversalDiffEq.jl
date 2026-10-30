@@ -295,4 +295,32 @@ function forecast(UDE::MultiUDE, test_data::DataFrame)
     end
 
     return reduce(vcat, dfs)
+    return df
+end
+
+
+function UniversalDiffEq.state_estimates(UDE::MultiUDE)
+
+
+    outs = []
+
+    N, T, dims, data, times,  dataframe, series, inds, starts, lengths, labs= UniversalDiffEq.process_multi_data(UDE.data_frame,UDE.time_column_name,UDE.series_column_name)
+
+    for d in 1:dims
+        output = DataFrame()
+        for series in eachindex(starts)
+
+            uhat = UDE.parameters.uhat[:,starts[series]:(starts[series]+lengths[series]-1)]
+            time = times[starts[series]:(starts[series]+lengths[series]-1)]
+            dat = data[:,starts[series]:(starts[series]+lengths[series]-1)]
+
+            temp = DataFrame(series = fill(series,lengths[series]), time = time, uhat = uhat, dat = dat)
+            output = vcat(output, temp)
+
+        end
+
+        push!(outs, output)
+    end
+
+    return outs
 end

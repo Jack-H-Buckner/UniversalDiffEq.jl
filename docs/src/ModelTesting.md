@@ -1,6 +1,6 @@
 # Model performance
 
-UniversalDiffEq.jl provides a number of functions to test the performance of NODE and UDE models on in-sample data. These tests validate the model fitting procedure. Functions to estimate the model's performance on out-of-sample data are discussed below and in the section on cross-validation.
+UniversalDiffEq.jl provides a number of functions to test the performance of NODE and UDE models on in-sample data. These tests validate the model fitting procedure. Functions to estimate the model's performance on out-of-sample data are discussed below and in the section on cross-validation. Many of these functions are visual in nature, and can be accessed through the `UniversalDiffEqPlots` extension when `Plots` is loaded into the environment. Otherwise, many functions have non-plot based equivalents (check the [API](API.md) for a full list of functions).
 
 ## Evaluating model fits to training data
 

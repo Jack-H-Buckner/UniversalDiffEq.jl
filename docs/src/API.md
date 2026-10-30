@@ -1,7 +1,12 @@
 # API
 
-### Please note that all plotting functions are provided through the `UniversalDiffEqPlots` extension, which requires `Plots` to be loaded as a dependency.
-
+## UniversalDiffEq
 ```@autodocs
-Modules = [UniversalDiffEq, UniversalDiffEqPlots]
+Modules = [UniversalDiffEq]
+```
+
+## UniversalDiffEqPlots
+`UniversalDiffEqPlots` is an extension of `UniversalDiffEq` that is active when `Plots` is loaded into the Julia environment
+```@autodocs
+Modules = [UniversalDiffEqPlots]
 ```
