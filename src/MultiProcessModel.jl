@@ -160,7 +160,7 @@ function MultiDiscreteProcessModel(difference,parameters,covariates,dims,l,extra
         return (u, 0)
     end 
     
-    forecast = init_forecast(predict,l,extrap_rho)
+    forecast = init_Multiforecast(predict,l,extrap_rho)
     
     function right_hand_side(u,i,X,parameters,t)
         return difference(u,i,X,parameters,t) .- u
@@ -179,7 +179,7 @@ function MultiDiscreteProcessModel(difference,parameters,dims,l,extrap_rho)
         return (u, 0)
     end 
     
-    forecast = init_forecast(predict,l,extrap_rho)
+    forecast = init_Multiforecast(predict,l,extrap_rho)
     
     function right_hand_side(u,i,parameters,t)
         return difference(u,i,parameters,t) .- u
@@ -231,13 +231,15 @@ function MultiNODE_process(dims,hidden,covariates,seed,l,extrap_rho; ode_solver 
     
    forecast = init_Multiforecast(predict,l,extrap_rho)
 
-   function right_hand_side(u,i,X,t,parameters)
+   function right_hand_side(u,i,X,parameters,t)
         du = NN(vcat(u,X),parameters.NN,states)[1]
         return du
     end 
 
+    rhs_(u, i, p, t) = right_hand_side(u, i, covariates(t, i), p, t)
+
     
-    return MultiNODE_process(dims,IVP,derivs!,parameters,predict,forecast,covariates,right_hand_side,right_hand_side)
+    return MultiNODE_process(dims,IVP,derivs!,parameters,predict,forecast,covariates,right_hand_side,rhs_)
     
 end 
 
@@ -270,7 +272,7 @@ function MultiNODE_process(dims,hidden,seed,l,extrap_rho; ode_solver = Tsit5(), 
    forecast = init_Multiforecast(predict,l,extrap_rho)
 
 
-   function right_hand_side(u,i,t,parameters)
+   function right_hand_side(u,i,parameters,t)
         du = NN(u,parameters.NN,states)[1]
         return du
     end 
@@ -312,7 +314,7 @@ function MultiNeuralNetwork(dims,hidden,covariates,seed,l,extrap_rho)
 
     forecast = init_Multiforecast(predict,l,extrap_rho)
 
-    function right_hand_side(u,i,X,t,parameters)
+    function right_hand_side(u,i,X,parameters,t)
         return NN(vcat(u,X),parameters.NN,states)[1]
     end
 
@@ -342,7 +344,7 @@ function MultiNeuralNetwork(dims,hidden,seed,l,extrap_rho)
 
     forecast = init_Multiforecast(predict,l,extrap_rho)
 
-    function right_hand_side(u,i,t,parameters)
+    function right_hand_side(u,i,parameters,t)
         return NN(u,parameters.NN,states)[1]
     end
 
