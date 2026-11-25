@@ -147,7 +147,7 @@ function DiscreteProcessModel(difference, parameters, covariates, dims, l, extra
     function predict(u,t,dt,parameters) 
         tspan =  t:(t+dt-1)
         for t in tspan
-            u = difference(u,covariates(t),t,parameters)
+            u = difference(u,covariates(t),parameters,t)
         end 
         return (u, 0)
     end 
@@ -155,7 +155,7 @@ function DiscreteProcessModel(difference, parameters, covariates, dims, l, extra
     forecast = init_forecast(predict,l,extrap_rho)
     
     function right_hand_side(u,x,parameters,t)
-        return difference(u,x,t,parameters) .- u
+        return difference(u,x,parameters,t) .- u
     end 
 
     rhs = (u,p,t) ->predict(u,t,1,p) 
@@ -168,7 +168,7 @@ function DiscreteProcessModel(difference, parameters, dims, l, extrap_rho)
     function predict(u,t,dt,parameters) 
         tspan =  t:(t+dt-1)
         for t in tspan
-            u = difference(u,t,parameters)
+            u = difference(u,parameters,t)
         end 
         return (u, 0)
     end 
@@ -176,7 +176,7 @@ function DiscreteProcessModel(difference, parameters, dims, l, extrap_rho)
     forecast = init_forecast(predict,l,extrap_rho)
     
     function right_hand_side(u,parameters,t)
-        return difference(u,t,parameters) .- u
+        return difference(u,parameters,t) .- u
     end 
 
     rhs = (u,p,t) ->predict(u,t,1,p) 
@@ -322,14 +322,14 @@ mutable struct DiscreteModelErrors
     dims::Int # number of state variables
     error_function # lux neural network object 
     known_dynamics
-    parameters #::ComponentArray # nerual network paramters
+    parameters #::ComponentArray # neural network parameters
     predict::Function # neural network
     forecast
 end 
 
 function DiscreteModelErrors(dims,known_dynamics,init_known_dynamics_parameters,hidden,seed,extrap_rho,l)
     
-    # initial neurla Network
+    # initial neural Network
     NN = Lux.Chain(Lux.Dense(dims,hidden,tanh), Lux.Dense(hidden,dims))
     
     # parameters 
@@ -340,14 +340,14 @@ function DiscreteModelErrors(dims,known_dynamics,init_known_dynamics_parameters,
                     NN = NN_parameters)
     # prediction 
     error_function = (u,parameters) -> NN(u,parameters.NN,NN_states)[1]
-    known_dynamics_function = (u,t,parameters) -> known_dynamics(u,t,parameters.known_dynamics)
+    known_dynamics_function = (u,parameters,t) -> known_dynamics(u,parameters.known_dynamics,t)
     
     
     function predict(u0,t,dt,parameters) 
         tspan =  1:dt
         u = u0
         for t in tspan
-            u = known_dynamics_function(u,t,parameters) .+ error_function(u,parameters)
+            u = known_dynamics_function(u,parameters,t) .+ error_function(u,parameters)
         end 
         return (u, 0)
     end 
